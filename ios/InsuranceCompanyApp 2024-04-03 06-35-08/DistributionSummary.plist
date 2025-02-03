@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>InsuranceCompanyApp.ipa</key>
+	<array>
+		<dict>
+			<key>architectures</key>
+			<array>
+				<string>arm64</string>
+			</array>
+			<key>bitcode</key>
+			<false/>
+			<key>buildNumber</key>
+			<string>3</string>
+			<key>certificate</key>
+			<dict>
+				<key>SHA1</key>
+				<string>2D64B9EFD7597DC48E300301762084AE5B59C374</string>
+				<key>dateExpires</key>
+				<string>24/8/24</string>
+				<key>type</key>
+				<string>Cloud Managed Apple Distribution</string>
+			</dict>
+			<key>embeddedBinaries</key>
+			<array>
+				<dict>
+					<key>architectures</key>
+					<array>
+						<string>arm64</string>
+					</array>
+					<key>bitcode</key>
+					<false/>
+					<key>buildNumber</key>
+					<string>3</string>
+					<key>certificate</key>
+					<dict>
+						<key>SHA1</key>
+						<string>2D64B9EFD7597DC48E300301762084AE5B59C374</string>
+						<key>dateExpires</key>
+						<string>24/8/24</string>
+						<key>type</key>
+						<string>Cloud Managed Apple Distribution</string>
+					</dict>
+					<key>name</key>
+					<string>hermes.framework</string>
+					<key>symbols</key>
+					<true/>
+					<key>team</key>
+					<dict>
+						<key>id</key>
+						<string>SX24SB2R9T</string>
+						<key>name</key>
+						<string>POPULAR LIFE INSURANCE COMPANY LIMITED</string>
+					</dict>
+					<key>versionNumber</key>
+					<string>1.0.2</string>
+				</dict>
+			</array>
+			<key>entitlements</key>
+			<dict>
+				<key>application-identifier</key>
+				<string>SX24SB2R9T.com.popularlife.app</string>
+				<key>beta-reports-active</key>
+				<true/>
+				<key>com.apple.developer.team-identifier</key>
+				<string>SX24SB2R9T</string>
+				<key>get-task-allow</key>
+				<false/>
+			</dict>
+			<key>name</key>
+			<string>InsuranceCompanyApp.app</string>
+			<key>profile</key>
+			<dict>
+				<key>UUID</key>
+				<string>d0baa17c-e612-4879-b95e-b50bcb423ebf</string>
+				<key>dateExpires</key>
+				<string>24/8/24</string>
+				<key>name</key>
+				<string>iOS Team Store Provisioning Profile: com.popularlife.app</string>
+			</dict>
+			<key>symbols</key>
+			<true/>
+			<key>team</key>
+			<dict>
+				<key>id</key>
+				<string>SX24SB2R9T</string>
+				<key>name</key>
+				<string>POPULAR LIFE INSURANCE COMPANY LIMITED</string>
+			</dict>
+			<key>versionNumber</key>
+			<string>1.0.2</string>
+		</dict>
+	</array>
+</dict>
+</plist>
