@@ -91,15 +91,23 @@ def reactNativeArchitectures() {
 android {
     ndkVersion rootProject.ext.ndkVersion
 
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     namespace "com.insurancecompanyapp"
+    //    namespace "com.plitns"
     defaultConfig {
         applicationId "com.insurancecompanyapp"
+        // applicationId "com.plitns"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 24
-        versionName "2.4"
+        versionCode 25
+        versionName "2.5"
     }
 
     dexOptions {
