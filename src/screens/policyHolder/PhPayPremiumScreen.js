@@ -111,6 +111,44 @@ const PhPayPremiumScreen = ({navigation, route}) => {
         ToastAndroid.LONG,
       );
 
+    if (method === 'bkash') {
+      // Attempt to retrieve the token from AsyncStorage
+      const storedToken = await AsyncStorage.getItem('bkashToken');
+
+      if (storedToken) {
+        // Token exists, use it for payment creation
+        setBkashToken(storedToken);
+        const createPaymentResult = await bkashCreatePayment(
+          storedToken,
+          amount,
+          number,
+        );
+        setBkashPaymentId(createPaymentResult.paymentID);
+        setBkashUrl(createPaymentResult.bkashURL);
+      } else {
+        // Token does not exist, obtain a new one and store it
+        const tokenResult = await bkashGetToken();
+        const token = tokenResult.id_token;
+        setBkashToken(token);
+        await AsyncStorage.setItem('bkashToken', token);
+
+        // Schedule token removal after 55 minutes
+        setTimeout(async () => {
+          await AsyncStorage.removeItem('bkashToken');
+          setBkashToken(null);
+        }, 55 * 60 * 1000);
+
+        // Proceed with payment creation
+        const createPaymentResult = await bkashCreatePayment(
+          token,
+          amount,
+          policyNo,
+        );
+        setBkashPaymentId(createPaymentResult.paymentID);
+        setBkashUrl(createPaymentResult.bkashURL);
+      }
+    }
+
     // if(method == "bkash"){
     //   const tokenResult = await bkashGetToken();
 
@@ -123,63 +161,51 @@ const PhPayPremiumScreen = ({navigation, route}) => {
     //   setBkashUrl(createPaymentResult.bkashURL);
     // }
 
-    if (method === 'bkash') {
-      // Proceed with getting a new token
-      const tokenResult = await bkashGetToken();
-      setBkashToken(tokenResult.id_token);
+    // if (method === 'bkash') {
+    //   // try {
+    //   //   const lastTokenTime = await AsyncStorage.getItem('lastBkashTokenTime');
+    //   //   const currentTime = Date.now();
 
-      const createPaymentResult = await bkashCreatePayment(
-        tokenResult.id_token,
-        amount,
-        policyNo,
-      );
-      setBkashPaymentId(createPaymentResult.paymentID);
-      setBkashUrl(createPaymentResult.bkashURL);
+    //   //   if (lastTokenTime) {
+    //   //     const elapsedTime =
+    //   //       (currentTime - parseInt(lastTokenTime, 10)) / 60000; // Convert ms to minutes
+    //   //     const remainingTime = 30 - elapsedTime;
 
-      // try {
-      //   const lastTokenTime = await AsyncStorage.getItem('lastBkashTokenTime');
-      //   const currentTime = Date.now();
+    //   //     if (elapsedTime < 30) {
+    //   //       alert(
+    //   //         `Rate limit exceeded. Please try again in ${Math.ceil(
+    //   //           remainingTime,
+    //   //         )} minutes.`,
+    //   //       );
+    //   //       return;
+    //   //     }
+    //   //   }
 
-      //   if (lastTokenTime) {
-      //     const elapsedTime =
-      //       (currentTime - parseInt(lastTokenTime, 10)) / 60000; // Convert ms to minutes
-      //     const remainingTime = 30 - elapsedTime;
+    //   //   // Proceed with getting a new token
+    //   //   const tokenResult = await bkashGetToken();
+    //   //   setBkashToken(tokenResult.id_token);
 
-      //     if (elapsedTime < 30) {
-      //       alert(
-      //         `Rate limit exceeded. Please try again in ${Math.ceil(
-      //           remainingTime,
-      //         )} minutes.`,
-      //       );
-      //       return;
-      //     }
-      //   }
+    //   //   // Store the timestamp of the new token retrieval
+    //   //   await AsyncStorage.setItem(
+    //   //     'lastBkashTokenTime',
+    //   //     currentTime.toString(),
+    //   //   );
 
-      //   // Proceed with getting a new token
-      //   const tokenResult = await bkashGetToken();
-      //   setBkashToken(tokenResult.id_token);
-
-      //   // Store the timestamp of the new token retrieval
-      //   await AsyncStorage.setItem(
-      //     'lastBkashTokenTime',
-      //     currentTime.toString(),
-      //   );
-
-      //   const createPaymentResult = await bkashCreatePayment(
-      //     tokenResult.id_token,
-      //     amount,
-      //     policyNo,
-      //   );
-      //   setBkashPaymentId(createPaymentResult.paymentID);
-      //   setBkashUrl(createPaymentResult.bkashURL);
-      // } catch (error) {
-      //   if (error.response && error.response.status === 429) {
-      //     alert('Rate limit exceeded. Please wait before retrying.');
-      //   } else {
-      //     alert('An error occurred. Please try again.');
-      //   }
-      // }
-    }
+    //   //   const createPaymentResult = await bkashCreatePayment(
+    //   //     tokenResult.id_token,
+    //   //     amount,
+    //   //     policyNo,
+    //   //   );
+    //   //   setBkashPaymentId(createPaymentResult.paymentID);
+    //   //   setBkashUrl(createPaymentResult.bkashURL);
+    //   // } catch (error) {
+    //   //   if (error.response && error.response.status === 429) {
+    //   //     alert('Rate limit exceeded. Please wait before retrying.');
+    //   //   } else {
+    //   //     alert('An error occurred. Please try again.');
+    //   //   }
+    //   // }
+    // }
 
     if (method == 'nagad') {
       Alert.alert('Under Maintenance');
