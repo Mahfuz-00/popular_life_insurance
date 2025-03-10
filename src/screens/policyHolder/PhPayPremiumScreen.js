@@ -113,37 +113,51 @@ const PhPayPremiumScreen = ({navigation, route}) => {
 
     if (method === 'bkash') {
       // Attempt to retrieve the token from AsyncStorage
+      console.log('Attempting to retrieve bkashToken from AsyncStorage...');
       const storedToken = await AsyncStorage.getItem('bkashToken');
+      console.log('Retrieved bkashToken:', storedToken);
 
       if (storedToken) {
         // Token exists, use it for payment creation
         setBkashToken(storedToken);
+        console.log('Creating payment with existing token...');
         const createPaymentResult = await bkashCreatePayment(
           storedToken,
           amount,
-          number,
+          policyNo,
         );
+        console.log('Payment created successfully:', createPaymentResult);
         setBkashPaymentId(createPaymentResult.paymentID);
         setBkashUrl(createPaymentResult.bkashURL);
       } else {
         // Token does not exist, obtain a new one and store it
+        console.log('bkashToken does not exist. Obtaining a new token...');
         const tokenResult = await bkashGetToken();
         const token = tokenResult.id_token;
+        console.log('New token obtained:', token);
         setBkashToken(token);
         await AsyncStorage.setItem('bkashToken', token);
+        console.log('New token stored in AsyncStorage.');
 
         // Schedule token removal after 55 minutes
+        console.log('Scheduling token removal after 55 minutes...');
         setTimeout(async () => {
+          console.log(
+            '55 minutes elapsed. Removing bkashToken from AsyncStorage...',
+          );
           await AsyncStorage.removeItem('bkashToken');
           setBkashToken(null);
+          console.log('bkashToken removed.');
         }, 55 * 60 * 1000);
 
         // Proceed with payment creation
+        console.log('Creating payment with new token...');
         const createPaymentResult = await bkashCreatePayment(
           token,
           amount,
           policyNo,
         );
+        console.log('Payment created successfully:', createPaymentResult);
         setBkashPaymentId(createPaymentResult.paymentID);
         setBkashUrl(createPaymentResult.bkashURL);
       }
