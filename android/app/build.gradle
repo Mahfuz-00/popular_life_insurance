@@ -106,7 +106,7 @@ android {
         // applicationId "com.plitns"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 27
+        versionCode 28
         versionName "2.6.1"
     }
 
