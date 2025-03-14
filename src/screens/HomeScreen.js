@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useState, useEffect} from 'react';
+import {useCallback, useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   Platform,
   Modal,
   ActivityIndicator,
+  ToastAndroid,
 } from 'react-native';
 var {width, height} = Dimensions.get('window');
 import {useDispatch, useSelector} from 'react-redux';
@@ -68,62 +69,95 @@ const HomeScreen = ({navigation}) => {
 
   const [isDownloading, setIsDownloading] = useState(false); // Track if downloading
   const [downloadProgress, setDownloadProgress] = useState(0); // Track progress
+  const [isInstalling, setIsInstalling] = useState(false);
 
-  const checkAppVersion = async () => {
-    try {
-      console.log('Checking app version...');
+  const checkAppVersion = useCallback(async () => {
+    if (Platform.OS === 'android') {
+      try {
+        console.log('Checking app version...');
 
-      const response = await fetch('http://27.147.163.94:1929/api/latest');
-      const result = await response.json();
+        // Fetch the latest version from your API
+        const response = await fetch('http://27.147.163.94:1929/api/latest');
+        const result = await response.json();
 
-      const currentVersion = DeviceInfo.getVersion();
-      const latestVersion = result.version;
-      const apkUrl = result.app; // URL of the APK
+        // Get current and latest versions
+        const currentVersion = DeviceInfo.getVersion();
+        const latestVersion = result.version;
+        const apkUrl = result.app; // APK download URL
 
-      console.log(`Current Version: ${currentVersion}`);
-      console.log(`Latest Version: ${latestVersion}`);
-      console.log(`APK URL: ${apkUrl}`);
+        console.log(`Current Version: ${currentVersion}`);
+        console.log(`Latest Version: ${latestVersion}`);
+        console.log(`APK URL: ${apkUrl}`);
 
-      if (currentVersion < latestVersion) {
-        Alert.alert(
-          'New Version Available',
-          'A new version of the app is available.\n\nTap below to download:',
-          [
-            {
-              text: 'Download Now',
-              onPress: () => downloadApk(apkUrl),
-            },
-            {
-              text: 'Later',
-              style: 'default',
-            },
-          ],
-        );
+        // If an update is available, show the alert
+        if (currentVersion < latestVersion) {
+          Alert.alert(
+            'New Version Available',
+            'A new version of the app is available.\n\nTap below to download:',
+            [
+              {
+                text: 'Download Now',
+                onPress: () => downloadApk(apkUrl),
+              },
+              {
+                text: 'Later',
+                style: 'default',
+              },
+            ],
+          );
+        }
+      } catch (error) {
+        console.error('Version check failed:', error);
       }
-    } catch (error) {
-      console.error('Version check failed:', error);
     }
-  };
+  }, [downloadApk]);
 
-  const downloadApk = async apkUrl => {
+  const downloadApk = useCallback(async apkUrl => {
+    ToastAndroid.show({
+      text1: 'Function Triggered',
+      position: 'bottom',
+      visibilityTime: 3000,
+    });
+
     try {
       if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
+        const permissionGranted = await PermissionsAndroid.check(
           PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          {
-            title: 'Storage Permission Required',
-            message: 'App needs access to your storage to download the update.',
-          },
         );
 
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          console.log('Storage permission denied');
-          return;
+        if (!permissionGranted) {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+            {
+              title: 'Storage Permission Required',
+              message:
+                'App needs access to your storage to download the update.',
+            },
+          );
+
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            console.log('Storage permission denied');
+            return;
+          }
         }
       }
 
       // Define destination for APK file
-      const downloadDest = `${RNFS.ExternalStorageDirectoryPath}/Download/newApp.apk`;
+      const downloadDest = `${RNFS.DownloadDirectoryPath}/newApp.apk`;
+
+      ToastAndroid.show({
+        text1: 'Root Path:',
+        text2: `${RNFS.DownloadDirectoryPath}%`,
+        position: 'bottom',
+        visibilityTime: 3000,
+      });
+
+      ToastAndroid.show({
+        text1: 'Downloading APK to:',
+        text2: `${downloadDest}%`,
+        position: 'bottom',
+        visibilityTime: 3000,
+      });
 
       console.log('Downloading APK to:', downloadDest);
 
@@ -133,33 +167,57 @@ const HomeScreen = ({navigation}) => {
         background: true, // Continue downloading in the background
         progress: res => {
           let progress = (res.bytesWritten / res.contentLength) * 100;
-          setDownloadProgress(progress); // Update the progress
+
+          ToastAndroid.show({
+            text1: 'Download Progress:',
+            text2: `${progress.toFixed(2)}%`,
+            position: 'bottom',
+            visibilityTime: 3000,
+          });
+
           console.log(`Download Progress: ${progress.toFixed(2)}%`);
         },
       };
 
-      setIsDownloading(true); // Start showing the loading indicator
-
       const downloadResult = await RNFS.downloadFile(options).promise;
-
       console.log('Download Complete:', downloadResult);
 
       // After download, trigger the installation
       installApk(downloadDest);
-      setIsDownloading(false); // Hide the loading indicator after completion
     } catch (error) {
       console.error('Download failed:', error);
+
+      ToastAndroid.show({
+        text1: 'Download failed:',
+        text2: `${error}`,
+        position: 'bottom',
+        visibilityTime: 3000,
+      });
     }
-  };
+  }, []);
 
   // Function to install APK
   const installApk = async filePath => {
+    setIsInstalling(true);
     try {
+      ToastAndroid.show({
+        text1: 'filePath:',
+        text2: `${filePath}%`,
+        position: 'bottom',
+        visibilityTime: 3000, // Duration for the toast message to be visible
+      });
       console.log('filePath:', filePath);
 
       // Check if the platform is Android
       if (Platform.OS === 'android') {
         const fileUri = 'file://' + filePath;
+
+        ToastAndroid.show({
+          text1: 'fileURI:',
+          text2: `${fileUri}%`,
+          position: 'bottom',
+          visibilityTime: 3000, // Duration for the toast message to be visible
+        });
 
         // Check if the file exists
         const fileExists = await RNFS.exists(fileUri);
@@ -175,12 +233,14 @@ const HomeScreen = ({navigation}) => {
       }
     } catch (error) {
       console.error('Installation failed:', error);
+    } finally {
+      setIsInstalling(false); // Hide the loading indicator once installation is done
     }
   };
 
   useEffect(() => {
     checkAppVersion();
-  }, []);
+  }, [checkAppVersion]);
 
   const navigateToDashboard = () => {
     if (user.type == 'policy holder') {
@@ -256,6 +316,20 @@ const HomeScreen = ({navigation}) => {
             <Text style={styles.loadingText}>
               Downloading... {downloadProgress.toFixed(2)}%
             </Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal for showing installation progress */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isInstalling}
+        onRequestClose={() => setIsInstalling(false)}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <ActivityIndicator size="large" color="#7B1FA2" />
+            <Text style={styles.loadingText}>Installing...</Text>
           </View>
         </View>
       </Modal>
