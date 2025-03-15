@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import * as React from 'react';
 import {useCallback, useState, useEffect} from 'react';
 import {
@@ -71,19 +72,20 @@ const HomeScreen = ({navigation}) => {
   const [downloadProgress, setDownloadProgress] = useState(0); // Track progress
   const [isInstalling, setIsInstalling] = useState(false);
 
-  const checkAppVersion = useCallback(async () => {
+  const checkAppVersion = async () => {
     if (Platform.OS === 'android') {
       try {
         console.log('Checking app version...');
 
         // Fetch the latest version from your API
         const response = await fetch('http://27.147.163.94:1929/api/latest');
-        const result = await response.json();
+        const result = await response.json(); // Assuming result is an object
+        console.log('API Response:', JSON.stringify(result, null, 2));
 
-        // Get current and latest versions
+        // Ensure that you're correctly extracting values as strings
         const currentVersion = DeviceInfo.getVersion();
-        const latestVersion = result.version;
-        const apkUrl = result.app; // APK download URL
+        const latestVersion = result.version; // This should be a string
+        const apkUrl = String(result.app); // This should also be a string
 
         console.log(`Current Version: ${currentVersion}`);
         console.log(`Latest Version: ${latestVersion}`);
@@ -97,7 +99,7 @@ const HomeScreen = ({navigation}) => {
             [
               {
                 text: 'Download Now',
-                onPress: () => downloadApk(apkUrl),
+                onPress: () => downloadApk(apkUrl), // Ensure apkUrl is passed correctly
               },
               {
                 text: 'Later',
@@ -110,14 +112,10 @@ const HomeScreen = ({navigation}) => {
         console.error('Version check failed:', error);
       }
     }
-  }, [downloadApk]);
+  };
 
-  const downloadApk = useCallback(async apkUrl => {
-    ToastAndroid.show({
-      text1: 'Function Triggered',
-      position: 'bottom',
-      visibilityTime: 3000,
-    });
+  const downloadApk = async apkUrl => {
+    ToastAndroid.show('Function Triggered', ToastAndroid.LONG);
 
     try {
       if (Platform.OS === 'android') {
@@ -125,68 +123,96 @@ const HomeScreen = ({navigation}) => {
           PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
         );
 
+        ToastAndroid.show(
+          `Permission: ${permissionGranted}`,
+          ToastAndroid.LONG,
+        );
+
         if (!permissionGranted) {
           const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+            PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
             {
               title: 'Storage Permission Required',
               message:
                 'App needs access to your storage to download the update.',
+              buttonNegative: 'Deny',
+              buttonPositive: 'Allow',
             },
           );
 
-          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-            console.log('Storage permission denied');
-            return;
+          ToastAndroid.show(`Permission: ${granted}`, ToastAndroid.LONG);
+
+          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+            ToastAndroid.show('Permission Granted', ToastAndroid.LONG);
+            return true;
+          } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+            ToastAndroid.show(
+              'Permission Denied Permanently',
+              ToastAndroid.LONG,
+            );
+            Linking.openSettings(); // Redirect user to settings
+            return false;
+          } else {
+            ToastAndroid.show('Permission Denied', ToastAndroid.LONG);
+            return false;
           }
         }
       }
 
+      // const externalDir = String(RNFS.ExternalDirectoryPath);
+      const externalDir = String(RNFS.DownloadDirectoryPath);
       // Define destination for APK file
-      const downloadDest = `${RNFS.DownloadDirectoryPath}/newApp.apk`;
+      const downloadDest = `${externalDir}/newApp.apk`;
+      // const downloadDest = `${RNFS.DownloadDirectoryPath}/newApp.apk`;
 
-      ToastAndroid.show({
-        text1: 'Root Path:',
-        text2: `${RNFS.DownloadDirectoryPath}%`,
-        position: 'bottom',
-        visibilityTime: 3000,
-      });
+      ToastAndroid.show(`Root Path: ${externalDir}`, ToastAndroid.LONG);
 
-      ToastAndroid.show({
-        text1: 'Downloading APK to:',
-        text2: `${downloadDest}%`,
-        position: 'bottom',
-        visibilityTime: 3000,
-      });
+      console.log('Root Path:', externalDir);
+
+      ToastAndroid.show(
+        `Downloading APK to: ${downloadDest}`,
+        ToastAndroid.LONG,
+      );
 
       console.log('Downloading APK to:', downloadDest);
 
+      console.log('apkUrl format:', typeof apkUrl);
+
+      if (typeof apkUrl !== 'string') {
+        console.error('Invalid apkUrl format:', apkUrl);
+        return;
+      }
+
       const options = {
-        fromUrl: apkUrl, // URL of the APK
+        fromUrl: String(apkUrl), // URL of the APK
         toFile: downloadDest, // Where the APK will be saved locally
-        background: true, // Continue downloading in the background
+        background: true, // will Continue downloading in the background
         progress: res => {
           let progress = (res.bytesWritten / res.contentLength) * 100;
 
-          ToastAndroid.show({
-            text1: 'Download Progress:',
-            text2: `${progress.toFixed(2)}%`,
-            position: 'bottom',
-            visibilityTime: 3000,
-          });
+          setDownloadProgress(progress);
+          setIsDownloading(true);
+
+          ToastAndroid.show(
+            `Download Progress: ${progress.toFixed(2)}%`,
+            ToastAndroid.LONG,
+          );
 
           console.log(`Download Progress: ${progress.toFixed(2)}%`);
         },
       };
 
+      console.log('Option:', JSON.stringify(options));
+
       const downloadResult = await RNFS.downloadFile(options).promise;
       console.log('Download Complete:', downloadResult);
+      setIsDownloading(false);
 
+      console.log('test');
       // After download, trigger the installation
-      installApk(downloadDest);
+      await installApk(downloadDest);
     } catch (error) {
       console.error('Download failed:', error);
-
       ToastAndroid.show({
         text1: 'Download failed:',
         text2: `${error}`,
@@ -194,18 +220,13 @@ const HomeScreen = ({navigation}) => {
         visibilityTime: 3000,
       });
     }
-  }, []);
+  };
 
   // Function to install APK
   const installApk = async filePath => {
     setIsInstalling(true);
     try {
-      ToastAndroid.show({
-        text1: 'filePath:',
-        text2: `${filePath}%`,
-        position: 'bottom',
-        visibilityTime: 3000, // Duration for the toast message to be visible
-      });
+      ToastAndroid.show(`FilePath: ${filePath}`, ToastAndroid.LONG);
       console.log('filePath:', filePath);
 
       // Check if the platform is Android
@@ -220,7 +241,7 @@ const HomeScreen = ({navigation}) => {
         });
 
         // Check if the file exists
-        const fileExists = await RNFS.exists(fileUri);
+        const fileExists = await RNFS.exists(filePath);
         if (fileExists) {
           // Trigger APK installation via Linking
           Linking.openURL(`file://${filePath}`).catch(err => {
@@ -240,7 +261,7 @@ const HomeScreen = ({navigation}) => {
 
   useEffect(() => {
     checkAppVersion();
-  }, [checkAppVersion]);
+  }, []);
 
   const navigateToDashboard = () => {
     if (user.type == 'policy holder') {
