@@ -115,73 +115,29 @@ const HomeScreen = ({navigation}) => {
   };
 
   const downloadApk = async apkUrl => {
-    ToastAndroid.show('Function Triggered', ToastAndroid.LONG);
-
     try {
-      if (Platform.OS === 'android') {
-        const permissionGranted = await PermissionsAndroid.check(
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        );
+      // const hasPermission = await requestStoragePermission();
 
-        ToastAndroid.show(
-          `Permission: ${permissionGranted}`,
-          ToastAndroid.LONG,
-        );
+      const downloadFolder = `${RNFS.DownloadDirectoryPath}`;
 
-        if (!permissionGranted) {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
-            {
-              title: 'Storage Permission Required',
-              message:
-                'App needs access to your storage to download the update.',
-              buttonNegative: 'Deny',
-              buttonPositive: 'Allow',
-            },
-          );
+      const folderExists = await RNFS.exists(downloadFolder);
 
-          ToastAndroid.show(`Permission: ${granted}`, ToastAndroid.LONG);
-
-          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-            ToastAndroid.show('Permission Granted', ToastAndroid.LONG);
-            return true;
-          } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-            ToastAndroid.show(
-              'Permission Denied Permanently',
-              ToastAndroid.LONG,
-            );
-            Linking.openSettings(); // Redirect user to settings
-            return false;
-          } else {
-            ToastAndroid.show('Permission Denied', ToastAndroid.LONG);
-            return false;
-          }
-        }
+      if (!folderExists) {
+        // Create the folder if it doesn't exist
+        await RNFS.mkdir(downloadFolder);
+        console.log('Download folder created:', downloadFolder);
+      } else {
+        console.log('Download folder already exists:', downloadFolder);
       }
 
-      // const externalDir = String(RNFS.ExternalDirectoryPath);
-      const externalDir = String(RNFS.DownloadDirectoryPath);
-      // Define destination for APK file
-      const downloadDest = `${externalDir}/newApp.apk`;
-      // const downloadDest = `${RNFS.DownloadDirectoryPath}/newApp.apk`;
+      // Set the destination file path (using the existing folder)
+      const downloadDest = `${downloadFolder}/newApp.apk`;
 
-      ToastAndroid.show(`Root Path: ${externalDir}`, ToastAndroid.LONG);
-
-      console.log('Root Path:', externalDir);
-
-      ToastAndroid.show(
-        `Downloading APK to: ${downloadDest}`,
-        ToastAndroid.LONG,
-      );
+      console.log('Download folder path:', downloadFolder);
 
       console.log('Downloading APK to:', downloadDest);
 
       console.log('apkUrl format:', typeof apkUrl);
-
-      if (typeof apkUrl !== 'string') {
-        console.error('Invalid apkUrl format:', apkUrl);
-        return;
-      }
 
       const options = {
         fromUrl: String(apkUrl), // URL of the APK
@@ -193,11 +149,6 @@ const HomeScreen = ({navigation}) => {
           setDownloadProgress(progress);
           setIsDownloading(true);
 
-          ToastAndroid.show(
-            `Download Progress: ${progress.toFixed(2)}%`,
-            ToastAndroid.LONG,
-          );
-
           console.log(`Download Progress: ${progress.toFixed(2)}%`);
         },
       };
@@ -208,7 +159,6 @@ const HomeScreen = ({navigation}) => {
       console.log('Download Complete:', downloadResult);
       setIsDownloading(false);
 
-      console.log('test');
       // After download, trigger the installation
       await installApk(downloadDest);
     } catch (error) {
@@ -222,6 +172,72 @@ const HomeScreen = ({navigation}) => {
     }
   };
 
+  // const requestStoragePermission = async () => {
+  //   if (Platform.OS !== 'android') {
+  //     return true; // iOS doesn't require storage permissions
+  //   }
+
+  //   try {
+  //     const apiLevel = parseInt(DeviceInfo.getSystemVersion(), 10); // Get Android API level
+
+  //     ToastAndroid.show(`Android API Version: ${apiLevel}%`, ToastAndroid.LONG);
+
+  //     if (apiLevel < 29) {
+  //       const granted = await PermissionsAndroid.requestMultiple([
+  //         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+  //         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+  //       ]);
+
+  //       if (
+  //         granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] !==
+  //           PermissionsAndroid.RESULTS.GRANTED ||
+  //         granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] !==
+  //           PermissionsAndroid.RESULTS.GRANTED
+  //       ) {
+  //         ToastAndroid.show('Storage permission denied', ToastAndroid.LONG);
+  //         return false;
+  //       }
+  //       return true;
+  //     } else if (apiLevel === 29) {
+  //       const readPermission = await PermissionsAndroid.request(
+  //         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+  //       );
+
+  //       if (readPermission !== PermissionsAndroid.RESULTS.GRANTED) {
+  //         ToastAndroid.show('Storage permission denied', ToastAndroid.LONG);
+  //         return false;
+  //       }
+  //       return true;
+  //     } else if (apiLevel >= 30 && apiLevel < 34) {
+  //       const managePermission = await PermissionsAndroid.request(
+  //         PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
+  //       );
+
+  //       if (managePermission !== PermissionsAndroid.RESULTS.GRANTED) {
+  //         ToastAndroid.show(
+  //           'Please grant Manage Storage permission manually',
+  //           ToastAndroid.LONG,
+  //         );
+  //         Linking.openSettings();
+  //         return false;
+  //       }
+  //       return true;
+  //     } else if (apiLevel >= 34) {
+  //       ToastAndroid.show(
+  //         'Storage access is restricted. Enable it manually in settings.',
+  //         ToastAndroid.LONG,
+  //       );
+  //       Linking.openSettings(); // Open settings for manual permission
+  //       return false;
+  //     }
+
+  //     return false;
+  //   } catch (error) {
+  //     console.error('Permission request error:', error);
+  //     return false;
+  //   }
+  // };
+
   // Function to install APK
   const installApk = async filePath => {
     setIsInstalling(true);
@@ -231,21 +247,20 @@ const HomeScreen = ({navigation}) => {
 
       // Check if the platform is Android
       if (Platform.OS === 'android') {
-        const fileUri = 'file://' + filePath;
+        const fileUri = 'content://' + filePath;
 
-        ToastAndroid.show({
-          text1: 'fileURI:',
-          text2: `${fileUri}%`,
-          position: 'bottom',
-          visibilityTime: 3000, // Duration for the toast message to be visible
-        });
+        ToastAndroid.show(`FileURL: ${fileUri}`, ToastAndroid.LONG);
 
         // Check if the file exists
         const fileExists = await RNFS.exists(filePath);
         if (fileExists) {
           // Trigger APK installation via Linking
-          Linking.openURL(`file://${filePath}`).catch(err => {
+          Linking.openURL(`content://${filePath}`).catch(err => {
             console.error('Error opening APK for installation:', err);
+            ToastAndroid.show(
+              `Error opening APK for installation: ${err}`,
+              ToastAndroid.LONG,
+            );
           });
           console.log('APK Installation Triggered');
         } else {
