@@ -28,6 +28,8 @@ import {COMPANY_NAME} from '../config';
 import Slider from '../components/Slider';
 import DeviceInfo from 'react-native-device-info';
 import RNFS from 'react-native-fs';
+import Share from 'react-native-share';
+import StoreVersion from 'react-native-store-version';
 
 const HomeScreen = ({navigation}) => {
   const {isAuthenticated, user} = useSelector(state => state.auth);
@@ -247,7 +249,7 @@ const HomeScreen = ({navigation}) => {
 
       // Check if the platform is Android
       if (Platform.OS === 'android') {
-        const fileUri = 'content://' + filePath;
+        const fileUri = 'file://' + filePath;
 
         ToastAndroid.show(`FileURL: ${fileUri}`, ToastAndroid.LONG);
 
@@ -255,13 +257,19 @@ const HomeScreen = ({navigation}) => {
         const fileExists = await RNFS.exists(filePath);
         if (fileExists) {
           // Trigger APK installation via Linking
-          Linking.openURL(`content://${filePath}`).catch(err => {
+          Linking.openURL(`file://${filePath}`).catch(err => {
             console.error('Error opening APK for installation:', err);
             ToastAndroid.show(
               `Error opening APK for installation: ${err}`,
               ToastAndroid.LONG,
             );
           });
+
+          // await Share.open({
+          //   url: fileUri,
+          //   type: 'application/vnd.android.package-archive',
+          // });
+
           console.log('APK Installation Triggered');
         } else {
           console.error('APK file does not exist at the specified path');
@@ -271,6 +279,39 @@ const HomeScreen = ({navigation}) => {
       console.error('Installation failed:', error);
     } finally {
       setIsInstalling(false); // Hide the loading indicator once installation is done
+    }
+  };
+
+  const checkPlayStoreVersion = async () => {
+    try {
+      // Get the latest version from the Play Store for your package
+      const storeVersion = await StoreVersion.getLatestVersion(
+        'com.insurancecompanyapp',
+      );
+      console.log('Store Version playstore:', storeVersion);
+      const currentVersion = DeviceInfo.getVersion();
+      console.log('Current Version playstore:', currentVersion);
+      if (currentVersion < storeVersion) {
+        Alert.alert(
+          'New Update Available',
+          'A new version is available on the Play Store.',
+          [
+            {
+              text: 'Update Now',
+              onPress: () =>
+                Linking.openURL(
+                  'https://play.google.com/store/apps/details?id=com.insurancecompanyapp&hl=en',
+                ),
+            },
+            {text: 'Later', style: 'cancel'},
+          ],
+        );
+      } else {
+        Alert.alert('No New Update', 'You are using the latest version.');
+      }
+    } catch (error) {
+      console.error('Error checking Play Store version:', error);
+      Alert.alert('Error', 'Could not check the Play Store version.');
     }
   };
 
@@ -324,6 +365,18 @@ const HomeScreen = ({navigation}) => {
                 title={item.title}
               />
             ))}
+
+            <View style={styles.updateContainer}>
+              <TouchableOpacity
+                onPress={checkPlayStoreVersion}
+                style={styles.updateButton}>
+                <Image
+                  source={require('../assets/playstore.png')}
+                  style={styles.playStoreIcon}
+                />
+              </TouchableOpacity>
+              <Text style={styles.updateButtonText}>Check for Updates</Text>
+            </View>
 
             {isAuthenticated ? (
               <MenuComponent
@@ -406,6 +459,33 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#333',
+  },
+  updateContainer: {
+    alignItems: 'center', // Center everything
+    marginTop: 10, // Adjust spacing
+    height: height * 0.1,
+    width: '32%',
+  },
+  updateButton: {
+    backgroundColor: '#ffffff',
+    marginVertical: 20,
+    alignItems: 'center',
+    height: height * 0.08,
+    width: '32%',
+    marginTop: 30,
+  },
+  playStoreIcon: {
+    width: 60, // Adjust icon size
+    height: 60,
+    alignContent: 'center',
+    //tintColor: '', // Change color if needed
+  },
+  updateButtonText: {
+    color: '#333',
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+    // fontWeight: 'bold',
+    alignContent: 'center',
   },
 });
 
