@@ -100,14 +100,12 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     namespace "com.insurancecompanyapp"
-    //    namespace "com.plitns"
     defaultConfig {
         applicationId "com.insurancecompanyapp"
-        // applicationId "com.plitns"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 30
-        versionName "2.6.3"
+        versionName "2.6.5"
     }
 
     dexOptions {

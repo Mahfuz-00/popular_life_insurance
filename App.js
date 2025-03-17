@@ -1,20 +1,19 @@
 // In App.js in a new project
 import * as React from 'react';
 import VersionCheck from 'react-native-version-check';
-import { View, Text, Alert, BackHandler, Linking, Platform } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { useDispatch, useSelector } from 'react-redux';
+import {View, Text, Alert, BackHandler, Linking, Platform} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {createDrawerNavigator} from '@react-navigation/drawer';
+import {useDispatch, useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 
 import {Provider} from 'react-redux';
 import store from './src/store';
-import { userPayPremium } from './src/actions/userActions';
+import {userPayPremium} from './src/actions/userActions';
 
 import HomeScreen from './src/screens/HomeScreen';
-import { loadUser } from './src/actions/userActions';
+import {loadUser} from './src/actions/userActions';
 import SelectLoginScreen from './src/screens/SelectLoginScreen';
 import PremiumCalculatorScreen from './src/screens/PremiumCalculatorScreen';
 import CompanyInfoScreen from './src/screens/CompanyInfoScreen';
@@ -55,88 +54,108 @@ import SyncPaymentScreen from './src/screens/policyHolder/SyncPaymentScreen';
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
-function StackNav(){
-  const { isAuthenticated, user } = useSelector(state => state.auth);
-  
+function StackNav() {
+  const {isAuthenticated, user} = useSelector(state => state.auth);
+
   return (
     <Stack.Navigator
-      screenOptions={{              
-        headerShown: false
-      }}
-    >
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen  name="PremiumCalculator" component={PremiumCalculatorScreen} />
-        <Stack.Screen  name="CompanyInfo" component={CompanyInfoScreen} />
-        <Stack.Screen  name="LocateUs" component={LocateUsScreen} />
-        <Stack.Screen  name="PayPremium" component={PayPremiumScreen} />
-        <Stack.Screen  name="ProductInfo" component={ProductInfoScreen} />
-        <Stack.Screen  name="ClaimSubmission" component={ClaimSubmissionScreen} />
+      screenOptions={{
+        headerShown: false,
+      }}>
+      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen
+        name="PremiumCalculator"
+        component={PremiumCalculatorScreen}
+      />
+      <Stack.Screen name="CompanyInfo" component={CompanyInfoScreen} />
+      <Stack.Screen name="LocateUs" component={LocateUsScreen} />
+      <Stack.Screen name="PayPremium" component={PayPremiumScreen} />
+      <Stack.Screen name="ProductInfo" component={ProductInfoScreen} />
+      <Stack.Screen name="ClaimSubmission" component={ClaimSubmissionScreen} />
 
-        <Stack.Screen  name="Login" component={LoginScreen} />
-        <Stack.Screen  name="Registration" component={RegistrationScreen} />
-        <Stack.Screen  name="ForgotPassword" component={ForgotPasswordScreen} />
-        <Stack.Screen  name="ResetPassword" component={ResetPasswordScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Registration" component={RegistrationScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
 
-        <Stack.Screen  name="MessageFromMd" component={MessageFromMd} />
-        <Stack.Screen  name="PolicyInfo" component={PolicyInfoScreen} />
-        <Stack.Screen  name="ContactUs" component={ContactUsScreen} />
-        <Stack.Screen  name="ApplyOnline" component={ApplyOnlineScreen} />
-        <Stack.Screen  name="PolicyPhoneUpdate" component={PolicyPhoneUpdateScreen} />
-        <Stack.Screen  name="ProposalTracking" component={ProposalTrackingScreen} />
-        <Stack.Screen  name="MyTransaction" component={MyTransactionScreen} />
-        <Stack.Screen  name="SyncPayment" component={SyncPaymentScreen} />
+      <Stack.Screen name="MessageFromMd" component={MessageFromMd} />
+      <Stack.Screen name="PolicyInfo" component={PolicyInfoScreen} />
+      <Stack.Screen name="ContactUs" component={ContactUsScreen} />
+      <Stack.Screen name="ApplyOnline" component={ApplyOnlineScreen} />
+      <Stack.Screen
+        name="PolicyPhoneUpdate"
+        component={PolicyPhoneUpdateScreen}
+      />
+      <Stack.Screen
+        name="ProposalTracking"
+        component={ProposalTrackingScreen}
+      />
+      <Stack.Screen name="MyTransaction" component={MyTransactionScreen} />
+      <Stack.Screen name="SyncPayment" component={SyncPaymentScreen} />
 
-        {/* Policy holder navigations */}        
-        <Stack.Screen  name="DashboardPh" component={DashboardPhScreen} />
-        <Stack.Screen  name="PhPolicyList" component={PhPolicyListScreen} />
-        <Stack.Screen  name="PhPolicyStatement" component={PhPolicyStatementScreen} />
-        <Stack.Screen  name="PhDuePremium" component={PhDuePremiumScreen} />
-        <Stack.Screen  name="PhPayPremium" component={PhPayPremiumScreen} />
-        <Stack.Screen  name="PhPolicyTransactions" component={PhPolicyTransactionsScreen} />
-        <Stack.Screen  name="AuthPolicyInfo" component={AuthPolicyInfoScreen} />
-        <Stack.Screen  name="PhMyProfile" component={PhMyProfileScreen} />
-        <Stack.Screen  name="PhClaimSubmission" component={PhClaimSubmissionScreen} />
-        <Stack.Screen  name="PhPRList" component={PhPRListScreen} />
+      {/* Policy holder navigations */}
+      <Stack.Screen name="DashboardPh" component={DashboardPhScreen} />
+      <Stack.Screen name="PhPolicyList" component={PhPolicyListScreen} />
+      <Stack.Screen
+        name="PhPolicyStatement"
+        component={PhPolicyStatementScreen}
+      />
+      <Stack.Screen name="PhDuePremium" component={PhDuePremiumScreen} />
+      <Stack.Screen name="PhPayPremium" component={PhPayPremiumScreen} />
+      <Stack.Screen
+        name="PhPolicyTransactions"
+        component={PhPolicyTransactionsScreen}
+      />
+      <Stack.Screen name="AuthPolicyInfo" component={AuthPolicyInfoScreen} />
+      <Stack.Screen name="PhMyProfile" component={PhMyProfileScreen} />
+      <Stack.Screen
+        name="PhClaimSubmission"
+        component={PhClaimSubmissionScreen}
+      />
+      <Stack.Screen name="PhPRList" component={PhPRListScreen} />
 
-        {/* Producer navigations */}
-        <Stack.Screen  name="DashboardProducer" component={DashboardProducerScreen} />
-        <Stack.Screen  name="BusinessInfo" component={BusinessInfoScreen} />
-        <Stack.Screen  name="EarningInfo" component={EarningInfoScreen} />
-        <Stack.Screen  name="PolicyList" component={PolicyListScreen} />
-        <Stack.Screen  name="OrgMyProfile" component={OrgMyProfileScreen} />
-        
-      </Stack.Navigator>
-  )
+      {/* Producer navigations */}
+      <Stack.Screen
+        name="DashboardProducer"
+        component={DashboardProducerScreen}
+      />
+      <Stack.Screen name="BusinessInfo" component={BusinessInfoScreen} />
+      <Stack.Screen name="EarningInfo" component={EarningInfoScreen} />
+      <Stack.Screen name="PolicyList" component={PolicyListScreen} />
+      <Stack.Screen name="OrgMyProfile" component={OrgMyProfileScreen} />
+    </Stack.Navigator>
+  );
 }
 
-function App() { 
-
+function App() {
   const handleSyncPayments = async () => {
-    var syncPayments = JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
-    syncPayments.map(async(payment) => {
+    var syncPayments =
+      JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
+    syncPayments.map(async payment => {
       const isSuccess = await userPayPremium(payment);
       if (isSuccess) {
-        var syncPayments = JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
-        updateSyncPayments = syncPayments.filter(item => item.transaction_no != payment.transaction_no);
+        var syncPayments =
+          JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
+        updateSyncPayments = syncPayments.filter(
+          item => item.transaction_no != payment.transaction_no,
+        );
 
-        await AsyncStorage.setItem('syncPayments', JSON.stringify(updateSyncPayments))
-        
+        await AsyncStorage.setItem(
+          'syncPayments',
+          JSON.stringify(updateSyncPayments),
+        );
       }
-    })
-
-  }
+    });
+  };
 
   React.useEffect(() => {
-    store.dispatch(loadUser())
-    if(Platform.OS != 'ios')
-    {
+    store.dispatch(loadUser());
+    if (Platform.OS != 'ios') {
       checkUpdateNeeded();
     }
-    
-  }, [])
+  }, []);
 
   const checkUpdateNeeded = async () => {
-   
     let updateNeeded = await VersionCheck.needUpdate();
     // console.log("updateNeeded: " + updateNeeded );
     if (updateNeeded.isNeeded) {
@@ -148,28 +167,26 @@ function App() {
             text: 'Update',
             onPress: () => {
               BackHandler.exitApp();
-              Linking.openURL(updateNeeded.storeUrl)
-            }
-          }
+              Linking.openURL(updateNeeded.storeUrl);
+            },
+          },
         ],
         {
-          cancelable: false
-        }
+          cancelable: false,
+        },
       );
     }
-  }
+  };
 
   return (
-    <Provider store={store} >
-      <Loading/>
+    <Provider store={store}>
+      <Loading />
       <NavigationContainer>
-        <Drawer.Navigator 
-        screenOptions={{              
-          headerShown: false
-        }} 
-
-        drawerContent={(props) => <DrawerContent {...props}/>}
-      >
+        <Drawer.Navigator
+          screenOptions={{
+            headerShown: false,
+          }}
+          drawerContent={props => <DrawerContent {...props} />}>
           <Drawer.Screen name="Stack" component={StackNav} />
         </Drawer.Navigator>
       </NavigationContainer>
