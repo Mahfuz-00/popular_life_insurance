@@ -29,7 +29,7 @@ import Slider from '../components/Slider';
 import DeviceInfo from 'react-native-device-info';
 import RNFS from 'react-native-fs';
 import Share from 'react-native-share';
-import StoreVersion from 'react-native-store-version';
+import checkVersion from 'react-native-store-version';
 
 const HomeScreen = ({navigation}) => {
   const {isAuthenticated, user} = useSelector(state => state.auth);
@@ -285,13 +285,17 @@ const HomeScreen = ({navigation}) => {
   const checkPlayStoreVersion = async () => {
     try {
       // Get the latest version from the Play Store for your package
-      const storeVersion = await StoreVersion.getLatestVersion(
-        'com.insurancecompanyapp',
-      );
-      console.log('Store Version playstore:', storeVersion);
       const currentVersion = DeviceInfo.getVersion();
       console.log('Current Version playstore:', currentVersion);
-      if (currentVersion < storeVersion) {
+      const storeVersion = await checkVersion({
+        version: currentVersion, // app local version
+        // iosStoreURL: 'ios app store url',
+        androidStoreURL:
+          'https://play.google.com/store/apps/details?id=com.insurancecompanyapp&hl=en',
+        // country: 'bd',
+      });
+      console.log('Store Version playstore:', storeVersion);
+      if (storeVersion.result === 'new') {
         Alert.alert(
           'New Update Available',
           'A new version is available on the Play Store.',
@@ -462,26 +466,30 @@ const styles = StyleSheet.create({
   },
   updateContainer: {
     alignItems: 'center', // Center everything
-    marginTop: 10, // Adjust spacing
-    height: height * 0.1,
-    width: '32%',
+    marginTop: 20, // Adjust spacing
+    height: height * 0.12,
+    width: '26%',
+    borderColor: '#333',
+    borderWidth: 1,
+    marginBottom: 5,
+    borderRadius: 15,
   },
   updateButton: {
     backgroundColor: '#ffffff',
     marginVertical: 20,
     alignItems: 'center',
-    height: height * 0.08,
+    height: height * 0.07,
     width: '32%',
-    marginTop: 30,
+    marginTop: 28,
   },
   playStoreIcon: {
-    width: 60, // Adjust icon size
-    height: 60,
+    width: 50, // Adjust icon size
+    height: 50,
     alignContent: 'center',
     //tintColor: '', // Change color if needed
   },
   updateButtonText: {
-    color: '#333',
+    color: '#000',
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
     // fontWeight: 'bold',
