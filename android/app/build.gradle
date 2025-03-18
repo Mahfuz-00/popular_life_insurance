@@ -104,8 +104,8 @@ android {
         applicationId "com.insurancecompanyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 30
-        versionName "2.6.5"
+        versionCode 31
+        versionName "2.8.1.1"
     }
 
     dexOptions {

@@ -16,6 +16,7 @@ import {
   Modal,
   ActivityIndicator,
   ToastAndroid,
+  NativeModules,
 } from 'react-native';
 var {width, height} = Dimensions.get('window');
 import {useDispatch, useSelector} from 'react-redux';
@@ -161,8 +162,14 @@ const HomeScreen = ({navigation}) => {
       console.log('Download Complete:', downloadResult);
       setIsDownloading(false);
 
+      Alert.alert(
+        'Download Complete',
+        `The APK has been downloaded to: ${downloadDest}\n\nPlease navigate to this location using your file manager and tap on the APK file to install it.`,
+        [{text: 'OK'}],
+      );
+
       // After download, trigger the installation
-      await installApk(downloadDest);
+      // await installApk(downloadDest);
     } catch (error) {
       console.error('Download failed:', error);
       ToastAndroid.show({
@@ -241,35 +248,57 @@ const HomeScreen = ({navigation}) => {
   // };
 
   // Function to install APK
+  // const installApk = async filePath => {
+  //   setIsInstalling(true);
+  //   try {
+  //     ToastAndroid.show(`FilePath: ${filePath}`, ToastAndroid.LONG);
+  //     console.log('filePath:', filePath);
+
+  //     // Check if the platform is Android
+  //     if (Platform.OS === 'android') {
+  //       const fileUri = 'file://' + filePath;
+
+  //       ToastAndroid.show(`FileURL: ${fileUri}`, ToastAndroid.LONG);
+
+  //       // Check if the file exists
+  //       const fileExists = await RNFS.exists(filePath);
+  //       if (fileExists) {
+  //         // Trigger APK installation via Linking
+  //         Linking.openURL(`file://${filePath}`).catch(err => {
+  //           console.error('Error opening APK for installation:', err);
+  //           ToastAndroid.show(
+  //             `Error opening APK for installation: ${err}`,
+  //             ToastAndroid.LONG,
+  //           );
+  //         });
+
+  //         // await Share.open({
+  //         //   url: fileUri,
+  //         //   type: 'application/vnd.android.package-archive',
+  //         // });
+
+  //         console.log('APK Installation Triggered');
+  //       } else {
+  //         console.error('APK file does not exist at the specified path');
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Installation failed:', error);
+  //   } finally {
+  //     setIsInstalling(false); // Hide the loading indicator once installation is done
+  //   }
+  // };
+
   const installApk = async filePath => {
     setIsInstalling(true);
     try {
       ToastAndroid.show(`FilePath: ${filePath}`, ToastAndroid.LONG);
       console.log('filePath:', filePath);
 
-      // Check if the platform is Android
       if (Platform.OS === 'android') {
-        const fileUri = 'file://' + filePath;
-
-        ToastAndroid.show(`FileURL: ${fileUri}`, ToastAndroid.LONG);
-
-        // Check if the file exists
         const fileExists = await RNFS.exists(filePath);
         if (fileExists) {
-          // Trigger APK installation via Linking
-          Linking.openURL(`file://${filePath}`).catch(err => {
-            console.error('Error opening APK for installation:', err);
-            ToastAndroid.show(
-              `Error opening APK for installation: ${err}`,
-              ToastAndroid.LONG,
-            );
-          });
-
-          // await Share.open({
-          //   url: fileUri,
-          //   type: 'application/vnd.android.package-archive',
-          // });
-
+          NativeModules.InstallApk.install(filePath);
           console.log('APK Installation Triggered');
         } else {
           console.error('APK file does not exist at the specified path');
@@ -278,7 +307,7 @@ const HomeScreen = ({navigation}) => {
     } catch (error) {
       console.error('Installation failed:', error);
     } finally {
-      setIsInstalling(false); // Hide the loading indicator once installation is done
+      setIsInstalling(false);
     }
   };
 
@@ -370,7 +399,7 @@ const HomeScreen = ({navigation}) => {
               />
             ))}
 
-            <View style={styles.updateContainer}>
+            {/* <View style={styles.updateContainer}>
               <TouchableOpacity
                 onPress={checkPlayStoreVersion}
                 style={styles.updateButton}>
@@ -380,7 +409,7 @@ const HomeScreen = ({navigation}) => {
                 />
               </TouchableOpacity>
               <Text style={styles.updateButtonText}>Check for Updates</Text>
-            </View>
+            </View> */}
 
             {isAuthenticated ? (
               <MenuComponent
