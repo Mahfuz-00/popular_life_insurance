@@ -123,24 +123,40 @@ const PayPremiumScreen = ({navigation}) => {
       const storedToken = await AsyncStorage.getItem('bkashToken');
       console.log('Retrieved bkashToken:', storedToken);
 
+      // ToastAndroid.show(
+      //   `Retrieved bkashToken: ${storedToken}`,
+      //   ToastAndroid.LONG,
+      // );
+
       if (storedToken) {
         // Token exists, use it for payment creation
         setBkashToken(storedToken);
         console.log('Creating payment with existing token...');
-        const createPaymentResult = await bkashCreatePayment(
-          storedToken,
-          amount,
-          number,
-        );
-        console.log('Payment created successfully:', createPaymentResult);
-        setBkashPaymentId(createPaymentResult.paymentID);
-        setBkashUrl(createPaymentResult.bkashURL);
+        try {
+          const createPaymentResult = await bkashCreatePayment(
+            storedToken,
+            amount,
+            number,
+          );
+          console.log('Payment created successfully:', createPaymentResult);
+
+          // ToastAndroid.show(
+          //   `Payment created successfully: ${createPaymentResult}`,
+          //   ToastAndroid.LONG,
+          // );
+          setBkashPaymentId(createPaymentResult.paymentID);
+          setBkashUrl(createPaymentResult.bkashURL);
+        } catch (error) {
+          // Display the error message in an alert
+          alert('Payment creation failed: ' + error.message);
+        }
       } else {
         // Token does not exist, obtain a new one and store it
         console.log('bkashToken does not exist. Obtaining a new token...');
         const tokenResult = await bkashGetToken();
         const token = tokenResult.id_token;
         console.log('New token obtained:', token);
+
         setBkashToken(token);
         await AsyncStorage.setItem('bkashToken', token);
         console.log('New token stored in AsyncStorage.');
@@ -158,14 +174,23 @@ const PayPremiumScreen = ({navigation}) => {
 
         // Proceed with payment creation
         console.log('Creating payment with new token...');
-        const createPaymentResult = await bkashCreatePayment(
-          token,
-          amount,
-          number,
-        );
-        console.log('Payment created successfully:', createPaymentResult);
-        setBkashPaymentId(createPaymentResult.paymentID);
-        setBkashUrl(createPaymentResult.bkashURL);
+        try {
+          const createPaymentResult = await bkashCreatePayment(
+            token,
+            amount,
+            number,
+          );
+          console.log('Payment created successfully:', createPaymentResult);
+          // ToastAndroid.show(
+          //   `Payment created successfully: ${createPaymentResult}`,
+          //   ToastAndroid.LONG,
+          // );
+          setBkashPaymentId(createPaymentResult.paymentID);
+          setBkashUrl(createPaymentResult.bkashURL);
+        } catch (error) {
+          // Display the error message in an alert
+          alert('Payment creation failed: ' + error.message);
+        }
       }
     }
 
@@ -262,7 +287,15 @@ const PayPremiumScreen = ({navigation}) => {
         }}
         style={{marginTop: 20}}
         onNavigationStateChange={async data => {
-          console.log('stateResponse: ', JSON.stringify(data));
+          // ToastAndroid.show(
+          //   `bkash: ${JSON.stringify(data)}`,
+          //   ToastAndroid.LONG,
+          // );
+          ToastAndroid.show(
+            `Permission Status: ${data.status}}`,
+            ToastAndroid.LONG,
+          );
+          console.log('bkash: ', JSON.stringify(data));
           if (JSON.stringify(data).includes('status=success')) {
             await setBkashUrl('');
 
@@ -273,7 +306,28 @@ const PayPremiumScreen = ({navigation}) => {
               bkashPaymentId,
             );
 
-            alert(createExecuteResult.statusMessage);
+            console.log(
+              'Status Message API Reponse: ',
+              JSON.stringify(createExecuteResult),
+            );
+            // ToastAndroid.show(
+            //   `Status Message API Reponse: ${createExecuteResult}`,
+            //   ToastAndroid.LONG,
+            // );
+            console.log('Status Message: ', createExecuteResult.statusMessage);
+
+            if (
+              createExecuteResult.statusMessage ===
+              'Duplicate for All Transactions'
+            ) {
+              alert(
+                createExecuteResult.statusMessage +
+                  '\n\nThe transaction failed. Please try again after a 2 minutes.',
+              );
+            } else {
+              alert(createExecuteResult.statusMessage);
+            }
+
             dispatch({type: HIDE_LOADING});
 
             if (createExecuteResult.transactionStatus == 'Completed') {
@@ -284,6 +338,9 @@ const PayPremiumScreen = ({navigation}) => {
                 transaction_no: createExecuteResult.trxID,
               };
 
+              console.log('Post Data: ', postData);
+              // ToastAndroid.show(`Post Data: ${postData}`, ToastAndroid.LONG);
+
               var syncPayments =
                 JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
               await AsyncStorage.setItem(
@@ -291,14 +348,20 @@ const PayPremiumScreen = ({navigation}) => {
                 JSON.stringify([...syncPayments, postData]),
               );
 
+              console.log('Sync Payments: ', syncPayments);
+
               const isSuccess = await userPayPremium(postData);
+
+              console.log('Is Success: ', isSuccess);
 
               if (isSuccess) {
                 var syncPayments =
                   JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
+                console.log('Sync Payments: ', syncPayments);
                 updateSyncPayments = syncPayments.filter(
                   item => item.transaction_no != postData.transaction_no,
                 );
+                console.log('Update Sync Payments: ', updateSyncPayments);
                 await AsyncStorage.setItem(
                   'syncPayments',
                   JSON.stringify(updateSyncPayments),
@@ -306,6 +369,9 @@ const PayPremiumScreen = ({navigation}) => {
                 navigation.pop();
               }
             }
+          } else {
+            dispatch({type: HIDE_LOADING});
+            ToastAndroid.show('Payment Failed !', ToastAndroid.LONG);
           }
         }}
       />
