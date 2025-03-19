@@ -123,6 +123,11 @@ const HomeScreen = ({navigation}) => {
 
       const downloadFolder = `${RNFS.DownloadDirectoryPath}`;
 
+      ToastAndroid.show(
+        `FilePath: ${RNFS.DownloadDirectoryPath}`,
+        ToastAndroid.LONG,
+      );
+
       const folderExists = await RNFS.exists(downloadFolder);
 
       if (!folderExists) {
@@ -139,6 +144,8 @@ const HomeScreen = ({navigation}) => {
       console.log('Download folder path:', downloadFolder);
 
       console.log('Downloading APK to:', downloadDest);
+
+      ToastAndroid.show(`Downloading APK to:`, downloadDest);
 
       console.log('apkUrl format:', typeof apkUrl);
 
@@ -162,14 +169,14 @@ const HomeScreen = ({navigation}) => {
       console.log('Download Complete:', downloadResult);
       setIsDownloading(false);
 
-      Alert.alert(
-        'Download Complete',
-        `The APK has been downloaded to: ${downloadDest}\n\nPlease navigate to this location using your file manager and tap on the APK file to install it.`,
-        [{text: 'OK'}],
-      );
+      // Alert.alert(
+      //   'Download Complete',
+      //   `The APK has been downloaded to: ${downloadDest}\n\nPlease navigate to this location using your file manager and tap on the APK file to install it.`,
+      //   [{text: 'OK'}],
+      // );
 
       // After download, trigger the installation
-      // await installApk(downloadDest);
+      await installApk(downloadDest);
     } catch (error) {
       console.error('Download failed:', error);
       ToastAndroid.show({
