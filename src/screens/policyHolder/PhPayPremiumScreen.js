@@ -142,6 +142,20 @@ const PhPayPremiumScreen = ({navigation, route}) => {
 
           setBkashPaymentId(createPaymentResult.paymentID);
           setBkashUrl(createPaymentResult.bkashURL);
+          ToastAndroid.show(
+            `Create Payment Bkash URL: ${createPaymentResult.bkashURL}`,
+            ToastAndroid.LONG,
+          );
+
+          ToastAndroid.show(
+            `Create Payment Status message: ${createPaymentResult.statusMessage}`,
+            ToastAndroid.LONG,
+          );
+
+          ToastAndroid.show(
+            `Create Payment Transaction Status: ${createPaymentResult.transactionStatus}`,
+            ToastAndroid.LONG,
+          );
         } catch (error) {
           // Display the error message in an alert
           alert('Payment creation failed: ' + error.message);
@@ -184,6 +198,20 @@ const PhPayPremiumScreen = ({navigation, route}) => {
 
           setBkashPaymentId(createPaymentResult.paymentID);
           setBkashUrl(createPaymentResult.bkashURL);
+          ToastAndroid.show(
+            `Create Payment Bkash URL: ${createPaymentResult.bkashURL}`,
+            ToastAndroid.LONG,
+          );
+
+          ToastAndroid.show(
+            `Create Payment Status message: ${createPaymentResult.statusMessage}`,
+            ToastAndroid.LONG,
+          );
+
+          ToastAndroid.show(
+            `Create Payment Transaction Status: ${createPaymentResult.transactionStatus}`,
+            ToastAndroid.LONG,
+          );
         } catch (error) {
           // Display the error message in an alert
           alert('Payment creation failed: ' + error.message);

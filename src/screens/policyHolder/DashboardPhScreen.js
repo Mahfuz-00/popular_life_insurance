@@ -126,7 +126,7 @@ const DashboardPhScreen = ({navigation, route}) => {
               />
             ))}
 
-            <View style={styles.updateContainer}>
+            {/* <View style={styles.updateContainer}>
               <TouchableOpacity
                 onPress={checkPlayStoreVersion}
                 style={styles.updateButton}>
@@ -136,7 +136,7 @@ const DashboardPhScreen = ({navigation, route}) => {
                 />
               </TouchableOpacity>
               <Text style={styles.updateButtonText}>Check for Updates</Text>
-            </View>
+            </View> */}
 
             <MenuComponent
               onPress={() => logoutHandler()}

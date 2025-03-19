@@ -146,6 +146,20 @@ const PayPremiumScreen = ({navigation}) => {
           // );
           setBkashPaymentId(createPaymentResult.paymentID);
           setBkashUrl(createPaymentResult.bkashURL);
+          ToastAndroid.show(
+            `Create Payment Bkash URL: ${createPaymentResult.bkashURL}`,
+            ToastAndroid.LONG,
+          );
+
+          ToastAndroid.show(
+            `Create Payment Status message: ${createPaymentResult.statusMessage}`,
+            ToastAndroid.LONG,
+          );
+
+          ToastAndroid.show(
+            `Create Payment Transaction Status: ${createPaymentResult.transactionStatus}`,
+            ToastAndroid.LONG,
+          );
         } catch (error) {
           // Display the error message in an alert
           alert('Payment creation failed: ' + error.message);
@@ -187,6 +201,20 @@ const PayPremiumScreen = ({navigation}) => {
           // );
           setBkashPaymentId(createPaymentResult.paymentID);
           setBkashUrl(createPaymentResult.bkashURL);
+          ToastAndroid.show(
+            `Create Payment Bkash URL: ${createPaymentResult.bkashURL}`,
+            ToastAndroid.LONG,
+          );
+
+          ToastAndroid.show(
+            `Create Payment Status message: ${createPaymentResult.statusMessage}`,
+            ToastAndroid.LONG,
+          );
+
+          ToastAndroid.show(
+            `Create Payment Transaction Status: ${createPaymentResult.transactionStatus}`,
+            ToastAndroid.LONG,
+          );
         } catch (error) {
           // Display the error message in an alert
           alert('Payment creation failed: ' + error.message);
@@ -322,7 +350,7 @@ const PayPremiumScreen = ({navigation}) => {
             ) {
               alert(
                 createExecuteResult.statusMessage +
-                  '\n\nThe transaction failed. Please try again after a 2 minutes.',
+                  '\n\nThe transaction failed.\nA payment of the same amount has already been made recently. Please wait a few minutes before attempting the transaction again.',
               );
             } else {
               alert(createExecuteResult.statusMessage);
