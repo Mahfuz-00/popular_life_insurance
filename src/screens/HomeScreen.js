@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   ToastAndroid,
   NativeModules,
+  DeviceEventEmitter,
 } from 'react-native';
 var {width, height} = Dimensions.get('window');
 import {useDispatch, useSelector} from 'react-redux';
@@ -29,7 +30,6 @@ import {COMPANY_NAME} from '../config';
 import Slider from '../components/Slider';
 import DeviceInfo from 'react-native-device-info';
 import RNFS from 'react-native-fs';
-import Share from 'react-native-share';
 import checkVersion from 'react-native-store-version';
 
 const HomeScreen = ({navigation}) => {
@@ -71,8 +71,8 @@ const HomeScreen = ({navigation}) => {
     // {title: 'Sync Payment', navigateTo: 'SyncPayment', icon: require('../assets/product-engine.png')},
   ];
 
-  const [isDownloading, setIsDownloading] = useState(false); // Track if downloading
-  const [downloadProgress, setDownloadProgress] = useState(0); // Track progress
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [isInstalling, setIsInstalling] = useState(false);
 
   const checkAppVersion = async () => {
@@ -82,19 +82,17 @@ const HomeScreen = ({navigation}) => {
 
         // Fetch the latest version from your API
         const response = await fetch('http://27.147.163.94:1929/api/latest');
-        const result = await response.json(); // Assuming result is an object
+        const result = await response.json();
         console.log('API Response:', JSON.stringify(result, null, 2));
 
-        // Ensure that you're correctly extracting values as strings
         const currentVersion = DeviceInfo.getVersion();
-        const latestVersion = result.version; // This should be a string
-        const apkUrl = String(result.app); // This should also be a string
+        const latestVersion = result.version;
+        const apkUrl = String(result.app);
 
         console.log(`Current Version: ${currentVersion}`);
         console.log(`Latest Version: ${latestVersion}`);
         console.log(`APK URL: ${apkUrl}`);
 
-        // If an update is available, show the alert
         if (currentVersion < latestVersion) {
           Alert.alert(
             'New Version Available',
@@ -102,7 +100,7 @@ const HomeScreen = ({navigation}) => {
             [
               {
                 text: 'Download Now',
-                onPress: () => downloadApk(apkUrl), // Ensure apkUrl is passed correctly
+                onPress: () => downloadApk(apkUrl),
               },
               {
                 text: 'Later',
@@ -117,16 +115,16 @@ const HomeScreen = ({navigation}) => {
     }
   };
 
-  const downloadApk = async apkUrl => {
+  const downloadApk = async (apkUrl, retries = 3) => {
     try {
       // const hasPermission = await requestStoragePermission();
 
       const downloadFolder = `${RNFS.DownloadDirectoryPath}`;
 
-      ToastAndroid.show(
-        `FilePath: ${RNFS.DownloadDirectoryPath}`,
-        ToastAndroid.LONG,
-      );
+      // ToastAndroid.show(
+      //   `FilePath: ${RNFS.DownloadDirectoryPath}`,
+      //   ToastAndroid.LONG,
+      // );
 
       const folderExists = await RNFS.exists(downloadFolder);
 
@@ -145,11 +143,44 @@ const HomeScreen = ({navigation}) => {
 
       console.log('Downloading APK to:', downloadDest);
 
-      ToastAndroid.show(`Downloading APK to:`, downloadDest);
+      // Get expected APK size from server
+      const expectedSize = await getApkFileSize(apkUrl);
+      console.log('Expected APK size from server:', expectedSize);
+      ToastAndroid.show(
+        `Expected APK size: ${expectedSize} bytes`,
+        ToastAndroid.LONG,
+      );
+
+      // Check if file exists and is valid
+      const fileExists = await RNFS.exists(downloadDest);
+      if (fileExists) {
+        const stat = await RNFS.stat(downloadDest);
+        console.log('Existing file size in folder:', stat.size);
+        ToastAndroid.show(
+          `Existing file size: ${stat.size} bytes`,
+          ToastAndroid.LONG,
+        );
+        if (stat.size === expectedSize && stat.size > 0) {
+          console.log('APK already downloaded and appears valid');
+          // await installApk(downloadDest);
+          const result = await installApk(downloadDest);
+          console.log('Installation result:', result);
+          return;
+        } else {
+          console.log('Existing file invalid or incomplete, deleting...');
+          await RNFS.unlink(downloadDest);
+        }
+      }
+
+      ToastAndroid.show(
+        `Downloading APK to: ${downloadDest}`,
+        ToastAndroid.LONG,
+      );
 
       console.log('apkUrl format:', typeof apkUrl);
 
       const options = {
+        // autoInstall: true,
         fromUrl: String(apkUrl), // URL of the APK
         toFile: downloadDest, // Where the APK will be saved locally
         background: true, // will Continue downloading in the background
@@ -159,15 +190,67 @@ const HomeScreen = ({navigation}) => {
           setDownloadProgress(progress);
           setIsDownloading(true);
 
-          console.log(`Download Progress: ${progress.toFixed(2)}%`);
+          // console.log(`Download Progress: ${progress.toFixed(2)}%`);
         },
+        begin: res => {
+          console.log('Download started, content length:', res.contentLength);
+          console.log('Download started');
+          ToastAndroid.show('Download Started', ToastAndroid.LONG);
+        },
+        progressDivider: 1,
       };
 
       console.log('Option:', JSON.stringify(options));
 
-      const downloadResult = await RNFS.downloadFile(options).promise;
-      console.log('Download Complete:', downloadResult);
-      setIsDownloading(false);
+      // const downloadResult = await RNFS.downloadFile(options).promise;
+      // RNFS.downloadFile(options)
+      //   .promise.then(res => {
+      //     console.log('Download completed successfully:', res);
+      //     // Perform any additional actions after the download completes
+      //     ToastAndroid.show('Download Complete', ToastAndroid.LONG);
+      //   })
+      //   .catch(err => {
+      //     console.error('Download failed:', err);
+      //     // Handle the error appropriately
+      //     ToastAndroid.show(`Download Failed ${err}`, ToastAndroid.LONG);
+      //   });
+      // console.log('Download Complete:', downloadResult);
+
+      let downloadResult;
+      for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+          downloadResult = await RNFS.downloadFile(options).promise;
+          console.log('Download Complete:', downloadResult);
+
+          // Get actual downloaded file size
+          const downloadedStat = await RNFS.stat(downloadDest);
+          console.log('Downloaded file size in folder:', downloadedStat.size);
+          ToastAndroid.show(
+            `Downloaded file size: ${downloadedStat.size} bytes`,
+            ToastAndroid.LONG,
+          );
+
+          // Validate sizes
+          if (
+            downloadedStat.size !== expectedSize ||
+            downloadedStat.size === 0
+          ) {
+            throw new Error(
+              `APK download invalid: expected ${expectedSize}, got ${downloadedStat.size}`,
+            );
+          }
+
+          ToastAndroid.show('Download Completed', ToastAndroid.LONG);
+          break;
+        } catch (error) {
+          console.error(`Attempt ${attempt + 1} failed:`, error);
+          if (attempt === retries - 1) {
+            ToastAndroid.show('Downlad Failed', ToastAndroid.LONG);
+            throw new Error('Download failed after multiple attempts');
+          }
+          console.log('Retrying download...');
+        }
+      }
 
       // Alert.alert(
       //   'Download Complete',
@@ -175,6 +258,7 @@ const HomeScreen = ({navigation}) => {
       //   [{text: 'OK'}],
       // );
 
+      setIsDownloading(false);
       // After download, trigger the installation
       await installApk(downloadDest);
     } catch (error) {
@@ -187,6 +271,139 @@ const HomeScreen = ({navigation}) => {
       });
     }
   };
+
+  const getApkFileSize = async apkUrl => {
+    try {
+      const response = await fetch(apkUrl, {method: 'HEAD'});
+      const contentLength = response.headers.get('content-length');
+      console.log('Server reported size for', apkUrl, ':', contentLength);
+      return parseInt(contentLength, 10); // Return file size in bytes
+    } catch (error) {
+      console.error('Error fetching APK file size:', error);
+      return 0; // Return 0 if error occurs
+    }
+  };
+
+  // Add this near the top of HomeScreen.js, outside the component
+  DeviceEventEmitter.addListener('InstallApkLog', message => {
+    console.log('Native Log:', message);
+  });
+
+  const installApk = async filePath => {
+    setIsInstalling(true);
+    try {
+      console.log('filePath:', filePath);
+      const fileExists = await RNFS.exists(filePath);
+
+      if (!fileExists) {
+        throw new Error('APK file does not exist');
+      }
+
+      if (Platform.OS === 'android') {
+        const {InstallApk} = NativeModules;
+        if (!InstallApk) {
+          throw new Error('InstallApk native module not available');
+        }
+
+        ToastAndroid.show('Installation Started', ToastAndroid.LONG);
+        console.log('APK Installation Triggered');
+
+        // Set a timeout for the installation (e.g., 60 seconds)
+        const installTimeout = new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Installation timed out after 60 seconds')),
+            60000,
+          ),
+        );
+
+        // Race the installation promise against the timeout
+        const result = await Promise.race([
+          InstallApk.install(filePath),
+          installTimeout,
+        ]);
+        console.log('Native result:', result);
+
+        // Installation successful
+        ToastAndroid.show('Installation Complete', ToastAndroid.LONG);
+        await RNFS.unlink(filePath);
+        console.log('APK file deleted');
+      }
+    } catch (error) {
+      console.error('Installation failed:', error);
+      if (error.message.includes('INSTALLATION_CANCELED')) {
+        ToastAndroid.show('Installation Canceled by User', ToastAndroid.LONG);
+      } else if (error.message.includes('INSTALLATION_FAILED')) {
+        ToastAndroid.show(
+          'Installation Failed: Invalid APK or Device Issue',
+          ToastAndroid.LONG,
+        );
+      } else if (error.message.includes('timed out')) {
+        ToastAndroid.show(
+          'Installation Timed Out: Took too long',
+          ToastAndroid.LONG,
+        );
+      } else {
+        ToastAndroid.show(
+          `Installation Failed: ${error.message}`,
+          ToastAndroid.LONG,
+        );
+      }
+      // File remains for inspection
+    } finally {
+      setIsInstalling(false);
+    }
+  };
+
+  // const installApk = async filePath => {
+  //   setIsInstalling(true);
+  //   try {
+  //     console.log('filePath:', filePath);
+  //     const fileExists = await RNFS.exists(filePath);
+
+  //     if (!fileExists) {
+  //       throw new Error('APK file does not exist');
+  //     }
+
+  //     if (Platform.OS === 'android') {
+  //       const {InstallApk} = NativeModules;
+  //       if (!InstallApk) {
+  //         throw new Error('InstallApk native module not available');
+  //       }
+
+  //       ToastAndroid.show('Installation Started', ToastAndroid.LONG);
+  //       console.log('APK Installation Triggered');
+
+  //       // Await the installation result
+  //       const result = await InstallApk.install(filePath);
+  //       console.log('Native result:', result);
+
+  //       // Installation successful
+  //       ToastAndroid.show('Installation Complete', ToastAndroid.LONG);
+  //       await RNFS.unlink(filePath); // Delete file only on success
+  //       console.log('APK file deleted');
+  //     }
+  //   } catch (error) {
+  //     console.error('Installation failed:', error);
+
+  //     // Check the error code to determine the outcome
+  //     if (error.message.includes('INSTALLATION_CANCELED')) {
+  //       ToastAndroid.show('Installation Canceled by User', ToastAndroid.LONG);
+  //     } else if (error.message.includes('INSTALLATION_FAILED')) {
+  //       ToastAndroid.show(
+  //         'Installation Failed: Invalid APK or Device Issue',
+  //         ToastAndroid.LONG,
+  //       );
+  //     } else {
+  //       ToastAndroid.show(
+  //         `Installation Failed: ${error.message}`,
+  //         ToastAndroid.LONG,
+  //       );
+  //     }
+  //     // File remains if installation fails or is canceled
+  //   } finally {
+  //     setIsInstalling(false);
+  //   }
+  // };
 
   // const requestStoragePermission = async () => {
   //   if (Platform.OS !== 'android') {
@@ -254,106 +471,229 @@ const HomeScreen = ({navigation}) => {
   //   }
   // };
 
-  // Function to install APK
+  // // Function to install APK
   // const installApk = async filePath => {
   //   setIsInstalling(true);
   //   try {
-  //     ToastAndroid.show(`FilePath: ${filePath}`, ToastAndroid.LONG);
+  //     // ToastAndroid.show(`FilePath: ${filePath}`, ToastAndroid.LONG);
   //     console.log('filePath:', filePath);
 
-  //     // Check if the platform is Android
   //     if (Platform.OS === 'android') {
-  //       const fileUri = 'file://' + filePath;
-
-  //       ToastAndroid.show(`FileURL: ${fileUri}`, ToastAndroid.LONG);
-
-  //       // Check if the file exists
   //       const fileExists = await RNFS.exists(filePath);
   //       if (fileExists) {
-  //         // Trigger APK installation via Linking
-  //         Linking.openURL(`file://${filePath}`).catch(err => {
+  //         // NativeModules.InstallApk.install(filePath);
+  //         // installApk(filePath);
+  //         // Linking.openURL(`file://${filePath}`);
+
+  //         // const contentUri = await generateContentUri(filePath);
+
+  //         // if (contentUri) {
+  //         //   // Trigger installation using Intent.ACTION_VIEW
+  //         //   const intent = {
+  //         //     action: 'android.intent.action.VIEW',
+  //         //     data: contentUri,
+  //         //     flags: 1, //FLAG_GRANT_READ_URI_PERMISSION
+  //         //     type: 'application/vnd.android.package-archive',
+  //         //   };
+
+  //         //   Linking.openURL(
+  //         //     `intent:#Intent;${intent.action};${intent.data};${intent.type};${intent.flags};end`,
+  //         //   ).catch(err => {
+  //         //     console.error('Error opening APK for installation:', err);
+  //         //     ToastAndroid.show(
+  //         //       `Error opening APK for installation: ${err}`,
+  //         //       ToastAndroid.LONG,
+  //         //     );
+  //         //   });
+
+  //         const apkUri = `file://${filePath}`;
+  //         Linking.openURL(apkUri).catch(err => {
   //           console.error('Error opening APK for installation:', err);
-  //           ToastAndroid.show(
-  //             `Error opening APK for installation: ${err}`,
-  //             ToastAndroid.LONG,
-  //           );
+  //           ToastAndroid.show(`Error opening APK: ${err}`, ToastAndroid.LONG);
   //         });
 
-  //         // await Share.open({
-  //         //   url: fileUri,
-  //         //   type: 'application/vnd.android.package-archive',
-  //         // });
-
+  //         ToastAndroid.show('Installation Started', ToastAndroid.LONG);
   //         console.log('APK Installation Triggered');
+
+  //         // Check installation status after a delay (simplified approach)
+  //         setTimeout(async () => {
+  //           const isInstalled = await checkInstallationStatus();
+  //           if (isInstalled) {
+  //             ToastAndroid.show('Installation Complete', ToastAndroid.LONG);
+  //             await RNFS.unlink(filePath); // Delete APK after installation
+  //             console.log('APK file deleted');
+  //           } else {
+  //             ToastAndroid.show('Installation Failed', ToastAndroid.LONG);
+  //             console.error('APK installation failed');
+  //           }
+  //         }, 5000);
   //       } else {
-  //         console.error('APK file does not exist at the specified path');
+  //         ToastAndroid.show(
+  //           'Error: Could not generate content URI',
+  //           ToastAndroid.LONG,
+  //         );
+  //         console.error('Could not generate content URI');
   //       }
+
+  //       ToastAndroid.show('Installation Started', ToastAndroid.LONG);
+  //       console.log('APK Installation Triggered');
+
+  //       // Now confirm if the installation is successful
+  //       const isInstalled = await checkInstallationStatus(); // Implement this method as per your requirement
+
+  //       if (isInstalled) {
+  //         ToastAndroid.show('Installation Complete', ToastAndroid.LONG);
+  //         // After confirming installation, delete the APK file
+  //         await RNFS.unlink(filePath);
+  //         console.log('APK file deleted');
+  //       } else {
+  //         ToastAndroid.show('Installation Failed', ToastAndroid.LONG);
+  //         console.error('APK installation failed');
+  //       }
+  //     } else {
+  //       console.error('APK file does not exist at the specified path');
   //     }
   //   } catch (error) {
+  //     ToastAndroid.show(`Installation Failed \n\n${error}`, ToastAndroid.LONG);
   //     console.error('Installation failed:', error);
   //   } finally {
-  //     setIsInstalling(false); // Hide the loading indicator once installation is done
+  //     setIsInstalling(false);
   //   }
   // };
 
-  const installApk = async filePath => {
-    setIsInstalling(true);
-    try {
-      ToastAndroid.show(`FilePath: ${filePath}`, ToastAndroid.LONG);
-      console.log('filePath:', filePath);
+  // const installApk = async filePath => {
+  //   setIsInstalling(true);
+  //   try {
+  //     console.log('filePath:', filePath);
+  //     const fileExists = await RNFS.exists(filePath);
 
-      if (Platform.OS === 'android') {
-        const fileExists = await RNFS.exists(filePath);
-        if (fileExists) {
-          NativeModules.InstallApk.install(filePath);
-          console.log('APK Installation Triggered');
-        } else {
-          console.error('APK file does not exist at the specified path');
-        }
-      }
-    } catch (error) {
-      console.error('Installation failed:', error);
-    } finally {
-      setIsInstalling(false);
-    }
-  };
+  //     if (!fileExists) {
+  //       throw new Error('APK file does not exist');
+  //     }
 
-  const checkPlayStoreVersion = async () => {
-    try {
-      // Get the latest version from the Play Store for your package
-      const currentVersion = DeviceInfo.getVersion();
-      console.log('Current Version playstore:', currentVersion);
-      const storeVersion = await checkVersion({
-        version: currentVersion, // app local version
-        // iosStoreURL: 'ios app store url',
-        androidStoreURL:
-          'https://play.google.com/store/apps/details?id=com.insurancecompanyapp&hl=en',
-        // country: 'bd',
-      });
-      console.log('Store Version playstore:', storeVersion);
-      if (storeVersion.result === 'new') {
-        Alert.alert(
-          'New Update Available',
-          'A new version is available on the Play Store.',
-          [
-            {
-              text: 'Update Now',
-              onPress: () =>
-                Linking.openURL(
-                  'https://play.google.com/store/apps/details?id=com.insurancecompanyapp&hl=en',
-                ),
-            },
-            {text: 'Later', style: 'cancel'},
-          ],
-        );
-      } else {
-        Alert.alert('No New Update', 'You are using the latest version.');
-      }
-    } catch (error) {
-      console.error('Error checking Play Store version:', error);
-      Alert.alert('Error', 'Could not check the Play Store version.');
-    }
-  };
+  //     if (Platform.OS === 'android') {
+  //       const {InstallApk} = NativeModules;
+  //       // const {FileProvider} = NativeModules;
+
+  //       // if (!FileProvider) {
+  //       //   throw new Error('FileProvider native module not available');
+  //       // }
+
+  //       // const contentUri = await new Promise((resolve, reject) => {
+  //       //   FileProvider.getUriForFile(filePath, (error, uri) => {
+  //       //     if (error) reject(new Error(error));
+  //       //     else resolve(uri);
+  //       //   });
+  //       // });
+
+  //       // if (contentUri) {
+  //       //   const apkIntent = `intent://#Intent;action=android.intent.action.INSTALL_PACKAGE;data=${encodeURIComponent(
+  //       //     contentUri,
+  //       //   )};type=application/vnd.android.package-archive;flags=1;end`;
+  //       //   await Linking.openURL(apkIntent);
+  //       //   ToastAndroid.show('Installation Started', ToastAndroid.LONG);
+  //       //   console.log('APK Installation Triggered');
+  //       // } else {
+  //       //   throw new Error('Could not generate content URI');
+  //       // }
+
+  //       InstallApk.install(filePath);
+
+  //       setTimeout(async () => {
+  //         const isInstalled = await checkInstallationStatus();
+  //         if (isInstalled) {
+  //           ToastAndroid.show('Installation Complete', ToastAndroid.LONG);
+  //           await RNFS.unlink(filePath);
+  //           console.log('APK file deleted');
+  //         } else {
+  //           ToastAndroid.show('Installation Failed', ToastAndroid.LONG);
+  //           console.error('APK installation failed');
+  //         }
+  //       }, 5000);
+  //     }
+  //   } catch (error) {
+  //     console.error('Installation failed:', error);
+  //     ToastAndroid.show(
+  //       `Installation Failed: ${error.message}`,
+  //       ToastAndroid.LONG,
+  //     );
+  //   } finally {
+  //     setIsInstalling(false);
+  //   }
+  // };
+
+  // const checkInstallationStatus = async () => {
+  //   try {
+  //     const packageName = 'com.insurancecompanyapp';
+
+  //     const isInstalled = await DeviceInfo.hasAppInstalled(packageName);
+
+  //     return isInstalled;
+  //   } catch (error) {
+  //     console.error('Error checking installation status:', error);
+  //     return false; // Return false if there's an error
+  //   }
+  // };
+
+  // const generateContentUri = async filePath => {
+  //   try {
+  //     // Generate content URI using FileProvider
+  //     const contentUri = NativeModules.FileProvider.getUriForFile(filePath);
+  //     return contentUri;
+  //   } catch (error) {
+  //     console.error('Error generating content URI:', error);
+  //     return null;
+  //   }
+  // };
+
+  // const checkInstallationStatus = async () => {
+  //   try {
+  //     const isInstalled = await AppInstalledChecker.isAppInstalled(
+  //       'com.insurancecompanyapp',
+  //     ); // Replace with your app's package name
+  //     return isInstalled;
+  //   } catch (error) {
+  //     console.error('Error checking installation status:', error);
+  //     return false;
+  //   }
+  // };
+
+  // const checkPlayStoreVersion = async () => {
+  //   try {
+  //     // Get the latest version from the Play Store for your package
+  //     const currentVersion = DeviceInfo.getVersion();
+  //     console.log('Current Version playstore:', currentVersion);
+  //     const storeVersion = await checkVersion({
+  //       version: currentVersion, // app local version
+  //       // iosStoreURL: 'ios app store url',
+  //       androidStoreURL:
+  //         'https://play.google.com/store/apps/details?id=com.insurancecompanyapp&hl=en',
+  //       // country: 'bd',
+  //     });
+  //     console.log('Store Version playstore:', storeVersion);
+  //     if (storeVersion.result === 'new') {
+  //       Alert.alert(
+  //         'New Update Available',
+  //         'A new version is available on the Play Store.',
+  //         [
+  //           {
+  //             text: 'Update Now',
+  //             onPress: () =>
+  //               Linking.openURL(
+  //                 'https://play.google.com/store/apps/details?id=com.insurancecompanyapp&hl=en',
+  //               ),
+  //           },
+  //           {text: 'Later', style: 'cancel'},
+  //         ],
+  //       );
+  //     } else {
+  //       Alert.alert('No New Update', 'You are using the latest version.');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error checking Play Store version:', error);
+  //     Alert.alert('Error', 'Could not check the Play Store version.');
+  //   }
+  // };
 
   useEffect(() => {
     checkAppVersion();
