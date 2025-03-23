@@ -17,7 +17,6 @@ import {
   ActivityIndicator,
   ToastAndroid,
   NativeModules,
-  DeviceEventEmitter,
 } from 'react-native';
 var {width, height} = Dimensions.get('window');
 import {useDispatch, useSelector} from 'react-redux';
@@ -31,6 +30,7 @@ import Slider from '../components/Slider';
 import DeviceInfo from 'react-native-device-info';
 import RNFS from 'react-native-fs';
 import checkVersion from 'react-native-store-version';
+import RNApkInstaller from '@dominicvonk/react-native-apk-installer';
 
 const HomeScreen = ({navigation}) => {
   const {isAuthenticated, user} = useSelector(state => state.auth);
@@ -117,120 +117,63 @@ const HomeScreen = ({navigation}) => {
 
   const downloadApk = async (apkUrl, retries = 3) => {
     try {
-      // const hasPermission = await requestStoragePermission();
-
-      const downloadFolder = `${RNFS.DownloadDirectoryPath}`;
-
-      // ToastAndroid.show(
-      //   `FilePath: ${RNFS.DownloadDirectoryPath}`,
-      //   ToastAndroid.LONG,
-      // );
-
-      const folderExists = await RNFS.exists(downloadFolder);
-
-      if (!folderExists) {
-        // Create the folder if it doesn't exist
-        await RNFS.mkdir(downloadFolder);
-        console.log('Download folder created:', downloadFolder);
-      } else {
-        console.log('Download folder already exists:', downloadFolder);
-      }
-
-      // Set the destination file path (using the existing folder)
+      const downloadFolder = RNFS.DownloadDirectoryPath;
       const downloadDest = `${downloadFolder}/newApp.apk`;
-
-      console.log('Download folder path:', downloadFolder);
-
       console.log('Downloading APK to:', downloadDest);
 
-      // Get expected APK size from server
       const expectedSize = await getApkFileSize(apkUrl);
-      console.log('Expected APK size from server:', expectedSize);
+      console.log('Expected APK size:', expectedSize);
       ToastAndroid.show(
         `Expected APK size: ${expectedSize} bytes`,
         ToastAndroid.LONG,
       );
 
-      // Check if file exists and is valid
       const fileExists = await RNFS.exists(downloadDest);
       if (fileExists) {
         const stat = await RNFS.stat(downloadDest);
-        console.log('Existing file size in folder:', stat.size);
-        ToastAndroid.show(
-          `Existing file size: ${stat.size} bytes`,
-          ToastAndroid.LONG,
-        );
+        console.log('Existing file size:', stat.size);
         if (stat.size === expectedSize && stat.size > 0) {
-          console.log('APK already downloaded and appears valid');
+          console.log('APK already downloaded and valid');
           // await installApk(downloadDest);
-          const result = await installApk(downloadDest);
-          console.log('Installation result:', result);
           return;
         } else {
-          console.log('Existing file invalid or incomplete, deleting...');
+          console.log('Existing file invalid, deleting...');
           await RNFS.unlink(downloadDest);
         }
       }
 
-      ToastAndroid.show(
-        `Downloading APK to: ${downloadDest}`,
-        ToastAndroid.LONG,
-      );
-
-      console.log('apkUrl format:', typeof apkUrl);
+      const freeSpace = await RNFS.getFSInfo().then(info => info.freeSpace);
+      if (freeSpace < expectedSize) {
+        throw new Error('Insufficient storage space');
+      }
 
       const options = {
-        // autoInstall: true,
-        fromUrl: String(apkUrl), // URL of the APK
-        toFile: downloadDest, // Where the APK will be saved locally
-        background: true, // will Continue downloading in the background
+        fromUrl: String(apkUrl),
+        toFile: downloadDest,
+        background: true,
         progress: res => {
           let progress = (res.bytesWritten / res.contentLength) * 100;
-
           setDownloadProgress(progress);
           setIsDownloading(true);
-
-          // console.log(`Download Progress: ${progress.toFixed(2)}%`);
         },
         begin: res => {
           console.log('Download started, content length:', res.contentLength);
-          console.log('Download started');
           ToastAndroid.show('Download Started', ToastAndroid.LONG);
         },
         progressDivider: 1,
       };
 
-      console.log('Option:', JSON.stringify(options));
-
-      // const downloadResult = await RNFS.downloadFile(options).promise;
-      // RNFS.downloadFile(options)
-      //   .promise.then(res => {
-      //     console.log('Download completed successfully:', res);
-      //     // Perform any additional actions after the download completes
-      //     ToastAndroid.show('Download Complete', ToastAndroid.LONG);
-      //   })
-      //   .catch(err => {
-      //     console.error('Download failed:', err);
-      //     // Handle the error appropriately
-      //     ToastAndroid.show(`Download Failed ${err}`, ToastAndroid.LONG);
-      //   });
-      // console.log('Download Complete:', downloadResult);
-
       let downloadResult;
       for (let attempt = 0; attempt < retries; attempt++) {
         try {
           downloadResult = await RNFS.downloadFile(options).promise;
-          console.log('Download Complete:', downloadResult);
-
-          // Get actual downloaded file size
-          const downloadedStat = await RNFS.stat(downloadDest);
-          console.log('Downloaded file size in folder:', downloadedStat.size);
-          ToastAndroid.show(
-            `Downloaded file size: ${downloadedStat.size} bytes`,
-            ToastAndroid.LONG,
+          console.log(
+            'Download Complete, bytes written:',
+            downloadResult.bytesWritten,
           );
 
-          // Validate sizes
+          const downloadedStat = await RNFS.stat(downloadDest);
+          console.log('Downloaded file size:', downloadedStat.size);
           if (
             downloadedStat.size !== expectedSize ||
             downloadedStat.size === 0
@@ -245,30 +188,17 @@ const HomeScreen = ({navigation}) => {
         } catch (error) {
           console.error(`Attempt ${attempt + 1} failed:`, error);
           if (attempt === retries - 1) {
-            ToastAndroid.show('Downlad Failed', ToastAndroid.LONG);
             throw new Error('Download failed after multiple attempts');
           }
           console.log('Retrying download...');
         }
       }
 
-      // Alert.alert(
-      //   'Download Complete',
-      //   `The APK has been downloaded to: ${downloadDest}\n\nPlease navigate to this location using your file manager and tap on the APK file to install it.`,
-      //   [{text: 'OK'}],
-      // );
-
       setIsDownloading(false);
-      // After download, trigger the installation
-      await installApk(downloadDest);
+      // await installApk(downloadDest);
     } catch (error) {
       console.error('Download failed:', error);
-      ToastAndroid.show({
-        text1: 'Download failed:',
-        text2: `${error}`,
-        position: 'bottom',
-        visibilityTime: 3000,
-      });
+      ToastAndroid.show(`Download failed: ${error.message}`, ToastAndroid.LONG);
     }
   };
 
@@ -284,75 +214,141 @@ const HomeScreen = ({navigation}) => {
     }
   };
 
-  // Add this near the top of HomeScreen.js, outside the component
-  DeviceEventEmitter.addListener('InstallApkLog', message => {
-    console.log('Native Log:', message);
-  });
-
   const installApk = async filePath => {
-    setIsInstalling(true);
     try {
-      console.log('filePath:', filePath);
-      const fileExists = await RNFS.exists(filePath);
+      console.log('Preparing to install APK from:', filePath);
 
+      const fileExists = await RNFS.exists(filePath);
       if (!fileExists) {
         throw new Error('APK file does not exist');
       }
 
-      if (Platform.OS === 'android') {
-        const {InstallApk} = NativeModules;
-        if (!InstallApk) {
-          throw new Error('InstallApk native module not available');
-        }
+      // Notify user before installation
+      Alert.alert(
+        'Install Update',
+        'The new version of the app has been downloaded.\n\nWould you like to install it now?',
+        [
+          {
+            text: 'Install Now',
+            onPress: async () => {
+              setIsInstalling(true);
+              try {
+                // Check for unknown sources permission
+                const hasPermission =
+                  await RNApkInstaller.haveUnknownAppSourcesPermission();
+                if (!hasPermission) {
+                  ToastAndroid.show(
+                    'Opening settings for unknown sources permission',
+                    ToastAndroid.LONG,
+                  );
+                  await RNApkInstaller.showUnknownAppSourcesPermission();
+                  return; // Wait for user to grant permission and retry manually
+                }
 
-        ToastAndroid.show('Installation Started', ToastAndroid.LONG);
-        console.log('APK Installation Triggered');
+                ToastAndroid.show('Installation Started', ToastAndroid.LONG);
+                await RNApkInstaller.install(filePath);
+                console.log('APK Installation Triggered');
 
-        // Set a timeout for the installation (e.g., 60 seconds)
-        const installTimeout = new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error('Installation timed out after 60 seconds')),
-            60000,
-          ),
-        );
-
-        // Race the installation promise against the timeout
-        const result = await Promise.race([
-          InstallApk.install(filePath),
-          installTimeout,
-        ]);
-        console.log('Native result:', result);
-
-        // Installation successful
-        ToastAndroid.show('Installation Complete', ToastAndroid.LONG);
-        await RNFS.unlink(filePath);
-        console.log('APK file deleted');
-      }
+                // Cleanup after successful install
+                await RNFS.unlink(filePath);
+                ToastAndroid.show('Installation Complete', ToastAndroid.LONG);
+                console.log('APK file deleted');
+              } catch (error) {
+                console.error('Installation failed:', error);
+                ToastAndroid.show(
+                  `Installation Failed: ${error.message}`,
+                  ToastAndroid.LONG,
+                );
+              } finally {
+                setIsInstalling(false);
+              }
+            },
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => {
+              console.log('User canceled installation');
+              ToastAndroid.show('Installation Canceled', ToastAndroid.LONG);
+            },
+          },
+        ],
+      );
     } catch (error) {
-      console.error('Installation failed:', error);
-      if (error.message.includes('INSTALLATION_CANCELED')) {
-        ToastAndroid.show('Installation Canceled by User', ToastAndroid.LONG);
-      } else if (error.message.includes('INSTALLATION_FAILED')) {
-        ToastAndroid.show(
-          'Installation Failed: Invalid APK or Device Issue',
-          ToastAndroid.LONG,
-        );
-      } else if (error.message.includes('timed out')) {
-        ToastAndroid.show(
-          'Installation Timed Out: Took too long',
-          ToastAndroid.LONG,
-        );
-      } else {
-        ToastAndroid.show(
-          `Installation Failed: ${error.message}`,
-          ToastAndroid.LONG,
-        );
-      }
-      // File remains for inspection
-    } finally {
-      setIsInstalling(false);
+      console.error('Pre-installation check failed:', error);
+      ToastAndroid.show(`Error: ${error.message}`, ToastAndroid.LONG);
     }
   };
+
+  // // Add this near the top of HomeScreen.js, outside the component
+  // DeviceEventEmitter.addListener('InstallApkLog', message => {
+  //   console.log('Native Log:', message);
+  // });
+
+  // const installApk = async filePath => {
+  //   setIsInstalling(true);
+  //   try {
+  //     console.log('filePath:', filePath);
+  //     const fileExists = await RNFS.exists(filePath);
+
+  //     if (!fileExists) {
+  //       throw new Error('APK file does not exist');
+  //     }
+
+  //     if (Platform.OS === 'android') {
+  //       const {InstallApk} = NativeModules;
+  //       if (!InstallApk) {
+  //         throw new Error('InstallApk native module not available');
+  //       }
+
+  //       ToastAndroid.show('Installation Started', ToastAndroid.LONG);
+  //       console.log('APK Installation Triggered');
+
+  //       // Set a timeout for the installation (e.g., 60 seconds)
+  //       const installTimeout = new Promise((_, reject) =>
+  //         setTimeout(
+  //           () => reject(new Error('Installation timed out after 60 seconds')),
+  //           60000,
+  //         ),
+  //       );
+
+  //       // Race the installation promise against the timeout
+  //       const result = await Promise.race([
+  //         InstallApk.install(filePath),
+  //         installTimeout,
+  //       ]);
+  //       console.log('Native result:', result);
+
+  //       // Installation successful
+  //       ToastAndroid.show('Installation Complete', ToastAndroid.LONG);
+  //       await RNFS.unlink(filePath);
+  //       console.log('APK file deleted');
+  //     }
+  //   } catch (error) {
+  //     console.error('Installation failed:', error);
+  //     if (error.message.includes('INSTALLATION_CANCELED')) {
+  //       ToastAndroid.show('Installation Canceled by User', ToastAndroid.LONG);
+  //     } else if (error.message.includes('INSTALLATION_FAILED')) {
+  //       ToastAndroid.show(
+  //         'Installation Failed: Invalid APK or Device Issue',
+  //         ToastAndroid.LONG,
+  //       );
+  //     } else if (error.message.includes('timed out')) {
+  //       ToastAndroid.show(
+  //         'Installation Timed Out: Took too long',
+  //         ToastAndroid.LONG,
+  //       );
+  //     } else {
+  //       ToastAndroid.show(
+  //         `Installation Failed: ${error.message}`,
+  //         ToastAndroid.LONG,
+  //       );
+  //     }
+  //     // File remains for inspection
+  //   } finally {
+  //     setIsInstalling(false);
+  //   }
+  // };
 
   // const installApk = async filePath => {
   //   setIsInstalling(true);
