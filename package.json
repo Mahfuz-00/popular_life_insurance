@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@dominicvonk/react-native-apk-installer": "^2.2.2",
     "@react-native-async-storage/async-storage": "~1.17.11",
     "@react-native-community/checkbox": "~0.5.17",
     "@react-native-picker/picker": "~2.11.0",
