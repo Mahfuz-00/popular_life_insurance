@@ -81,6 +81,7 @@ const PayPremiumScreen = ({navigation}) => {
   const [bkashToken, setBkashToken] = useState('');
   const [bkashPaymentId, setBkashPaymentId] = useState('');
   const [bkashUrl, setBkashUrl] = useState('');
+  const [isFirstPayment, setIsFirstPayment] = useState(true);
 
   const [nagadPGUrl, setNagadPGUrl] = useState('');
   const [showNagadPG, setShowNagadPG] = useState(false);
@@ -118,106 +119,91 @@ const PayPremiumScreen = ({navigation}) => {
     // setBkashUrl(createPaymentResult.bkashURL);
 
     if (method === 'bkash') {
-      // Attempt to retrieve the token from AsyncStorage
-      console.log('Attempting to retrieve bkashToken from AsyncStorage...');
-      const storedToken = await AsyncStorage.getItem('bkashToken');
-      console.log('Retrieved bkashToken:', storedToken);
+      console.log('Processing bkash payment...');
 
-      // ToastAndroid.show(
-      //   `Retrieved bkashToken: ${storedToken}`,
-      //   ToastAndroid.LONG,
-      // );
-
-      if (storedToken) {
-        // Token exists, use it for payment creation
-        setBkashToken(storedToken);
-        console.log('Creating payment with existing token...');
+      if (isFirstPayment) {
+        console.log('First payment, obtaining grant token...');
         try {
-          const createPaymentResult = await bkashCreatePayment(
-            storedToken,
-            amount,
-            number,
-          );
-          console.log('Payment created successfully:', createPaymentResult);
+          const tokenResult = await bkashGetToken();
+          const token = tokenResult.id_token;
+          console.log('Grant token obtained:', token);
 
-          // ToastAndroid.show(
-          //   `Payment created successfully: ${createPaymentResult}`,
-          //   ToastAndroid.LONG,
-          // );
-          setBkashPaymentId(createPaymentResult.paymentID);
-          setBkashUrl(createPaymentResult.bkashURL);
-          ToastAndroid.show(
-            `Create Payment Bkash URL: ${createPaymentResult.bkashURL}`,
-            ToastAndroid.LONG,
-          );
-
-          ToastAndroid.show(
-            `Create Payment Status message: ${createPaymentResult.statusMessage}`,
-            ToastAndroid.LONG,
-          );
-
-          ToastAndroid.show(
-            `Create Payment Transaction Status: ${createPaymentResult.transactionStatus}`,
-            ToastAndroid.LONG,
-          );
-        } catch (error) {
-          // Display the error message in an alert
-          alert('Payment creation failed: ' + error.message);
-        }
-      } else {
-        // Token does not exist, obtain a new one and store it
-        console.log('bkashToken does not exist. Obtaining a new token...');
-        const tokenResult = await bkashGetToken();
-        const token = tokenResult.id_token;
-        console.log('New token obtained:', token);
-
-        setBkashToken(token);
-        await AsyncStorage.setItem('bkashToken', token);
-        console.log('New token stored in AsyncStorage.');
-
-        // Schedule token removal after 55 minutes
-        console.log('Scheduling token removal after 55 minutes...');
-        setTimeout(async () => {
-          console.log(
-            '55 minutes elapsed. Removing bkashToken from AsyncStorage...',
-          );
-          await AsyncStorage.removeItem('bkashToken');
-          setBkashToken(null);
-          console.log('bkashToken removed.');
-        }, 55 * 60 * 1000);
-
-        // Proceed with payment creation
-        console.log('Creating payment with new token...');
-        try {
           const createPaymentResult = await bkashCreatePayment(
             token,
             amount,
             number,
           );
-          console.log('Payment created successfully:', createPaymentResult);
-          // ToastAndroid.show(
-          //   `Payment created successfully: ${createPaymentResult}`,
-          //   ToastAndroid.LONG,
-          // );
+          console.log(
+            'First payment created successfully:',
+            createPaymentResult,
+          );
+
           setBkashPaymentId(createPaymentResult.paymentID);
           setBkashUrl(createPaymentResult.bkashURL);
-          ToastAndroid.show(
-            `Create Payment Bkash URL: ${createPaymentResult.bkashURL}`,
-            ToastAndroid.LONG,
-          );
 
-          ToastAndroid.show(
-            `Create Payment Status message: ${createPaymentResult.statusMessage}`,
-            ToastAndroid.LONG,
-          );
-
-          ToastAndroid.show(
-            `Create Payment Transaction Status: ${createPaymentResult.transactionStatus}`,
-            ToastAndroid.LONG,
-          );
+          setBkashToken(token);
+          setIsFirstPayment(false);
         } catch (error) {
-          // Display the error message in an alert
-          alert('Payment creation failed: ' + error.message);
+          alert('First failed: ' + error.message);
+        }
+      } else {
+        const storedToken = await AsyncStorage.getItem('bkashToken');
+        console.log('Retrieved bkashToken:', storedToken);
+
+        if (storedToken) {
+          console.log('Payment with stored refresh token...');
+          try {
+            const createPaymentResult = await bkashCreatePayment(
+              storedToken,
+              amount,
+              number,
+            );
+            console.log(
+              'Payment created successfully with refresh token:',
+              createPaymentResult,
+            );
+
+            setBkashPaymentId(createPaymentResult.paymentID);
+            setBkashUrl(createPaymentResult.bkashURL);
+          } catch (error) {
+            alert('Payment failed: ' + error.message);
+          }
+        } else {
+          console.log('No stored token, obtaining grant token again...');
+          try {
+            const tokenResult = await bkashGetToken();
+            const token = tokenResult.id_token;
+            console.log('New grant token obtained:', token);
+
+            const createPaymentResult = await bkashCreatePayment(
+              token,
+              amount,
+              number,
+            );
+            console.log(
+              'Payment created successfully with new grant token:',
+              createPaymentResult,
+            );
+
+            setBkashPaymentId(createPaymentResult.paymentID);
+            setBkashUrl(createPaymentResult.bkashURL);
+
+            setBkashToken(token);
+            await AsyncStorage.setItem('bkashToken', token);
+            console.log('New refresh token stored in AsyncStorage.');
+
+            setTimeout(async () => {
+              console.log(
+                '55 minutes elapsed. Removing bkashToken from AsyncStorage...',
+              );
+              await AsyncStorage.removeItem('bkashToken');
+              setBkashToken(null);
+              setIsFirstPayment(true);
+              console.log('bkashToken removed and isFirstPayment set to true.');
+            }, 55 * 60 * 1000);
+          } catch (error) {
+            alert('Payment failed: ' + error.message);
+          }
         }
       }
     }
@@ -281,23 +267,24 @@ const PayPremiumScreen = ({navigation}) => {
     // }
 
     if (method == 'nagad') {
-      Alert.alert('Under Maintenance');
-      //console.log();
-      // const trnxNo = moment().format('YYYYMMDDHHmmss');
-      // setTransactionNo(trnxNo);
-      // let postData={
-      //   policyNo: number,
-      //   amount: amount,
-      //   mobileNo: user?.phone,
-      //   transactionNo: trnxNo
-      // }
-      // const url = await nagadPaymentUrl(postData);
-      // if(url == ""){
-      //   return  ToastAndroid.show('Something wrong !', ToastAndroid.LONG);
-      // } else {
-      //   setNagadPGUrl(url);
-      //   setShowNagadPG(true)
-      // }
+      // Alert.alert('Under Maintenance');
+      console.log();
+      const trnxNo = moment().format('YYYYMMDDHHmmss');
+      setTransactionNo(trnxNo);
+      let postData = {
+        policyNo: number,
+        amount: amount,
+        mobileNo: user?.phone,
+        transactionNo: trnxNo,
+      };
+      const url = await nagadPaymentUrl(postData);
+      console.log('Nagad URL: ', url);
+      if (url == '') {
+        return ToastAndroid.show('Something wrong !', ToastAndroid.LONG);
+      } else {
+        setNagadPGUrl(url);
+        setShowNagadPG(true);
+      }
     }
   };
 
@@ -315,14 +302,13 @@ const PayPremiumScreen = ({navigation}) => {
         }}
         style={{marginTop: 20}}
         onNavigationStateChange={async data => {
-          // ToastAndroid.show(
-          //   `bkash: ${JSON.stringify(data)}`,
-          //   ToastAndroid.LONG,
-          // );
-          ToastAndroid.show(
-            `Permission Status: ${data.status}}`,
-            ToastAndroid.LONG,
-          );
+          if (!data || data.status === undefined || data.status !== 'success') {
+            Alert.alert(
+              'Payment Failed',
+              'Please try again from the dashboard.',
+            );
+          }
+
           console.log('bkash: ', JSON.stringify(data));
           if (JSON.stringify(data).includes('status=success')) {
             await setBkashUrl('');
@@ -338,10 +324,6 @@ const PayPremiumScreen = ({navigation}) => {
               'Status Message API Reponse: ',
               JSON.stringify(createExecuteResult),
             );
-            // ToastAndroid.show(
-            //   `Status Message API Reponse: ${createExecuteResult}`,
-            //   ToastAndroid.LONG,
-            // );
             console.log('Status Message: ', createExecuteResult.statusMessage);
 
             if (
@@ -367,7 +349,6 @@ const PayPremiumScreen = ({navigation}) => {
               };
 
               console.log('Post Data: ', postData);
-              // ToastAndroid.show(`Post Data: ${postData}`, ToastAndroid.LONG);
 
               var syncPayments =
                 JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
