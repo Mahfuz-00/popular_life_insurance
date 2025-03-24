@@ -133,10 +133,10 @@ const HomeScreen = ({navigation}) => {
 
       const expectedSize = await getApkFileSize(apkUrl);
       console.log('Expected APK size:', expectedSize);
-      ToastAndroid.show(
-        `Expected APK size: ${expectedSize} bytes`,
-        ToastAndroid.LONG,
-      );
+      // ToastAndroid.show(
+      //   `Expected APK size: ${expectedSize} bytes`,
+      //   ToastAndroid.LONG,
+      // );
 
       const fileExists = await RNFS.exists(downloadDest);
       if (fileExists) {
@@ -205,6 +205,18 @@ const HomeScreen = ({navigation}) => {
       }
 
       setIsDownloading(false);
+
+      Alert.alert(
+        'Install App',
+        `Use this location to install the app: ${downloadDest}`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {}, // No action, simply dismiss the alert
+          },
+        ],
+      );
+
       // await installApk(downloadDest);
     } catch (error) {
       console.error('Download failed:', error);
@@ -701,9 +713,9 @@ const HomeScreen = ({navigation}) => {
   //   }
   // };
 
-  // useEffect(() => {
-  //   checkAppVersion();
-  // }, []);
+  useEffect(() => {
+    checkAppVersion();
+  }, []);
 
   const navigateToDashboard = () => {
     if (user.type == 'policy holder') {

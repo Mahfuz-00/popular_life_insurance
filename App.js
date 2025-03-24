@@ -161,32 +161,32 @@ function App() {
   React.useEffect(() => {
     store.dispatch(loadUser());
     if (Platform.OS != 'ios') {
-      // checkUpdateNeeded();
+      checkUpdateNeeded();
     }
   }, []);
 
-  // const checkUpdateNeeded = async () => {
-  //   let updateNeeded = await VersionCheck.needUpdate();
-  //   // console.log("updateNeeded: " + updateNeeded );
-  //   if (updateNeeded.isNeeded) {
-  //     Alert.alert(
-  //       'Update Available !',
-  //       'Please update the app.',
-  //       [
-  //         {
-  //           text: 'Update',
-  //           onPress: () => {
-  //             BackHandler.exitApp();
-  //             Linking.openURL(updateNeeded.storeUrl);
-  //           },
-  //         },
-  //       ],
-  //       {
-  //         cancelable: false,
-  //       },
-  //     );
-  //   }
-  // };
+  const checkUpdateNeeded = async () => {
+    let updateNeeded = await VersionCheck.needUpdate();
+    // console.log("updateNeeded: " + updateNeeded );
+    if (updateNeeded.isNeeded) {
+      Alert.alert(
+        'Update Available !',
+        'Please update the app.',
+        [
+          {
+            text: 'Update',
+            onPress: () => {
+              BackHandler.exitApp();
+              Linking.openURL(updateNeeded.storeUrl);
+            },
+          },
+        ],
+        {
+          cancelable: false,
+        },
+      );
+    }
+  };
 
   return (
     <Provider store={store}>

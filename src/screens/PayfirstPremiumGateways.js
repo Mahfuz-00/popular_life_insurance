@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -110,6 +110,25 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
     {label: 'BM', value: bm},
     {label: 'AGM', value: agm},
   ];
+
+  // Show alert when the page loads
+  useEffect(() => {
+    Alert.alert(
+      'Service Update',
+      'The service is coming soon!',
+      [{text: 'OK', onPress: () => {}}],
+      {cancelable: false}, // Makes sure the user must acknowledge the alert
+    );
+  }, []);
+
+  const handleSubmitMessage = async () => {
+    Alert.alert(
+      'Service Update',
+      'The service is coming soon!',
+      [{text: 'OK', onPress: () => {}}],
+      {cancelable: false}, // Makes sure the user must acknowledge the alert
+    );
+  };
 
   // Handle payment submission
   const handleSubmit = async () => {
@@ -375,7 +394,7 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
                 alignSelf: 'center',
                 marginVertical: 10,
               }}
-              onPress={/*handleSubmit*/ () => {}}
+              onPress={/*handleSubmit*/ handleSubmitMessage}
             />
           </View>
         </ScrollView>

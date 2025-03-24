@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   ImageBackground,
+  Alert,
 } from 'react-native';
 import moment from 'moment';
 import globalStyle from '../styles/globalStyle';
@@ -49,6 +50,16 @@ const PayFirstPremiumScreen = ({navigation}) => {
       setCode(project ? project.code : '');
     }
   }, [selectedProject]);
+
+  // Show alert when the page loads
+  useEffect(() => {
+    Alert.alert(
+      'Service Update',
+      'The service is coming soon!',
+      [{text: 'OK', onPress: () => {}}],
+      {cancelable: false}, // Makes sure the user must acknowledge the alert
+    );
+  }, []);
 
   const handleSubmit = () => {
     navigation.navigate('PayfirstPremiumGateways', {
