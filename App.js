@@ -50,6 +50,8 @@ import OrgMyProfileScreen from './src/screens/producer/OrgMyProfileScreen';
 import PhClaimSubmissionScreen from './src/screens/policyHolder/PhClaimSubmissionScreen';
 import PhPRListScreen from './src/screens/policyHolder/PhPRListScreen';
 import SyncPaymentScreen from './src/screens/policyHolder/SyncPaymentScreen';
+import PayFirstPremiumScreen from './src/screens/PayFirstPremiumScreen';
+import PayfirstPremiumGateway from './src/screens/PayfirstPremiumGateways';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -70,6 +72,14 @@ function StackNav() {
       <Stack.Screen name="CompanyInfo" component={CompanyInfoScreen} />
       <Stack.Screen name="LocateUs" component={LocateUsScreen} />
       <Stack.Screen name="PayPremium" component={PayPremiumScreen} />
+      <Stack.Screen
+        name="PhPayFirstPremium"
+        component={PayFirstPremiumScreen}
+      />
+      <Stack.Screen
+        name="PayfirstPremiumGateways"
+        component={PayfirstPremiumGateway}
+      />
       <Stack.Screen name="ProductInfo" component={ProductInfoScreen} />
       <Stack.Screen name="ClaimSubmission" component={ClaimSubmissionScreen} />
 

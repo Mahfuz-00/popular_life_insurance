@@ -278,23 +278,23 @@ const PhPayPremiumScreen = ({navigation, route}) => {
     // }
 
     if (method == 'nagad') {
-      Alert.alert('Under Maintenance');
-      //console.log();
-      // const trnxNo = moment().format('YYYYMMDDHHmmss');
-      // setTransactionNo(trnxNo);
-      // let postData={
-      //   policyNo: policyNo,
-      //   amount: amount,
-      //   mobileNo: user?.phone,
-      //   transactionNo: trnxNo
-      // }
-      // const url = await nagadPaymentUrl(postData);
-      // if(url == ""){
-      //   return  ToastAndroid.show('Something wrong !', ToastAndroid.LONG);
-      // } else {
-      //   setNagadPGUrl(url);
-      //   setShowNagadPG(true)
-      // }
+      // Alert.alert('Under Maintenance');
+      console.log();
+      const trnxNo = moment().format('YYYYMMDDHHmmss');
+      setTransactionNo(trnxNo);
+      let postData = {
+        policyNo: policyNo,
+        amount: amount,
+        mobileNo: user?.phone,
+        transactionNo: trnxNo,
+      };
+      const url = await nagadPaymentUrl(postData);
+      if (url == '') {
+        return ToastAndroid.show('Something wrong !', ToastAndroid.LONG);
+      } else {
+        setNagadPGUrl(url);
+        setShowNagadPG(true);
+      }
     }
   };
 

@@ -68,6 +68,16 @@ const HomeScreen = ({navigation}) => {
       navigateTo: 'PolicyPhoneUpdate',
       icon: require('../assets/product-engine.png'),
     },
+    // Conditionally add "Pay First Premium" only if authenticated
+    ...(isAuthenticated
+      ? [
+          {
+            title: 'Pay First Premium',
+            navigateTo: 'PhPayFirstPremium',
+            icon: require('../assets/pay-first-premiums-menu.jpg'),
+          },
+        ]
+      : []),
     // {title: 'Sync Payment', navigateTo: 'SyncPayment', icon: require('../assets/product-engine.png')},
   ];
 
@@ -691,9 +701,9 @@ const HomeScreen = ({navigation}) => {
   //   }
   // };
 
-  useEffect(() => {
-    checkAppVersion();
-  }, []);
+  // useEffect(() => {
+  //   checkAppVersion();
+  // }, []);
 
   const navigateToDashboard = () => {
     if (user.type == 'policy holder') {
