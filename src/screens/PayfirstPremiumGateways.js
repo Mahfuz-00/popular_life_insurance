@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   ToastAndroid,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import RadioButtonRN from 'radio-buttons-react-native';
 import {WebView} from 'react-native-webview';
@@ -60,6 +61,7 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
   const [nagadPGUrl, setNagadPGUrl] = useState('');
   const [showNagadPG, setShowNagadPG] = useState(false);
   const [transactionNo, setTransactionNo] = useState('');
+  const [isFirstPayment, setIsFirstPayment] = useState(true);
 
   // Payment gateway options
   const gatewayOptions = [
@@ -119,38 +121,95 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
     }
 
     if (method === 'bkash') {
-      try {
-        const storedToken = await AsyncStorage.getItem('bkashToken');
-        if (storedToken) {
-          setBkashToken(storedToken);
-          const createPaymentResult = await bkashCreatePayment(
-            storedToken,
-            amount,
-            nid,
-          );
-          setBkashPaymentId(createPaymentResult.paymentID);
-          setBkashUrl(createPaymentResult.bkashURL);
-        } else {
+      console.log('Processing bkash payment...');
+
+      if (isFirstPayment) {
+        console.log('First payment, obtaining grant token...');
+        try {
           const tokenResult = await bkashGetToken();
           const token = tokenResult.id_token;
-          setBkashToken(token);
-          await AsyncStorage.setItem('bkashToken', token);
-          setTimeout(async () => {
-            await AsyncStorage.removeItem('bkashToken');
-            setBkashToken(null);
-          }, 55 * 60 * 1000);
+          console.log('Grant token obtained:', token);
+
           const createPaymentResult = await bkashCreatePayment(
             token,
             amount,
             nid,
           );
+          console.log(
+            'First payment created successfully:',
+            createPaymentResult,
+          );
+
           setBkashPaymentId(createPaymentResult.paymentID);
           setBkashUrl(createPaymentResult.bkashURL);
+
+          setBkashToken(token);
+          setIsFirstPayment(false);
+        } catch (error) {
+          alert('First failed: ' + error.message);
         }
-      } catch (error) {
-        alert('Payment creation failed: ' + error.message);
+      } else {
+        const storedToken = await AsyncStorage.getItem('bkashToken');
+        console.log('Retrieved bkashToken:', storedToken);
+
+        if (storedToken) {
+          console.log('Payment with stored refresh token...');
+          try {
+            const createPaymentResult = await bkashCreatePayment(
+              storedToken,
+              amount,
+              nid,
+            );
+            console.log(
+              'Payment created successfully with refresh token:',
+              createPaymentResult,
+            );
+
+            setBkashPaymentId(createPaymentResult.paymentID);
+            setBkashUrl(createPaymentResult.bkashURL);
+          } catch (error) {
+            alert('Payment failed: ' + error.message);
+          }
+        } else {
+          console.log('No stored token, obtaining grant token again...');
+          try {
+            const tokenResult = await bkashGetToken();
+            const token = tokenResult.id_token;
+            console.log('New grant token obtained:', token);
+
+            const createPaymentResult = await bkashCreatePayment(
+              token,
+              amount,
+              nid,
+            );
+            console.log(
+              'Payment created successfully with new grant token:',
+              createPaymentResult,
+            );
+
+            setBkashPaymentId(createPaymentResult.paymentID);
+            setBkashUrl(createPaymentResult.bkashURL);
+
+            setBkashToken(token);
+            await AsyncStorage.setItem('bkashToken', token);
+            console.log('New refresh token stored in AsyncStorage.');
+
+            setTimeout(async () => {
+              console.log(
+                '55 minutes elapsed. Removing bkashToken from AsyncStorage...',
+              );
+              await AsyncStorage.removeItem('bkashToken');
+              setBkashToken(null);
+              setIsFirstPayment(true);
+              console.log('bkashToken removed and isFirstPayment set to true.');
+            }, 55 * 60 * 1000);
+          } catch (error) {
+            alert('Payment failed: ' + error.message);
+          }
+        }
       }
-    } else if (method === 'nagad') {
+    }
+    if (method === 'nagad') {
       const trnxNo = moment().format('YYYYMMDDHHmmss');
       setTransactionNo(trnxNo);
       const postData = {
@@ -176,6 +235,13 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
         source={{uri: bkashUrl}}
         style={{marginTop: 20}}
         onNavigationStateChange={async data => {
+          if (!data || data.status === undefined || data.status !== 'success') {
+            Alert.alert(
+              'Payment Failed',
+              'Please try again from the dashboard.',
+            );
+          }
+
           if (JSON.stringify(data).includes('status=success')) {
             setBkashUrl('');
             dispatch({type: SHOW_LOADING});
