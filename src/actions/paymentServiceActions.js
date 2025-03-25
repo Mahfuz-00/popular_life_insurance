@@ -59,7 +59,7 @@ export const bkashCreatePayment = async (token, amount, policyNo) => {
     body: JSON.stringify({
       mode: '0011',
       payerReference: policyNo,
-      callbackURL: 'https://touchandsolve.com/',
+      callbackURL: 'https://www.popularlifeins.com/',
       merchantAssociationInfo: '',
       amount: amount,
       currency: 'BDT',

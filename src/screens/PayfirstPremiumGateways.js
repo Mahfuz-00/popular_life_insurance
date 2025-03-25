@@ -11,6 +11,7 @@ import {
   ToastAndroid,
   StyleSheet,
   Alert,
+  BackHandler,
 } from 'react-native';
 import RadioButtonRN from 'radio-buttons-react-native';
 import {WebView} from 'react-native-webview';
@@ -29,6 +30,9 @@ import {
   nagadPaymentUrl,
 } from '../actions/paymentServiceActions';
 import {SHOW_LOADING, HIDE_LOADING} from '../constants/commonConstants';
+import {userPayPremium} from '../actions/userActions';
+import axios from 'axios';
+import {API} from '../config';
 
 const PayFirstPremiumGateway = ({navigation, route}) => {
   const dispatch = useDispatch();
@@ -62,6 +66,26 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
   const [showNagadPG, setShowNagadPG] = useState(false);
   const [transactionNo, setTransactionNo] = useState('');
   const [isFirstPayment, setIsFirstPayment] = useState(true);
+
+  // Back button handler setup
+  useEffect(() => {
+    const backAction = () => {
+      if (bkashUrl || showNagadPG) {
+        // Close WebView instead of navigating back
+        setBkashUrl('');
+        setShowNagadPG(false);
+        // ToastAndroid.show('Transaction canceled', ToastAndroid.SHORT);
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+    return () => backHandler.remove(); // Cleanup on unmount
+  }, [bkashUrl, showNagadPG]);
 
   // Payment gateway options
   const gatewayOptions = [
@@ -111,23 +135,47 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
     {label: 'AGM', value: agm},
   ];
 
-  // Show alert when the page loads
-  useEffect(() => {
-    Alert.alert(
-      'Service Update',
-      'The service is coming soon!',
-      [{text: 'OK', onPress: () => {}}],
-      {cancelable: false}, // Makes sure the user must acknowledge the alert
-    );
-  }, []);
+  const handleFirstPremiumSubmission = async () => {
+    try {
+      dispatch({type: SHOW_LOADING}); // Keep loading if needed
 
-  const handleSubmitMessage = async () => {
-    Alert.alert(
-      'Service Update',
-      'The service is coming soon!',
-      [{text: 'OK', onPress: () => {}}],
-      {cancelable: false}, // Makes sure the user must acknowledge the alert
-    );
+      const token = await AsyncStorage.getItem('token');
+
+      const postData = {
+        nid,
+        project,
+        code,
+        name,
+        mobile,
+        totalPremium,
+        servicingCell,
+        fa,
+        um: um || null,
+        bm: bm || null,
+        agm: agm || null,
+        agentMobile,
+      };
+
+      const response = await axios.post(`${API}/api/first-premium`, postData, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${JSON.parse(token)}`,
+        },
+      });
+
+      if (response.status === 200) {
+        console.log('Data submitted successfully:', response.data);
+        // ToastAndroid.show('Data submitted successfully', ToastAndroid.SHORT);
+      }
+    } catch (error) {
+      console.error('Submission failed:', error);
+      // ToastAndroid.show(
+      //   `Submission failed: ${error.response?.data?.message || 'Server error'}`,
+      //   ToastAndroid.LONG,
+      // );
+    } finally {
+      dispatch({type: HIDE_LOADING});
+    }
   };
 
   // Handle payment submission
@@ -232,7 +280,7 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
       const trnxNo = moment().format('YYYYMMDDHHmmss');
       setTransactionNo(trnxNo);
       const postData = {
-        nid: nid,
+        policyNo: nid,
         amount: amount,
         mobileNo: mobile,
         transactionNo: trnxNo,
@@ -251,30 +299,107 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
   if (bkashUrl) {
     return (
       <WebView
-        source={{uri: bkashUrl}}
+        source={{
+          uri: bkashUrl,
+        }}
         style={{marginTop: 20}}
         onNavigationStateChange={async data => {
-          if (!data || data.status === undefined || data.status !== 'success') {
-            Alert.alert(
-              'Payment Failed',
-              'Please try again from the dashboard.',
-            );
-          }
+          // if (!data || data.status === undefined || data.status !== 'success') {
+          //   Alert.alert(
+          //     'Payment Failed',
+          //     'Please try again from the dashboard.',
+          //   );
+          // }
+          try {
+            console.log('Bkash: ', JSON.stringify(data));
+            if (JSON.stringify(data).includes('status=success')) {
+              await setBkashUrl('');
+              dispatch({type: SHOW_LOADING});
+              const createExecuteResult = await bkashExecutePayment(
+                bkashToken,
+                bkashPaymentId,
+              );
 
-          if (JSON.stringify(data).includes('status=success')) {
-            setBkashUrl('');
-            dispatch({type: SHOW_LOADING});
-            const createExecuteResult = await bkashExecutePayment(
-              bkashToken,
-              bkashPaymentId,
-            );
-            dispatch({type: HIDE_LOADING});
-            if (createExecuteResult.transactionStatus === 'Completed') {
-              alert('Payment Successful');
-              navigation.pop();
+              console.log(
+                'Status Message API Reponse: ',
+                JSON.stringify(createExecuteResult),
+              );
+              console.log(
+                'Status Message: ',
+                createExecuteResult.statusMessage,
+              );
+
+              if (
+                createExecuteResult.statusMessage ===
+                'Duplicate for All Transactions'
+              ) {
+                alert(
+                  createExecuteResult.statusMessage +
+                    '\n\nThe transaction failed.\nA payment of the same amount has already been made recently. Please try again after a 2-5 minutes.',
+                );
+              } else {
+                alert(createExecuteResult.statusMessage);
+              }
+
+              dispatch({type: HIDE_LOADING});
+
+              if (createExecuteResult.transactionStatus == 'Completed') {
+                let postData = {
+                  policy_no: nid,
+                  method: method,
+                  amount: amount,
+                  transaction_no: createExecuteResult.trxID,
+                  date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+                };
+
+                console.log('Post Data: ', postData);
+
+                var syncPayments =
+                  JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
+                await AsyncStorage.setItem(
+                  'syncPayments',
+                  JSON.stringify([...syncPayments, postData]),
+                );
+
+                console.log('Sync Payments: ', syncPayments);
+                const isSuccess = await userPayPremium(postData);
+                console.log('Is Success: ', isSuccess);
+                handleFirstPremiumSubmission();
+
+                // Reset navigation to HomeScreen instead of popping
+                navigation.reset({
+                  index: 0,
+                  routes: [{name: 'HomeScreen'}],
+                });
+
+                if (isSuccess) {
+                  var syncPayments =
+                    JSON.parse(await AsyncStorage.getItem('syncPayments')) ??
+                    [];
+                  console.log('Sync Payments: ', syncPayments);
+                  updateSyncPayments = syncPayments.filter(
+                    item => item.transaction_no != postData.transaction_no,
+                  );
+                  console.log('Update Sync Payments: ', updateSyncPayments);
+                  await AsyncStorage.setItem(
+                    'syncPayments',
+                    JSON.stringify(updateSyncPayments),
+                  );
+                  navigation.pop();
+                }
+              }
             } else {
-              alert('Payment Failed');
+              dispatch({type: HIDE_LOADING});
+              // ToastAndroid.show('Payment Failed !', ToastAndroid.LONG);
             }
+          } finally {
+            // dispatch({type: HIDE_LOADING});
+
+            // Always navigate to HomeScreen
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'HomeScreen'}],
+            });
           }
         }}
       />
@@ -285,22 +410,63 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
   if (showNagadPG) {
     return (
       <WebView
-        source={{uri: nagadPGUrl, method: 'post'}}
+        source={{
+          uri: nagadPGUrl,
+          method: 'post',
+        }}
         style={{marginTop: 20}}
         onNavigationStateChange={async data => {
+          console.log(data);
+          if (JSON.stringify(data).includes('Aborted')) {
+            setShowNagadPG(false);
+            dispatch({type: HIDE_LOADING});
+            return ToastAndroid.show('Aborted !', ToastAndroid.LONG);
+          }
+          if (JSON.stringify(data).includes('Failed')) {
+            setShowNagadPG(false);
+            dispatch({type: HIDE_LOADING});
+            return ToastAndroid.show('Failed !', ToastAndroid.LONG);
+          }
           if (JSON.stringify(data).includes('Success')) {
-            setShowNagadPG(false);
             dispatch({type: SHOW_LOADING});
-            alert('Payment Successful');
-            navigation.pop();
-            dispatch({type: HIDE_LOADING});
-          } else if (
-            JSON.stringify(data).includes('Failed') ||
-            JSON.stringify(data).includes('Aborted')
-          ) {
+            let postData = {
+              policy_no: nid,
+              method: method,
+              amount: amount,
+              transaction_no: transactionNo,
+              date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+            };
+
+            var syncPayments =
+              JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
+            await AsyncStorage.setItem(
+              'syncPayments',
+              JSON.stringify([...syncPayments, postData]),
+            );
+            const isSuccess = await userPayPremium(postData);
+            handleFirstPremiumSubmission();
+
+            // Reset navigation to HomeScreen instead of popping
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'HomeScreen'}],
+            });
+
+            if (isSuccess) {
+              var syncPayments =
+                JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
+              updateSyncPayments = syncPayments.filter(
+                item => item.transaction_no != postData.transaction_no,
+              );
+              await AsyncStorage.setItem(
+                'syncPayments',
+                JSON.stringify(updateSyncPayments),
+              );
+              navigation.pop();
+            }
             setShowNagadPG(false);
             dispatch({type: HIDE_LOADING});
-            ToastAndroid.show('Payment Failed', ToastAndroid.LONG);
+            return ToastAndroid.show('Payment Success !', ToastAndroid.LONG);
           }
         }}
       />
@@ -394,7 +560,7 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
                 alignSelf: 'center',
                 marginVertical: 10,
               }}
-              onPress={/*handleSubmit*/ handleSubmitMessage}
+              onPress={handleSubmit}
             />
           </View>
         </ScrollView>

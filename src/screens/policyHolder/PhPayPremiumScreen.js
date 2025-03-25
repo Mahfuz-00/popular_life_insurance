@@ -298,12 +298,12 @@ const PhPayPremiumScreen = ({navigation, route}) => {
         }}
         style={{marginTop: 20}}
         onNavigationStateChange={async data => {
-          if (!data || data.status === undefined || data.status !== 'success') {
-            Alert.alert(
-              'Payment Failed',
-              'Please try again from the dashboard.',
-            );
-          }
+          // if (!data || data.status === undefined || data.status !== 'success') {
+          //   Alert.alert(
+          //     'Payment Failed',
+          //     'Please try again from the dashboard.',
+          //   );
+          // }
 
           console.log('Bkash: ', JSON.stringify(data));
           if (JSON.stringify(data).includes('status=success')) {
@@ -326,7 +326,7 @@ const PhPayPremiumScreen = ({navigation, route}) => {
             ) {
               alert(
                 createExecuteResult.statusMessage +
-                  '\n\nThe transaction failed. Please try again after a 2 minutes.',
+                  '\n\nThe transaction failed.\nA payment of the same amount has already been made recently. Please try again after a 2-5 minutes.',
               );
             } else {
               alert(createExecuteResult.statusMessage);
@@ -373,7 +373,7 @@ const PhPayPremiumScreen = ({navigation, route}) => {
             }
           } else {
             dispatch({type: HIDE_LOADING});
-            ToastAndroid.show('Payment Failed !', ToastAndroid.LONG);
+            // ToastAndroid.show('Payment Failed !', ToastAndroid.LONG);
           }
         }}
       />
