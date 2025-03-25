@@ -15,10 +15,14 @@ import {FilledButton} from './../components/FilledButton';
 import {PickerComponent} from './../components/PickerComponent';
 import Header from './../components/Header';
 import BackgroundImage from '../assets/BackgroundImage.png';
+import {fetchProjects} from '../actions/userActions';
 
 const PayFirstPremiumScreen = ({navigation}) => {
-  const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('');
+  const [selectedProject, setSelectedProject] = useState({
+    code: '',
+    id: null,
+    name: '',
+  });
   const [code, setCode] = useState('');
   const [nid, setNid] = useState('');
   const [name, setName] = useState('');
@@ -32,39 +36,47 @@ const PayFirstPremiumScreen = ({navigation}) => {
   const [agm, setAgm] = useState('');
   const currentDate = moment().format('YYYY-MM-DD');
 
+  const [projects, setProjects] = useState([]);
+
   useEffect(() => {
-    // Dummy API Call to Fetch Projects
-    const fetchProjects = async () => {
-      const response = [
-        {label: 'Project A', value: 'A', code: '123'},
-        {label: 'Project B', value: 'B', code: '456'},
-      ];
-      setProjects(response);
-    };
-    fetchProjects();
+    async function fetchData() {
+      const response = await fetchProjects();
+      console.log('response.data', response.data);
+
+      if (response?.data) {
+        const formattedProjects = response.data.map(project => ({
+          label: project.name, // What the user sees
+          value: project.code, // What is stored internally
+        }));
+        setProjects(formattedProjects);
+      }
+    }
+
+    fetchData();
   }, []);
 
   useEffect(() => {
-    if (selectedProject) {
-      const project = projects.find(p => p.value === selectedProject);
-      setCode(project ? project.code : '');
+    if (selectedProject?.value) {
+      setCode(selectedProject.value);
     }
   }, [selectedProject]);
 
-  // Show alert when the page loads
-  useEffect(() => {
-    Alert.alert(
-      'Service Update',
-      'The service is coming soon!',
-      [{text: 'OK', onPress: () => {}}],
-      {cancelable: false}, // Makes sure the user must acknowledge the alert
-    );
-  }, []);
+  // useEffect(() => {
+  //   if (selectedProject) {
+  //     const project = projects.find(p => p.code === selectedProject.code);
+  //     setCode(project ? project.code : '');
+  //   }
+  // }, [selectedProject, projects]);
 
   const handleSubmit = () => {
+    // Validate required fields first
+    if (!selectedProject?.value || !nid || !name || !mobile || !totalPremium) {
+      return Alert.alert('Error', 'Please fill all required fields');
+    }
+
     navigation.navigate('PayfirstPremiumGateways', {
-      project: selectedProject,
-      code,
+      project: selectedProject.label,
+      code: selectedProject.value,
       nid,
       date: currentDate,
       name,
@@ -86,8 +98,11 @@ const PayFirstPremiumScreen = ({navigation}) => {
         <ScrollView style={[globalStyle.wrapper, {margin: 10}]}>
           <PickerComponent
             items={projects}
-            value={selectedProject}
-            setValue={setSelectedProject}
+            value={selectedProject?.value}
+            setValue={val => {
+              const project = projects.find(p => p.value === val);
+              setSelectedProject(project || {code: '', id: null, name: ''});
+            }}
             label={'Project'}
             placeholder={'Select a project'}
             required
