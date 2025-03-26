@@ -636,7 +636,7 @@ export const fetchProjects = async () => {
       },
     };
     const {data} = await axios.get(`${API}/api/projects`, config);
-    console.log(data);
+    console.log(data.data);
     return data;
   } catch (error) {
     console.error('Error fetching projects: ', error);

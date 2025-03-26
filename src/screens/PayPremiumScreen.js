@@ -527,7 +527,7 @@ const PayPremiumScreen = ({navigation}) => {
 
                 <RadioButtonRN
                   data={gatewayOptions}
-                  selectedBtn={e => console.log(e)}
+                  selectedBtn={e => setMethod(e.value)}
                   initial={1}
                   boxActiveBgColor={'#FFF'}
                   textStyle={{height: 60, textAlign: 'center', width: '100%'}}
