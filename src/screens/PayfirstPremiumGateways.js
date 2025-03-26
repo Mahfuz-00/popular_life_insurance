@@ -310,97 +310,99 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
           //     'Please try again from the dashboard.',
           //   );
           // }
-          try {
-            console.log('Bkash: ', JSON.stringify(data));
-            if (JSON.stringify(data).includes('status=success')) {
-              await setBkashUrl('');
-              dispatch({type: SHOW_LOADING});
-              const createExecuteResult = await bkashExecutePayment(
-                bkashToken,
-                bkashPaymentId,
+          // try {
+          console.log('Bkash: ', JSON.stringify(data));
+          if (JSON.stringify(data).includes('status=success')) {
+            await setBkashUrl('');
+            dispatch({type: SHOW_LOADING});
+            const createExecuteResult = await bkashExecutePayment(
+              bkashToken,
+              bkashPaymentId,
+            );
+
+            console.log(
+              'Status Message API Reponse: ',
+              JSON.stringify(createExecuteResult),
+            );
+            console.log('Status Message: ', createExecuteResult.statusMessage);
+
+            if (
+              createExecuteResult.statusMessage ===
+              'Duplicate for All Transactions'
+            ) {
+              alert(
+                createExecuteResult.statusMessage +
+                  '\n\nThe transaction failed.\nA payment of the same amount has already been made recently. Please try again after a 2-5 minutes.',
+              );
+            } else {
+              alert(createExecuteResult.statusMessage);
+            }
+
+            dispatch({type: HIDE_LOADING});
+
+            if (createExecuteResult.transactionStatus == 'Completed') {
+              let postData = {
+                project_name: code,
+                policy_no: nid,
+                method: method,
+                amount: amount,
+                transaction_no: createExecuteResult.trxID,
+                date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+              };
+
+              console.log('Post Data: ', postData);
+
+              var syncPayments =
+                JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
+              await AsyncStorage.setItem(
+                'syncPayments',
+                JSON.stringify([...syncPayments, postData]),
               );
 
-              console.log(
-                'Status Message API Reponse: ',
-                JSON.stringify(createExecuteResult),
-              );
-              console.log(
-                'Status Message: ',
-                createExecuteResult.statusMessage,
-              );
+              console.log('Sync Payments: ', syncPayments);
+              const isSuccess = await userPayPremium(postData);
+              console.log('Is Success: ', isSuccess);
+              handleFirstPremiumSubmission();
 
-              if (
-                createExecuteResult.statusMessage ===
-                'Duplicate for All Transactions'
-              ) {
-                alert(
-                  createExecuteResult.statusMessage +
-                    '\n\nThe transaction failed.\nA payment of the same amount has already been made recently. Please try again after a 2-5 minutes.',
-                );
-              } else {
-                alert(createExecuteResult.statusMessage);
-              }
-
-              dispatch({type: HIDE_LOADING});
-
-              if (createExecuteResult.transactionStatus == 'Completed') {
-                let postData = {
-                  policy_no: nid,
-                  method: method,
-                  amount: amount,
-                  transaction_no: createExecuteResult.trxID,
-                  date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
-                };
-
-                console.log('Post Data: ', postData);
-
+              if (isSuccess) {
                 var syncPayments =
                   JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
+                console.log('Sync Payments: ', syncPayments);
+                updateSyncPayments = syncPayments.filter(
+                  item => item.transaction_no != postData.transaction_no,
+                );
+                console.log('Update Sync Payments: ', updateSyncPayments);
                 await AsyncStorage.setItem(
                   'syncPayments',
-                  JSON.stringify([...syncPayments, postData]),
+                  JSON.stringify(updateSyncPayments),
                 );
-
-                console.log('Sync Payments: ', syncPayments);
-                const isSuccess = await userPayPremium(postData);
-                console.log('Is Success: ', isSuccess);
-                handleFirstPremiumSubmission();
-
                 // Reset navigation to HomeScreen instead of popping
                 navigation.reset({
                   index: 0,
                   routes: [{name: 'HomeScreen'}],
                 });
-
-                if (isSuccess) {
-                  var syncPayments =
-                    JSON.parse(await AsyncStorage.getItem('syncPayments')) ??
-                    [];
-                  console.log('Sync Payments: ', syncPayments);
-                  updateSyncPayments = syncPayments.filter(
-                    item => item.transaction_no != postData.transaction_no,
-                  );
-                  console.log('Update Sync Payments: ', updateSyncPayments);
-                  await AsyncStorage.setItem(
-                    'syncPayments',
-                    JSON.stringify(updateSyncPayments),
-                  );
-                  navigation.pop();
-                }
+                // navigation.pop();
               }
-            } else {
-              dispatch({type: HIDE_LOADING});
-              // ToastAndroid.show('Payment Failed !', ToastAndroid.LONG);
             }
-          } finally {
-            // dispatch({type: HIDE_LOADING});
-
-            // Always navigate to HomeScreen
+          } else {
+            dispatch({type: HIDE_LOADING});
+            // ToastAndroid.show('Payment Failed !', ToastAndroid.LONG);
+            // Reset navigation to HomeScreen instead of popping
             navigation.reset({
               index: 0,
               routes: [{name: 'HomeScreen'}],
             });
           }
+
+          //  }finally {
+          //   dispatch({type: HIDE_LOADING});
+
+          //   // Always navigate to HomeScreen
+          //   navigation.reset({
+          //     index: 0,
+          //     routes: [{name: 'HomeScreen'}],
+          //   });
+          // }
         }}
       />
     );
@@ -430,6 +432,7 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
           if (JSON.stringify(data).includes('Success')) {
             dispatch({type: SHOW_LOADING});
             let postData = {
+              project_name: code,
               policy_no: nid,
               method: method,
               amount: amount,
@@ -446,12 +449,6 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
             const isSuccess = await userPayPremium(postData);
             handleFirstPremiumSubmission();
 
-            // Reset navigation to HomeScreen instead of popping
-            navigation.reset({
-              index: 0,
-              routes: [{name: 'HomeScreen'}],
-            });
-
             if (isSuccess) {
               var syncPayments =
                 JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
@@ -466,7 +463,14 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
             }
             setShowNagadPG(false);
             dispatch({type: HIDE_LOADING});
-            return ToastAndroid.show('Payment Success !', ToastAndroid.LONG);
+
+            // Reset navigation to HomeScreen instead of popping
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'HomeScreen'}],
+            });
+
+            // return ToastAndroid.show('Payment Success !', ToastAndroid.LONG);
           }
         }}
       />

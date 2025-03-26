@@ -91,7 +91,10 @@ const HomeScreen = ({navigation}) => {
         console.log('Checking app version...');
 
         // Fetch the latest version from your API
-        const response = await fetch('http://27.147.163.94:1929/api/latest');
+        // const response = await fetch('http://27.147.163.94:1929/api/latest');
+        const response = await fetch(
+          'https://vmi1596425.contaboserver.net/api/latest',
+        );
         const result = await response.json();
         console.log('API Response:', JSON.stringify(result, null, 2));
 
