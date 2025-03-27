@@ -100,24 +100,102 @@
 //   }
 // }
 
+// package com.insurancecompanyapp;
+
+// import android.os.Bundle;
+// import com.facebook.react.ReactActivity;
+// import com.facebook.react.ReactActivityDelegate;
+// import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
+// import com.facebook.react.defaults.DefaultReactActivityDelegate;
+
+// public class MainActivity extends ReactActivity {
+
+//   @Override
+//   protected String getMainComponentName() {
+//     return "InsuranceCompanyApp";
+//   }
+
+//   @Override
+//   protected void onCreate(Bundle savedInstanceState) {
+//     super.onCreate(savedInstanceState);
+//   }
+
+//   @Override
+//   protected ReactActivityDelegate createReactActivityDelegate() {
+//     return new DefaultReactActivityDelegate(
+//         this,
+//         getMainComponentName(),
+//         DefaultNewArchitectureEntryPoint.getFabricEnabled(),
+//         DefaultNewArchitectureEntryPoint.getConcurrentReactEnabled());
+//   }
+// }
+
 package com.insurancecompanyapp;
 
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
+import androidx.core.content.FileProvider;
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactActivityDelegate;
+import java.io.File;
 
 public class MainActivity extends ReactActivity {
+  private static final int REQUEST_CODE_ENABLE_INSTALL = 100;
+  private String apkPath = "/path/to/your/app.apk"; // Update with actual APK path
 
   @Override
   protected String getMainComponentName() {
-    return "InsuranceCompanyApp";
+    return "InsuranceCompanyApp"; // Replace with your app's main component name
   }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+  }
+
+  // Method to trigger APK installation (call this from JavaScript via a native
+  // module)
+  public void startInstallation(String path) {
+    apkPath = path;
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      if (!getPackageManager().canRequestPackageInstalls()) {
+        Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+        intent.setData(Uri.parse("package:" + getPackageName()));
+        startActivityForResult(intent, REQUEST_CODE_ENABLE_INSTALL);
+        return;
+      }
+    }
+    installApk(apkPath);
+  }
+
+  private void installApk(String apkPath) {
+    File apkFile = new File(apkPath);
+    Uri apkUri = FileProvider.getUriForFile(this, "com.insurancecompanyapp.fileprovider", apkFile);
+    Intent intent = new Intent(Intent.ACTION_VIEW);
+    intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+    intent.putExtra(Intent.EXTRA_ALLOW_REPLACE, true);
+    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    startActivity(intent);
+  }
+
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    if (requestCode == REQUEST_CODE_ENABLE_INSTALL) {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (getPackageManager().canRequestPackageInstalls()) {
+          installApk(apkPath);
+        } else {
+          // Handle permission denial (e.g., show a message to the user)
+        }
+      }
+    }
   }
 
   @Override
