@@ -14,6 +14,7 @@ import RadioButtonRN from 'radio-buttons-react-native';
 import {WebView} from 'react-native-webview';
 import {useDispatch, useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
 
 import Header from './../components/Header';
 import globalStyle from '../styles/globalStyle';
@@ -90,6 +91,8 @@ const PayPremiumScreen = ({navigation}) => {
   const toggleSwitch = () => setIsEnabled(previousState => !previousState);
 
   const handleSubmit = async () => {
+    console.log(`is enabled: ${isEnabled}`);
+    console.log(`policyDetails: ${JSON.stringify(policyDetails)}`);
     if (!isEnabled)
       return ToastAndroid.show(
         'Please agree terms & conditions',
@@ -118,7 +121,7 @@ const PayPremiumScreen = ({navigation}) => {
 
     // setBkashUrl(createPaymentResult.bkashURL);
 
-    if (method === 'bkash') {
+    if (method === 'BKASH') {
       console.log('Processing bkash payment...');
 
       if (isFirstPayment) {
@@ -266,9 +269,11 @@ const PayPremiumScreen = ({navigation}) => {
     //   }
     // }
 
-    if (method == 'nagad') {
+    console.log('Method: ', method);
+
+    if (method == 'NAGAD') {
       // Alert.alert('Under Maintenance');
-      console.log();
+      console.log('Processing nagad payment...');
       const trnxNo = moment().format('YYYYMMDDHHmmss');
       setTransactionNo(trnxNo);
       let postData = {
@@ -343,7 +348,7 @@ const PayPremiumScreen = ({navigation}) => {
             if (createExecuteResult.transactionStatus == 'Completed') {
               let postData = {
                 policy_no: number,
-                method: method,
+                method: 'bkash',
                 amount: amount,
                 transaction_no: createExecuteResult.trxID,
               };
@@ -410,7 +415,7 @@ const PayPremiumScreen = ({navigation}) => {
             dispatch({type: SHOW_LOADING});
             let postData = {
               policy_no: number,
-              method: method,
+              method: 'nagad',
               amount: amount,
               transaction_no: transactionNo,
               date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
