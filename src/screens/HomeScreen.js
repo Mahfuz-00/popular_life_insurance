@@ -11,7 +11,7 @@ import {
   Dimensions,
   Alert,
   Linking,
-  // PermissionsAndroid,
+  PermissionsAndroid,
   Platform,
   Modal,
   ActivityIndicator,
@@ -34,7 +34,7 @@ import RNFS from 'react-native-fs';
 import checkVersion from 'react-native-store-version';
 import RNApkInstaller from '@dominicvonk/react-native-apk-installer';
 import RNIntentLauncher from 'react-native-intent-launcher';
-import PermissionsAndroid from 'react-native-permissions';
+import RNRestart from 'react-native-restart';
 
 const HomeScreen = ({navigation}) => {
   const {isAuthenticated, user} = useSelector(state => state.auth);
@@ -89,86 +89,108 @@ const HomeScreen = ({navigation}) => {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isInstalling, setIsInstalling] = useState(false);
 
-  async function requestStoragePermission() {
-    if (Platform.OS === 'android') {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          {
-            title: 'Storage Permission Required',
-            message:
-              'This app requires storage permission to download updates. Without this permission, the app will not function correctly.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'Grant Permission',
-          },
-        );
+  async function downloadApkWrapper(apkUrl, expectedSize) {
+    const getRequiredPermissions = () => {
+      if (Platform.Version >= 33) {
+        // Android 13+
+        return [
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
+        ];
+      }
+      if (Platform.Version >= 29) {
+        // Android 10+
+        return [PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE];
+      }
+      return [PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE];
+    };
 
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          console.log('Storage permission granted');
+    const checkPermission = async () => {
+      try {
+        const permissions = getRequiredPermissions();
+        const hasPermission = await PermissionsAndroid.check(permissions[0]);
+
+        if (hasPermission) {
           return true;
-        } else {
-          console.log('Storage permission denied');
-          return false;
         }
+
+        const results = await PermissionsAndroid.requestMultiple(permissions);
+
+        return Object.values(results).every(
+          status => status === PermissionsAndroid.RESULTS.GRANTED,
+        );
       } catch (err) {
-        console.error('Permission request error:', err);
+        console.error('Permission error:', err);
         return false;
       }
-    } else {
-      return true; // No permissions required on iOS
-    }
-  }
+    };
 
-  function showPermissionAlert() {
-    return new Promise(resolve => {
+    const showSettingsAlert = () => {
       Alert.alert(
-        'Storage Permission Required',
-        'This app requires storage permission to download updates. Without this permission, the app will not function correctly.',
+        'Permission Required',
+        'Please enable storage permissions in app settings',
         [
+          {text: 'Cancel', style: 'cancel'},
           {
-            text: 'Cancel',
-            onPress: () => resolve(false),
-            style: 'cancel',
-          },
-          {
-            text: 'Retry',
-            onPress: async () => {
-              const granted = await requestStoragePermission();
-              resolve(granted);
+            text: 'Open Settings',
+            onPress: () => {
+              Linking.openSettings();
+              // Add delay to ensure settings screen loads
+              setTimeout(() => {}, 1000);
             },
           },
         ],
-        {cancelable: false},
       );
-    });
-  }
+    };
 
-  async function downloadApkWrapper(apkUrl, expectedSize) {
     try {
-      // First, try to request permission
-      let permissionGranted = await requestStoragePermission();
+      let hasPermission = await checkPermission();
 
-      // If permission is denied, show the alert and wait for user response
-      if (!permissionGranted) {
-        permissionGranted = await showPermissionAlert();
+      while (!hasPermission) {
+        const tryAgain = await new Promise(resolve => {
+          Alert.alert(
+            'Permission Required',
+            'Storage access is needed to download updates',
+            [
+              {
+                text: 'Open Settings',
+                onPress: () => {
+                  Linking.openSettings();
+                  resolve(false);
+                },
+              },
+              {
+                text: 'Try Again',
+                onPress: async () => {
+                  const result = await checkPermission();
+                  resolve(result);
+                },
+              },
+              {
+                text: 'Cancel',
+                style: 'cancel',
+                onPress: () => resolve(false),
+              },
+            ],
+            {cancelable: false},
+          );
+        });
+
+        if (tryAgain === 'never_ask_again') {
+          showSettingsAlert();
+          return;
+        }
+
+        hasPermission = tryAgain;
       }
 
-      // Proceed based on the final permission status
-      if (permissionGranted) {
+      if (hasPermission) {
         await downloadApk(apkUrl, expectedSize);
-      } else {
-        ToastAndroid.show(
-          'Storage permission denied. Functionality may be limited.',
-          ToastAndroid.LONG,
-        );
       }
     } catch (error) {
-      console.error('Error in downloadApkWrapper:', error);
-      ToastAndroid.show(
-        'An error occurred. Please try again.',
-        ToastAndroid.LONG,
-      );
+      console.error('Download error:', error);
+      ToastAndroid.show('Download failed', ToastAndroid.LONG);
     }
   }
 
@@ -222,11 +244,9 @@ const HomeScreen = ({navigation}) => {
       const downloadFolder = RNFS.DownloadDirectoryPath;
       const downloadDest = `${downloadFolder}/newApp.apk`;
       console.log('Downloading APK to:', downloadDest);
-      ToastAndroid.show(`${downloadDest}`, ToastAndroid.LONG);
 
       // const expectedSize = await getApkFileSize(apkUrl);
       console.log('Expected APK size:', expectedSize);
-      ToastAndroid.show(`${expectedSize}`, ToastAndroid.LONG);
       // ToastAndroid.show(
       //   `Expected APK size: ${expectedSize} bytes`,
       //   ToastAndroid.LONG,
@@ -338,73 +358,82 @@ const HomeScreen = ({navigation}) => {
 
   const installApk = async filePath => {
     try {
-      console.log('Preparing to install APK from:', filePath);
+      // const filePath = `${RNFS.DownloadDirectoryPath}/newApp.apk`;
 
-      const fileExists = await RNFS.exists(filePath);
-      if (!fileExists) {
-        throw new Error('APK file does not exist');
+      // Show loading state
+      setIsInstalling(true);
+      ToastAndroid.show('Checking for update...', ToastAndroid.SHORT);
+
+      // 1. Verify file exists
+      if (!(await RNFS.exists(filePath))) {
+        setIsInstalling(false);
+        return Alert.alert('Error', 'Installation file not found');
       }
 
-      // Notify user before installation
+      // 2. Show installation confirmation dialog
       Alert.alert(
         'Install Update',
-        'The new version of the app has been downloaded.\n\nWould you like to install it now?',
+        'A new version is ready to install. Continue?',
         [
           {
             text: 'Install Now',
             onPress: async () => {
-              setIsInstalling(true);
               try {
-                // Check for unknown sources permission
-                const hasPermission =
-                  await RNApkInstaller.haveUnknownAppSourcesPermission();
-                if (!hasPermission) {
-                  ToastAndroid.show(
-                    'Opening settings for unknown sources permission',
-                    ToastAndroid.LONG,
-                  );
-                  await RNApkInstaller.showUnknownAppSourcesPermission();
-                  return; // Wait for user to grant permission and retry manually
-                }
-
-                ToastAndroid.show('Installation Started', ToastAndroid.LONG);
-                const context =
-                  NativeModules.RNCConfig?.getConstants()?.ApplicationContext;
-                const applicationId =
-                  NativeModules.RNCConfig?.getConstants()?.ApplicationId;
-                const APKfilePath = RNFS.DocumentDirectoryPath + '/' + filePath;
-
-                RNFS.stat(filePath)
-                  .then(stats => console.log('File size:', stats.size))
-                  .catch(error => console.log('Error:', error));
-
-                console.log('APK Installation Triggered (Base64 Method)');
-
-                // Read the APK file as a base64 string
-                const apkBase64 = await RNFS.readFile(filePath, 'base64');
-
-                // Create a data URI from the base64 string
-                const dataUri = `data:application/vnd.android.package-archive;base64,${apkBase64}`;
-
-                const intent = {
-                  action: 'android.intent.action.VIEW',
-                  data: dataUri,
-                  type: 'application/vnd.android.package-archive',
-                  flags: 1, // RNIntentLauncher.FLAG_GRANT_READ_URI_PERMISSION,
-                };
-
-                RNIntentLauncher.startActivity(intent);
-
-                // Cleanup after successful install
-                await RNFS.unlink(filePath);
-                ToastAndroid.show('Installation Complete', ToastAndroid.LONG);
-                console.log('APK file deleted');
-              } catch (error) {
-                console.error('Installation failed:', error);
+                setIsInstalling(true);
                 ToastAndroid.show(
-                  `Installation Failed: ${error.message}`,
+                  'Starting installation...',
                   ToastAndroid.LONG,
                 );
+
+                // 3. Android-specific installation flow
+                if (Platform.OS === 'android') {
+                  try {
+                    const apkUri = `content://${filePath}`;
+                    console.log('APK URI:', apkUri);
+
+                    ToastAndroid.show(`ApK Url : ${apkUri}`, ToastAndroid.LONG);
+                    RNApkInstaller.install(filePath);
+                    // try {
+                    //   await RNIntentLauncher.startActivity({
+                    //     action: 'android.intent.action.INSTALL_PACKAGE',
+                    //     data: apkUri,
+                    //     type: 'application/vnd.android.package-archive',
+                    //     flags: 268435456, // Or try 3 or 268435456
+                    //   });
+                    // } catch (error) {
+                    //   console.error('Test URL launch failed:', error);
+                    //   Alert.alert(
+                    //     'Error',
+                    //     'Failed to launch APK installation.',
+                    //     `error: ${error}`,
+                    //   );
+                    //   setIsInstalling(false);
+                    // }
+                  } catch (fileProviderError) {
+                    console.error('FileProvider error:', fileProviderError);
+                    Alert.alert(
+                      'FileProvider Error',
+                      fileProviderError.message,
+                    );
+                    setIsInstalling(false);
+                    return;
+                  }
+                }
+
+                ToastAndroid.show('Installation Complete', ToastAndroid.LONG);
+
+                // 4. Cleanup after installation
+                setTimeout(async () => {
+                  try {
+                    await RNFS.unlink(filePath);
+                    ToastAndroid.show('APK file deleted.', ToastAndroid.LONG);
+                    RNRestart.restart();
+                  } catch (e) {
+                    console.warn('Cleanup error:', e);
+                  }
+                }, 5000);
+              } catch (error) {
+                Alert.alert('Install Failed', error.message);
               } finally {
                 setIsInstalling(false);
               }
@@ -412,17 +441,17 @@ const HomeScreen = ({navigation}) => {
           },
           {
             text: 'Cancel',
-            style: 'cancel',
             onPress: () => {
-              console.log('User canceled installation');
-              ToastAndroid.show('Installation Canceled', ToastAndroid.LONG);
+              setIsInstalling(false);
+              ToastAndroid.show('Installation canceled', ToastAndroid.SHORT);
             },
+            style: 'cancel',
           },
         ],
       );
     } catch (error) {
-      console.error('Pre-installation check failed:', error);
-      ToastAndroid.show(`Error: ${error.message}`, ToastAndroid.LONG);
+      Alert.alert('Error', error.message);
+      setIsInstalling(false);
     }
   };
 
