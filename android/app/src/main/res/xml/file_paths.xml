@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <external-path name="external_files" path="." />
+  <!-- Add this for Download directory access -->
+  <external-path 
+    name="download" 
+    path="." />
+  <!-- <root-path 
+    name="root" 
+    path="." /> -->
 </paths>
