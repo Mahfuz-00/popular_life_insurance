@@ -89,7 +89,7 @@ const HomeScreen = ({navigation}) => {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isInstalling, setIsInstalling] = useState(false);
 
-  async function downloadApkWrapper(apkUrl, expectedSize) {
+  async function downloadApkWrapper(apkUrl, expectedSize, latestVersion) {
     const getRequiredPermissions = () => {
       if (Platform.Version >= 33) {
         // Android 13+
@@ -186,7 +186,7 @@ const HomeScreen = ({navigation}) => {
       }
 
       if (hasPermission) {
-        await downloadApk(apkUrl, expectedSize);
+        await downloadApk(apkUrl, expectedSize, latestVersion);
       }
     } catch (error) {
       console.error('Download error:', error);
@@ -224,7 +224,8 @@ const HomeScreen = ({navigation}) => {
             [
               {
                 text: 'Download Now',
-                onPress: () => downloadApkWrapper(apkUrl, expectedSize),
+                onPress: () =>
+                  downloadApkWrapper(apkUrl, expectedSize, latestVersion),
               },
               {
                 text: 'Later',
@@ -232,6 +233,22 @@ const HomeScreen = ({navigation}) => {
               },
             ],
           );
+        } else if (currentVersion === latestVersion) {
+          console.log('App is up to date');
+          const downloadFolder = RNFS.DownloadDirectoryPath;
+          const downloadDest = `${downloadFolder}/newApp-${currentVersion}.apk`;
+          const fileExists = await RNFS.exists(downloadDest);
+          if (fileExists) {
+            await RNFS.unlink(downloadDest);
+          }
+        } else if (currentVersion > latestVersion) {
+          console.log('App is up to date 2');
+          const downloadFolder = RNFS.DownloadDirectoryPath;
+          const downloadDest = `${downloadFolder}/newApp-${currentVersion}.apk`;
+          const fileExists = await RNFS.exists(downloadDest);
+          if (fileExists) {
+            await RNFS.unlink(downloadDest);
+          }
         }
       } catch (error) {
         console.error('Version check failed:', error);
@@ -239,10 +256,16 @@ const HomeScreen = ({navigation}) => {
     }
   };
 
-  const downloadApk = async (apkUrl, expectedSize, retries = 3) => {
+  const downloadApk = async (
+    apkUrl,
+    expectedSize,
+    latestVersion,
+    retries = 3,
+  ) => {
     try {
+      console.log(`Latest Version: ${latestVersion}`);
       const downloadFolder = RNFS.DownloadDirectoryPath;
-      const downloadDest = `${downloadFolder}/newApp.apk`;
+      const downloadDest = `${downloadFolder}/newApp-${latestVersion}.apk`;
       console.log('Downloading APK to:', downloadDest);
 
       // const expectedSize = await getApkFileSize(apkUrl);
@@ -361,12 +384,12 @@ const HomeScreen = ({navigation}) => {
       // const filePath = `${RNFS.DownloadDirectoryPath}/newApp.apk`;
 
       // Show loading state
-      setIsInstalling(true);
-      ToastAndroid.show('Checking for update...', ToastAndroid.SHORT);
+      // setIsInstalling(true);
+      // ToastAndroid.show('Checking for update...', ToastAndroid.SHORT);
 
       // 1. Verify file exists
       if (!(await RNFS.exists(filePath))) {
-        setIsInstalling(false);
+        // setIsInstalling(false);
         return Alert.alert('Error', 'Installation file not found');
       }
 
@@ -425,8 +448,8 @@ const HomeScreen = ({navigation}) => {
                 // 4. Cleanup after installation
                 setTimeout(async () => {
                   try {
-                    await RNFS.unlink(filePath);
-                    ToastAndroid.show('APK file deleted.', ToastAndroid.LONG);
+                    // await RNFS.unlink(filePath);
+                    // ToastAndroid.show('APK file deleted.', ToastAndroid.LONG);
                     RNRestart.restart();
                   } catch (e) {
                     console.warn('Cleanup error:', e);
