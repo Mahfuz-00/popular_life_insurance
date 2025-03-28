@@ -443,7 +443,7 @@ const PayPremiumScreen = ({navigation}) => {
             }
             setShowNagadPG(false);
             dispatch({type: HIDE_LOADING});
-            return ToastAndroid.show('Payment Success !', ToastAndroid.LONG);
+            // return ToastAndroid.show('Payment Success !', ToastAndroid.LONG);
           }
         }}
       />
