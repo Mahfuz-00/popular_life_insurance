@@ -516,7 +516,7 @@ const HomeScreen = ({navigation}) => {
             onPress: () => {
               Alert.alert(
                 'Manual Installation',
-                `Please use a file manager to navigate to:\n\n${filePath}\n\nTap the file to install.`,
+                `Uninstall current app first.\n\nUse file manager to find and tap:\n\n${filePath}\n\nThen install.`,
                 [{text: 'OK'}],
                 {cancelable: false},
               );
