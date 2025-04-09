@@ -46,6 +46,11 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
     date,
     name,
     mobile,
+    plan,
+    age,
+    term,
+    mode,
+    sumAssured,
     totalPremium,
     servicingCell,
     agentMobile,
@@ -126,6 +131,11 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
     {label: 'Date', value: date},
     {label: 'Name', value: name},
     {label: 'Mobile No.', value: mobile},
+    {label: 'Plan', value: plan},
+    {label: 'Age', value: age},
+    {label: 'Term', value: term},
+    {label: 'Mode', value: mode},
+    {label: 'Sum assured', value: sumAssured},
     {label: 'Total Premium', value: totalPremium},
     {label: 'Servicing Cell', value: servicingCell},
     {label: 'Agent Mobile', value: agentMobile},
@@ -147,6 +157,11 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
         code,
         name,
         mobile,
+        plan,
+        age,
+        term,
+        mode,
+        sumAssured,
         totalPremium,
         servicingCell,
         fa,
@@ -325,6 +340,8 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
               JSON.stringify(createExecuteResult),
             );
             console.log('Status Message: ', createExecuteResult.statusMessage);
+            console.log('Download Link: ', createExecuteResult.statusMessage);
+
 
             if (
               createExecuteResult.statusMessage ===
@@ -430,6 +447,7 @@ const PayFirstPremiumGateway = ({navigation, route}) => {
             return ToastAndroid.show('Failed !', ToastAndroid.LONG);
           }
           if (JSON.stringify(data).includes('Success')) {
+            // console.log('Download Link: ', data.link);
             dispatch({type: SHOW_LOADING});
             let postData = {
               project_name: code,

@@ -24,6 +24,7 @@ export const getTermList = async (code) => {
 }
 
 export const getCalculatedPremium = async (postData) => {
+    console.log('Calculator Data:', JSON.stringify(postData, null, 2)); // Pretty-print the object
     try {
         const { data } = await axios.post(`${API}/api/premium-calculator`, postData);              
         return data.data.result;
