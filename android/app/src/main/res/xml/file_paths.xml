@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
+    <!-- External storage (e.g., Downloads folder) -->
+    <external-path name="download" path="Download/" />
+    <external-path name="external" path="." />
+    <!-- Internal app-specific storage -->
+    <files-path name="files" path="." />
+    <!-- External files directory (e.g., /sdcard/Android/data/com.insurancecompanyapp/files) -->
+    <external-files-path name="external_files" path="." />
+    <!-- <external-path name="external_files" path="."/> -->
+    <cache-path name="cache" path="."/>
+    <!-- <external-files-path name="external_files_root" path="."/> -->
+    <external-cache-path name="external_cache_root" path="."/>
+    <!-- <files-path name="internal_files" path="."/> -->
+</paths>
+
+
+
+<!-- <?xml version="1.0" encoding="utf-8"?>
+<paths>
   <!-- Add this for Download directory access -->
   <external-path 
     name="download" 
@@ -7,4 +25,4 @@
   <!-- <root-path 
     name="root" 
     path="." /> -->
-</paths>
+</paths> -->

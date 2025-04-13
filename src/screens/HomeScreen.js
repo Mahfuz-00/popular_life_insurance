@@ -33,6 +33,7 @@ import DeviceInfo from 'react-native-device-info';
 import RNFS from 'react-native-fs';
 import checkVersion from 'react-native-store-version';
 import RNApkInstaller from '@dominicvonk/react-native-apk-installer';
+// const {RNApkInstaller} = NativeModules;
 import RNIntentLauncher from 'react-native-intent-launcher';
 import RNRestart from 'react-native-restart';
 
@@ -396,26 +397,74 @@ const HomeScreen = ({navigation}) => {
       // 2. Show installation confirmation dialog
       Alert.alert(
         'Install Update',
-        'A new version is ready to install. Continue?',
+        'A new version is ready. Install now?\n\n(If install fails, tap "Manual Install" for the APK location.)',
         [
           {
             text: 'Install Now',
             onPress: async () => {
               try {
-                setIsInstalling(true);
-                ToastAndroid.show(
-                  'Starting installation...',
-                  ToastAndroid.LONG,
-                );
+                // setIsInstalling(true);
 
                 // 3. Android-specific installation flow
                 if (Platform.OS === 'android') {
                   try {
-                    const apkUri = `content://${filePath}`;
-                    console.log('APK URI:', apkUri);
+                    // const apkUri = `content://${filePath}`;
+                    // console.log('APK URI:', apkUri);
 
-                    ToastAndroid.show(`ApK Url : ${apkUri}`, ToastAndroid.LONG);
-                    RNApkInstaller.install(filePath);
+                    // ToastAndroid.show(`ApK Url : ${apkUri}`, ToastAndroid.LONG);
+                    if (await RNFS.exists(filePath)) {
+                      ToastAndroid.show('Apk Installing', ToastAndroid.LONG);
+                      // RNApkInstaller.install(filePath);
+
+                      await RNApkInstaller.install(filePath);
+
+                      // try {
+                      //   console.log(
+                      //     'Attempting to install APK from:',
+                      //     filePath,
+                      //   );
+                      //   await RNApkInstaller.install(filePath);
+                      //   ToastAndroid.show(
+                      //     'Installation initiated. Please follow the prompts.',
+                      //     ToastAndroid.LONG,
+                      //   );
+                      //   // You might want to add logic here to check if the app was actually updated
+                      //   // (this can be tricky and might involve checking app versions later).
+                      // } catch (error) {
+                      //   console.error('Error during APK installation:', error);
+                      //   if (error.message) {
+                      //     Alert.alert(
+                      //       'Installation Failed',
+                      //       'The app update could not be installed automatically. Please navigate to the following location using a file manager and install it manually:\n\n' +
+                      //         filePath,
+                      //       [
+                      //         {
+                      //           text: 'OK',
+                      //           onPress: () =>
+                      //             console.log('Manual install info shown'),
+                      //         },
+                      //       ],
+                      //       {cancelable: false},
+                      //     );
+                      //   } else {
+                      //     Alert.alert(
+                      //       'Installation Failed',
+                      //       'An error occurred during installation: ' +
+                      //         (error.message || 'An unknown error occurred.'),
+                      //       [
+                      //         {
+                      //           text: 'OK',
+                      //           onPress: () =>
+                      //             console.log('Installation error alert shown'),
+                      //         },
+                      //       ],
+                      //       {cancelable: false},
+                      //     );
+                      //   }
+                      // }
+                    } else {
+                      Alert.alert('Error', 'APK not found at: ' + filePath);
+                    }
                     // try {
                     //   await RNIntentLauncher.startActivity({
                     //     action: 'android.intent.action.INSTALL_PACKAGE',
@@ -438,28 +487,39 @@ const HomeScreen = ({navigation}) => {
                       'FileProvider Error',
                       fileProviderError.message,
                     );
-                    setIsInstalling(false);
+                    // setIsInstalling(false);
                     return;
                   }
                 }
 
-                ToastAndroid.show('Installation Complete', ToastAndroid.LONG);
+                // ToastAndroid.show('Installation Complete', ToastAndroid.LONG);
 
                 // 4. Cleanup after installation
-                setTimeout(async () => {
-                  try {
-                    // await RNFS.unlink(filePath);
-                    // ToastAndroid.show('APK file deleted.', ToastAndroid.LONG);
-                    RNRestart.restart();
-                  } catch (e) {
-                    console.warn('Cleanup error:', e);
-                  }
-                }, 5000);
+                // setTimeout(async () => {
+                //   try {
+                //     // await RNFS.unlink(filePath);
+                //     // ToastAndroid.show('APK file deleted.', ToastAndroid.LONG);
+                //     RNRestart.restart();
+                //   } catch (e) {
+                //     console.warn('Cleanup error:', e);
+                //   }
+                // }, 5000);
               } catch (error) {
                 Alert.alert('Install Failed', error.message);
               } finally {
-                setIsInstalling(false);
+                // setIsInstalling(false);
               }
+            },
+          },
+          {
+            text: 'Manual Install',
+            onPress: () => {
+              Alert.alert(
+                'Manual Installation',
+                `Uninstall current app first.\n\nUse file manager to find and tap:\n\n${filePath}\n\nThen install.`,
+                [{text: 'OK'}],
+                {cancelable: false},
+              );
             },
           },
           {

@@ -113,6 +113,8 @@
 
 package com.insurancecompanyapp;
 
+import com.insurancecompanyapp.InstallApkPackage;
+
 import android.app.Application;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
@@ -135,6 +137,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       List<ReactPackage> packages = new PackageList(this).getPackages();
       // No custom packages added
+      // packages.add(new InstallApkPackage());
       return packages;
     }
 
