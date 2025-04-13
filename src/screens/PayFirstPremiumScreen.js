@@ -45,7 +45,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   const [um, setUm] = useState('');
   const [bm, setBm] = useState('');
   const [agm, setAgm] = useState('');
-  const currentDate = moment().format('YYYY-MM-DD');
+  const entrydate = moment().format('YYYY-MM-DD');
 
   const [projects, setProjects] = useState([]);
 
@@ -123,7 +123,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
 
         const calculatedPremium = await getCalculatedPremium(postData);
         if (calculatedPremium !== undefined) {
-          setTotalPremium(calculatedPremium.toString());
+          setTotalPremium(Math.ceil(calculatedPremium).toString());
         } else {
           setTotalPremium('');
           ToastAndroid.show('Failed to calculate premium', ToastAndroid.SHORT);
@@ -163,7 +163,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
       project: selectedProject.label,
       code: selectedProject.value,
       nid,
-      date: currentDate,
+      entrydate: entrydate,
       name,
       mobile,
       plan, age,
@@ -198,7 +198,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
           />
           <Input label={'Code'} value={code} editable={false} />
           <Input label={'NID'} value={nid} onChangeText={setNid} required />
-          <Input label={'Date'} value={currentDate} editable={false} />
+          <Input label={'Date'} value={entrydate} editable={false} />
           <Input
             label={'Proposers Name'}
             value={name}
