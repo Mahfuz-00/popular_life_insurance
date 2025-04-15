@@ -52,6 +52,7 @@ import PhPRListScreen from './src/screens/policyHolder/PhPRListScreen';
 import SyncPaymentScreen from './src/screens/policyHolder/SyncPaymentScreen';
 import PayFirstPremiumScreen from './src/screens/PayFirstPremiumScreen';
 import PayfirstPremiumGateway from './src/screens/PayfirstPremiumGateways';
+import FirstPremiumTransactionsScreen from './src/screens/PayFirstPremiumTransaction';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -79,6 +80,10 @@ function StackNav() {
       <Stack.Screen
         name="PayfirstPremiumGateways"
         component={PayfirstPremiumGateway}
+      />
+      <Stack.Screen
+        name="PayFirstPremiumTransaction"
+        component={FirstPremiumTransactionsScreen }
       />
       <Stack.Screen name="ProductInfo" component={ProductInfoScreen} />
       <Stack.Screen name="ClaimSubmission" component={ClaimSubmissionScreen} />
