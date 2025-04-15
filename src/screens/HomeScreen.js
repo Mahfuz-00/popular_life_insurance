@@ -81,6 +81,11 @@ const HomeScreen = ({navigation}) => {
             navigateTo: 'PhPayFirstPremium',
             icon: require('../assets/pay-first-premiums-menu.jpg'),
           },
+          {
+            title: 'Pay First Premium Transaction',
+            navigateTo: 'PayFirstPremiumTransaction',
+            icon: require('../assets/icon-premium-calc.png'),
+          },
         ]
       : []),
     // {title: 'Sync Payment', navigateTo: 'SyncPayment', icon: require('../assets/product-engine.png')},
