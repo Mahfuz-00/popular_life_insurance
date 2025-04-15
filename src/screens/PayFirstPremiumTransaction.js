@@ -20,6 +20,7 @@ import globalStyle from '../styles/globalStyle';
 import BackgroundImage from '../assets/BackgroundImage.png';
 import { FilledButton } from './../components/FilledButton';
 import { SHOW_LOADING, HIDE_LOADING } from '../constants/commonConstants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API } from '../config';
 
@@ -45,8 +46,9 @@ const FirstPremiumTransactionsScreen = ({ navigation }) => {
         },
       });
 
-      if (response.status === 200 && response.data) {
-        setTransactions(response.data); // Assuming response.data is an array of transactions
+      if (response.status === 200 && response.data?.data) {
+        console.log(response.data.data);
+        setTransactions(response.data.data); 
       } else {
         Alert.alert('Error', 'No transactions found for this NID.', [
           { text: 'OK', style: 'cancel' },
@@ -67,8 +69,8 @@ const FirstPremiumTransactionsScreen = ({ navigation }) => {
   };
 
   // Handle download receipt
-  const handleDownloadReceipt = async (transactionId) => {
-    const receiptUrl = `${API}/api/first-payment/e-receipt/${nid}/${transactionId}`;
+  const handleDownloadReceipt = async (code, nid) => {
+    const receiptUrl = `${API}/api/first-payment/e-receipt/${nid}/${code}`;
     console.log('Opening receipt URL:', receiptUrl);
     try {
       await Linking.openURL(receiptUrl);
@@ -112,17 +114,21 @@ const FirstPremiumTransactionsScreen = ({ navigation }) => {
                 <View style={styles.rowWrapper}>
                   <Text style={styles.rowLabel}>Project Name</Text>
                   <Text style={styles.rowLabel}>Trns. Date</Text>
+                    {/* <Text style={styles.rowLable}>Trns. No</Text> */}
+                  <Text style={styles.rowLable}>Method</Text>
                   <Text style={styles.rowLabel}>Premium</Text>
                   <Text style={styles.rowLabel}>Receipt</Text>
                 </View>
                 {transactions.map((item, index) => (
                   <View style={styles.rowWrapper} key={index}>
-                    <Text style={styles.rowValue}>{item.project_name}</Text>
-                    <Text style={styles.rowValue}>{moment(item.created_at).format('YYYY-MM-DD')}</Text>
-                    <Text style={styles.rowValue}>{item.totalPremium}</Text>
+                    <Text style={styles.rowValue}>{item.Project_Name}</Text>
+                    <Text style={styles.rowValue}>{moment(item.entrydate).format('YYYY-MM-DD')}</Text> 
+                    {/* <Text style={styles.rowValue}>{item.transaction_no}</Text> */}
+                    <Text style={styles.rowValue}>{item.method}</Text> 
+                    <Text style={styles.rowValue}>{parseFloat(item.Total_Premium).toFixed(2)}</Text>
                     <TouchableOpacity
                       style={[styles.rowValue, { alignItems: 'center' }]}
-                      onPress={() => handleDownloadReceipt(item.transaction_no)}
+                      onPress={() => handleDownloadReceipt(item.Project_Code, item.NID_NO)}
                     >
                       <Icon name="download-outline" size={26} color="blue" />
                     </TouchableOpacity>
