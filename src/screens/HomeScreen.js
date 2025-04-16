@@ -86,6 +86,11 @@ const HomeScreen = ({navigation}) => {
             navigateTo: 'PayFirstPremiumTransaction',
             icon: require('../assets/icon-premium-calc.png'),
           },
+          {
+            title: 'Collection Summary',
+            navigateTo: 'CodeWiseCollectionScreen',
+            icon: require('../assets/icon-claim-submission.png'),
+          },
         ]
       : []),
     // {title: 'Sync Payment', navigateTo: 'SyncPayment', icon: require('../assets/product-engine.png')},
