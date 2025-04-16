@@ -32,6 +32,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   const [mobile, setMobile] = useState('');
   const [plans, setPlans] = useState([]);
   const [plan, setPlan] = useState('');
+  const [selectedPlanLabel, setSelectedPlanLabel] = useState(''); // New state for plan label
   const [dateOfBirth, setDateOfBirth] = useState(new Date('1990-01-01'));
   const [age, setAge] = useState('');
   const [terms, setTerms] = useState([]);
@@ -52,7 +53,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   useEffect(() => {
     async function fetchData() {
       const response = await fetchProjects();
-      console.log('response.data', response.data);
+      console.log('Project response.data', response.data);
 
       if (response?.data) {
         const formattedProjects = response.data.map(project => ({
@@ -79,12 +80,26 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   useEffect(() => {
     async function fetchPlans() {
       const response = await getPlanList();
+      console.log('Plan response.data', response);
       if (response) {
-        setPlans(response);
+        // setPlans(response);
+        // Format plans to show value in dropdown
+        const formattedPlans = response.map(plan => ({
+          label: plan.value, // Show value in dropdown
+          value: plan.value, // Store value
+          fullLabel: plan.label, // Store full label for display
+        }));
+        setPlans(formattedPlans);
       }
     }
     fetchPlans();
   }, []);
+
+  // Set selected plan label when plan changes
+  useEffect(() => {
+    const selected = plans.find(p => p.value === plan);
+    setSelectedPlanLabel(selected ? selected.fullLabel : '');
+  }, [plan, plans]);
 
   // Fetch Terms based on selected Plan
   useEffect(() => {
@@ -220,6 +235,11 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             label={'Plan'}
             placeholder={'Select a plan'}
             required
+          />
+          <Input
+            label={'Plan Name'}
+            value={selectedPlanLabel}
+            editable={false}
           />
           <DatePickerComponent
             date={dateOfBirth}
