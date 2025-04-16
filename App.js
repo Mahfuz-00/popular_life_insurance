@@ -1,19 +1,19 @@
 // In App.js in a new project
 import * as React from 'react';
 import VersionCheck from 'react-native-version-check';
-import {View, Text, Alert, BackHandler, Linking, Platform} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {createDrawerNavigator} from '@react-navigation/drawer';
-import {useDispatch, useSelector} from 'react-redux';
+import { View, Text, Alert, BackHandler, Linking, Platform } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 import store from './src/store';
-import {userPayPremium} from './src/actions/userActions';
+import { userPayPremium } from './src/actions/userActions';
 
 import HomeScreen from './src/screens/HomeScreen';
-import {loadUser} from './src/actions/userActions';
+import { loadUser } from './src/actions/userActions';
 import SelectLoginScreen from './src/screens/SelectLoginScreen';
 import PremiumCalculatorScreen from './src/screens/PremiumCalculatorScreen';
 import CompanyInfoScreen from './src/screens/CompanyInfoScreen';
@@ -53,12 +53,13 @@ import SyncPaymentScreen from './src/screens/policyHolder/SyncPaymentScreen';
 import PayFirstPremiumScreen from './src/screens/PayFirstPremiumScreen';
 import PayfirstPremiumGateway from './src/screens/PayfirstPremiumGateways';
 import FirstPremiumTransactionsScreen from './src/screens/PayFirstPremiumTransaction';
+import CodeWiseCollectionScreen from './src/screens/CodeWiseCollectionScreen';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
 function StackNav() {
-  const {isAuthenticated, user} = useSelector(state => state.auth);
+  const { isAuthenticated, user } = useSelector(state => state.auth);
 
   return (
     <Stack.Navigator
@@ -83,8 +84,9 @@ function StackNav() {
       />
       <Stack.Screen
         name="PayFirstPremiumTransaction"
-        component={FirstPremiumTransactionsScreen }
+        component={FirstPremiumTransactionsScreen}
       />
+      <Stack.Screen name="CodeWiseCollectionScreen" component={CodeWiseCollectionScreen} />
       <Stack.Screen name="ProductInfo" component={ProductInfoScreen} />
       <Stack.Screen name="ClaimSubmission" component={ClaimSubmissionScreen} />
 

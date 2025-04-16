@@ -22,7 +22,7 @@ import { getPlanList, getTermList, getCalculatedPremium } from '../actions/calcu
 
 const PayFirstPremiumScreen = ({ navigation }) => {
   const [selectedProject, setSelectedProject] = useState({
-    code: '',
+    code: null,
     id: null,
     name: '',
   });
@@ -57,7 +57,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
       if (response?.data) {
         const formattedProjects = response.data.map(project => ({
           label: project.name, // What the user sees
-          value: project.code, // What is stored internally
+          value: project.id, // What is stored internally
         }));
         setProjects(formattedProjects);
       }
@@ -68,7 +68,9 @@ const PayFirstPremiumScreen = ({ navigation }) => {
 
   useEffect(() => {
     if (selectedProject?.value) {
-      setCode(selectedProject.value);
+      setCode(selectedProject.value.toString());
+      // const projectValue = selectedProject?.value?.toString() ?? '';
+      // setCode(projectValue);
     }
   }, [selectedProject]);
 
@@ -190,7 +192,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             value={selectedProject?.value}
             setValue={val => {
               const project = projects.find(p => p.value === val);
-              setSelectedProject(project || { code: '', id: null, name: '' });
+              setSelectedProject(project || { code: null, id: null, name: '' });
             }}
             label={'Project'}
             placeholder={'Select a project'}
