@@ -106,6 +106,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 31
         versionName "2.8.2"
+
     }
 
     dexOptions {

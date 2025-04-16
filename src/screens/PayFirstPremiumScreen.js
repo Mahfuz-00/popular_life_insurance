@@ -199,9 +199,14 @@ const PayFirstPremiumScreen = ({ navigation }) => {
           <Input label={'Code'} value={code} editable={false} />
           <Input label={'NID'} value={nid} onChangeText={setNid} required />
           <Input label={'Date'} value={entrydate} editable={false} />
-          <Input label={'Name'} value={name} onChangeText={setName} required />
           <Input
-            label={'Mobile No.'}
+            label={'Proposers Name'}
+            value={name}
+            onChangeText={setName}
+            required
+          />
+          <Input
+            label={'Proposers Mobile No.'}
             value={mobile}
             onChangeText={setMobile}
             required
@@ -255,7 +260,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             required
           />
           <Input
-            label={'Servicing Cell Name'}
+            label={'Servicing Cell Code'}
             value={servicingCell}
             onChangeText={setServicingCell}
             required
