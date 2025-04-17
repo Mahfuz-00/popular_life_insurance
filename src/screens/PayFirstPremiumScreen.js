@@ -14,7 +14,7 @@ import globalStyle from '../styles/globalStyle';
 import { Input } from './../components/Input';
 import { FilledButton } from './../components/FilledButton';
 import { PickerComponent } from './../components/PickerComponent';
-import { DatePickerComponent } from './../components/DatePickerComponent'; // Added
+import { DatePickerComponent } from './../components/DatePickerComponent';
 import Header from './../components/Header';
 import BackgroundImage from '../assets/BackgroundImage.png';
 import { fetchProjects } from '../actions/userActions';
@@ -59,6 +59,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
         const formattedProjects = response.data.map(project => ({
           label: project.name, // What the user sees
           value: project.id, // What is stored internally
+          code: project.code,
         }));
         setProjects(formattedProjects);
       }
@@ -70,8 +71,14 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   useEffect(() => {
     if (selectedProject?.value) {
       setCode(selectedProject.value.toString());
-      // const projectValue = selectedProject?.value?.toString() ?? '';
-      // setCode(projectValue);
+    }
+  }, [selectedProject]);
+
+  useEffect(() => {
+    if (selectedProject?.id) {
+      setCode(selectedProject.id.toString());
+    } else {
+      setCode('');
     }
   }, [selectedProject]);
 
@@ -116,6 +123,14 @@ const PayFirstPremiumScreen = ({ navigation }) => {
       setTerm(''); // Reset term when plan changes
     }
   }, [plan]);
+
+  useEffect(() => {
+    if (selectedProject?.id) {
+      setCode(selectedProject.id.toString());
+    } else {
+      setCode('');
+    }
+  }, [selectedProject]);
 
 
   // Calculate Age from Date of Birth
@@ -172,18 +187,28 @@ const PayFirstPremiumScreen = ({ navigation }) => {
 
   const handleSubmit = () => {
     // Validate required fields first
-    if (!selectedProject?.value || !nid || !name || !mobile || !totalPremium || !plan || !age || !term || !mode || !sumAssured) {
+    if (!selectedProject?.id || !nid || !name || !mobile || !totalPremium || !plan || !age || !term || !mode || !sumAssured) {
       return Alert.alert('Error', 'Please fill all required fields');
     }
 
+    const combinedPlan = selectedProject.id && plan ? `${selectedProject.id}${plan}` : '';
+
+    if (!combinedPlan) {
+      console.log(com);
+      return Alert.alert('Error', 'Invalid project or plan selection');
+    }
+
     navigation.navigate('PayfirstPremiumGateways', {
-      project: selectedProject.label,
-      code: selectedProject.value,
+      project: selectedProject.name,
+      projectCode: selectedProject.code,
+      code: selectedProject.id,
       nid,
       entrydate: entrydate,
       name,
       mobile,
-      plan, age,
+      plan: combinedPlan,
+      planlabel: selectedPlanLabel,
+      age,
       term,
       mode,
       sumAssured,
@@ -204,16 +229,21 @@ const PayFirstPremiumScreen = ({ navigation }) => {
         <ScrollView style={[globalStyle.wrapper, { margin: 10 }]}>
           <PickerComponent
             items={projects}
-            value={selectedProject?.value}
-            setValue={val => {
-              const project = projects.find(p => p.value === val);
-              setSelectedProject(project || { code: null, id: null, name: '' });
+            value={selectedProject?.id}
+            setValue={(val) => {
+              const project = projects.find(p => p.value === val) || { value: null, code: null, label: '' };
+              console.log('Selected project:', project); // Debug
+              setSelectedProject({
+                id: project.value,
+                code: project.code,
+                name: project.label,
+              });
             }}
             label={'Project'}
             placeholder={'Select a project'}
             required
           />
-          <Input label={'Code'} value={code} editable={false} />
+          <Input label={'Code'} value={selectedProject?.id?.toString() || ''} editable={false} />
           <Input label={'NID'} value={nid} onChangeText={setNid} required />
           <Input label={'Date'} value={entrydate} editable={false} />
           <Input
@@ -236,15 +266,33 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             placeholder={'Select a plan'}
             required
           />
-          <Input
+          {/* <Input
             label={'Plan Name'}
             value={selectedPlanLabel}
             editable={false}
-          />
+          /> */}
+          <View>
+            <Text style={[globalStyle.fontMedium.fontFamily, styles.planName]}>
+              Plan Name
+            </Text>
+            <ScrollView
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+              style={styles.planNameScroll}
+            >
+              <Text style={[globalStyle.input, styles.planNameInput]}>
+                {selectedPlanLabel}
+              </Text>
+            </ScrollView>
+          </View>
           <DatePickerComponent
             date={dateOfBirth}
             setDate={setDateOfBirth}
-            label={'Birth Date'}
+            label={
+              <Text>
+                Birth Date<Text style={{ color: 'red' }}>*</Text>
+              </Text>
+            }
             required
           />
           <PickerComponent
@@ -318,6 +366,29 @@ const styles = StyleSheet.create({
   submitButton: {
     marginVertical: 20,
   },
+  planNameScroll: {
+    marginBottom: 10,
+    flexGrow: 0,
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 7,
+    backgroundColor: '#E0E0E0',
+  },
+  planNameInput: {
+    padding: 15,
+    fontSize: 14,
+    fontFamily: 'Poppins-Regular', fontWeight: 'normal',
+    // fontWeight: 'normal',
+    color: '#333',
+    minWidth: '100%',
+    paddingRight: 20,
+  },
+  planName: {
+    color: 'black',
+    marginBottom: 10,
+    fontFamily: 'Poppins-Regular', fontWeight: 'normal'
+    // fontWeight: '100'
+  }
 });
 
 export default PayFirstPremiumScreen;

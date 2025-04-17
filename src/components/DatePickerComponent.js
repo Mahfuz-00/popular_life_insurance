@@ -5,9 +5,9 @@ import moment from 'moment';
 
 import globalStyle from '../styles/globalStyle';
 
-export function DatePickerComponent({date, setDate, style, label, labelStyle, ...props}) {
+export function DatePickerComponent({date, setDate, style, label, labelStyle, defaultDate = new Date('1990-01-01'), ...props}) {
     const [openDatePicker, setOpenDatePicker] = useState(false);
-    const [dateOfBirth, setDateOfBirth] = useState(new Date('1990-01-01'));
+    const [dateOfBirth, setDateOfBirth] = useState(defaultDate);
 
   return (
     <View style={[styles.container, style]}>
@@ -25,7 +25,7 @@ export function DatePickerComponent({date, setDate, style, label, labelStyle, ..
           modal
           mode={"date"}
           open={openDatePicker}
-          date={dateOfBirth}
+          date={date || dateOfBirth}
           onConfirm={(date) => {
             setOpenDatePicker(false)
             setDate(date)
