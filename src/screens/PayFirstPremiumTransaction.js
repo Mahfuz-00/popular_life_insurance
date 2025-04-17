@@ -129,7 +129,7 @@ const FirstPremiumTransactionsScreen = ({ navigation }) => {
                                         <Text style={styles.rowValue}>{parseFloat(item.Total_Premium).toFixed(2)}</Text>
                                         <TouchableOpacity
                                             style={[styles.rowValue, { alignItems: 'center' }]}
-                                            onPress={() => handleDownloadReceipt(item.Project_Code, item.NID_NO)}
+                                            onPress={() => handleDownloadReceipt(item.Project_Name, item.NID_NO)}
                                         >
                                             <Icon name="download-outline" size={26} color="blue" />
                                         </TouchableOpacity>
