@@ -42,12 +42,14 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
   // Extract data from route params
   const {
     project,
+    projectCode,
     code,
     nid,
     entrydate,
     name,
     mobile,
     plan,
+    planlabel,
     age,
     term,
     mode,
@@ -127,12 +129,14 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
   // Table data
   const tableData = [
     { label: 'Project', value: project },
-    { label: 'Code', value: code },
+    { label: 'Project Code', value: projectCode },
+    { label: 'Project ID', value: code },
     { label: 'NID', value: nid },
     { label: 'Date', value: entrydate },
     { label: 'Name', value: name },
     { label: 'Mobile No.', value: mobile },
-    { label: 'Plan', value: plan },
+    { label: 'Plan Code', value: plan },
+    { label: 'Plan', value: planlabel },
     { label: 'Age', value: age },
     { label: 'Term', value: term },
     { label: 'Mode', value: mode },
@@ -146,16 +150,26 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
     { label: 'AGM', value: agm },
   ];
 
+  console.log(tableData);
+
   const handleFirstPremiumSubmission = async () => {
     try {
       dispatch({ type: SHOW_LOADING }); // Keep loading if needed
 
       const token = await AsyncStorage.getItem('token');
 
+      // Ensure code is a string
+      const codeString = code.toString();
+
+      // Validate required fields
+      if (!codeString) {
+        throw new Error('Project ID (code) is required');
+      }
+
       const postData = {
         nid,
-        project: project.slice(0, 15), // Limit project to 15 characters for API
-        code,
+        project: projectCode,
+        code: codeString,
         name,
         entrydate,
         mobile,
@@ -197,7 +211,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
 
   // Handle eReceipt download
   const handleDownloadEReceipt = async () => {
-    eReceiptUrl = `${API}/api/first-payment/e-receipt/${nid}/${code}`;
+    eReceiptUrl = `${API}/api/first-payment/e-receipt/${nid}/${projectCode}`;
     console.log('Opening eReceipt URL:', eReceiptUrl);
     try {
       await Linking.openURL(eReceiptUrl);
@@ -223,7 +237,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
     // Step 1: Run handleFirstPremiumSubmission and check success
     let submissionSuccess = false;
     try {
-      await handleFirstPremiumSubmission();
+      submissionSuccess = await handleFirstPremiumSubmission();
       submissionSuccess = true; // Assume success if no error is thrown and status is 200
     } catch (error) {
       submissionSuccess = false;
@@ -415,7 +429,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
 
 
               let postData = {
-                project_name: code,
+                project_name: projectCode,
                 policy_no: nid,
                 method: method,
                 amount: amount,
