@@ -1,6 +1,7 @@
 // In App.js in a new project
 import * as React from 'react';
 import VersionCheck from 'react-native-version-check';
+import InAppUpdates from 'react-native-in-app-updates';
 import { View, Text, Alert, BackHandler, Linking, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -145,6 +146,7 @@ function StackNav() {
 }
 
 function App() {
+  // const inAppUpdates = new InAppUpdates();
   const handleSyncPayments = async () => {
     var syncPayments =
       JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
@@ -171,6 +173,34 @@ function App() {
       checkUpdateNeeded();
     }
   }, []);
+
+  // const checkUpdateNeeded = async () => {
+  //   try {
+  //     const result = await inAppUpdates.checkNeedsUpdate();
+  //     if (result.shouldUpdate) {
+  //       Alert.alert(
+  //         'Update Available!',
+  //         'Please update the app.',
+  //         [
+  //           {
+  //             text: 'Update',
+  //             onPress: async () => {
+  //               await inAppUpdates.startUpdate({
+  //                 updateType: InAppUpdates.IMMEDIATE,
+  //               });
+  //               BackHandler.exitApp();
+  //             },
+  //           },
+  //         ],
+  //         {
+  //           cancelable: false,
+  //         }
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error('Update check failed:', error);
+  //   }
+  // };
 
   const checkUpdateNeeded = async () => {
     let updateNeeded = await VersionCheck.needUpdate();

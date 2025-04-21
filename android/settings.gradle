@@ -2,3 +2,5 @@ rootProject.name = 'InsuranceCompanyApp'
 apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
 include ':app'
 includeBuild('../node_modules/react-native-gradle-plugin')
+include ':sp-react-native-in-app-updates'
+project(':sp-react-native-in-app-updates').projectDir = new File(rootProject.projectDir, '../node_modules/sp-react-native-in-app-updates/android')
