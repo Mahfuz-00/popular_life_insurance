@@ -24,6 +24,9 @@ buildscript {
         // classpath("com.facebook.react:react-native-gradle-plugin:0.72.4")
         // classpath("com.android.tools.build:gradle:8.7.0")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22")
+        classpath("com.google.gms:google-services:4.3.15")
+        // implementation 'com.google.android.play:core:2.1.0' 
+        // implementation project(':react-native-in-app-updates')
     }
 }
 

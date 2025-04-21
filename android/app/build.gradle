@@ -104,17 +104,17 @@ android {
         applicationId "com.insurancecompanyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 31
-        versionName "2.8.3"
+        versionCode 33
+        versionName "2.7.5"
 
     }
 
-    dexOptions {
-       javaMaxHeapSize "3g"
+    // dexOptions {
+    //    javaMaxHeapSize "3g"
 
-    //    incremental true
-    //     javaMaxHeapSize "4g"
-    }
+    // //    incremental true
+    // //     javaMaxHeapSize "4g"
+    // }
 
     lintOptions {
         abortOnError false
@@ -189,6 +189,9 @@ dependencies {
     implementation("com.facebook.react:react-android")
 
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.0.0")
+
+    // implementation ("com.google.android.play:core:2.0.1")
+    // implementation project(':react-native-in-app-updates')
 
     // implementation ("androidx.core:core:1.9.0")
 
