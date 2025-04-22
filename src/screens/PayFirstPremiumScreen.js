@@ -388,7 +388,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontFamily: 'Poppins-Regular', fontWeight: 'normal'
     // fontWeight: '100'
-  }
+  },
+  loadingText: {
+    color: '#000', // Ensure black text for loading
+    fontFamily: globalStyle.fontMedium.fontFamily,
+    fontSize: 16,
+    marginLeft: 10, // Space after loading indicator
+},
 });
 
 export default PayFirstPremiumScreen;
