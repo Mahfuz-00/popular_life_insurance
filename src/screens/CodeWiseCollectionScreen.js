@@ -45,7 +45,6 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
     // Minimum date (Jan 1, 2020)
     const minDate = new Date(2020, 0, 1);
 
-
     // Fetch projects on component mount
     useEffect(() => {
         async function fetchData() {
@@ -54,8 +53,8 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
 
             if (response?.data) {
                 const formattedProjects = response.data.map(project => ({
-                    label: project.name, // What the user sees
-                    value: project.code, // What is stored internally
+                    label: project.name,
+                    value: project.code,
                 }));
                 setProjects(formattedProjects);
             }
@@ -68,7 +67,7 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
     useEffect(() => {
         const fetchDesignations = async () => {
             try {
-                dispatch({ type: SHOW_LOADING });
+                dispatch({ type: SHOW_LOADING , payload: { textColor: '#000000' }});
                 const token = await AsyncStorage.getItem('token');
                 const response = await axios.get(`${API}/api/designations`, {
                     headers: {
@@ -80,15 +79,22 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
 
                 if (response.status === 200 && response.data?.data) {
                     console.log('Designation response.data', response.data);
-                    // Format the simple string array into Picker items
-                    const formattedDesignations = response.data.data.map(item => ({
-                        label: item,
-                        value: item,
-                    }));
+                    const formattedDesignations = response.data.data.map(item => {
+                        const displayLabel = {
+                            'Agent': 'FA',
+                            'Manager': 'BM',
+                            'Am': 'UM',
+                            'Agm': 'AGM',
+                        }[item] || item; // Use mapped label or original if not in mapping
+                        return {
+                            label: displayLabel,
+                            value: item, // Preserve original API value
+                        };
+                    });
                     setDesignations(formattedDesignations);
-                    if (formattedDesignations.length > 0) {
-                        setSelectedDesignation(formattedDesignations[0].value);
-                    }
+                    // if (formattedDesignations.length > 0) {
+                    //     setSelectedDesignation(formattedDesignations[0].value);
+                    // }
                 }
             } catch (error) {
                 console.error('Failed to fetch designations:', error);
@@ -105,9 +111,7 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
         fetchDesignations();
     }, []);
 
-
-    // Fetch collection data based on report type
-    // Fetch collection data based on report type
+    // Fetch collection data
     const fetchCollectionData = async () => {
         // Validate inputs
         if (!selectedProject?.value || !selectedDesignation || !code.trim()) {
@@ -115,19 +119,19 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
             return;
         }
 
-        // Validate date range
-        if (fromDate > toDate) {
+        // Validate date range only for Details
+        if (reportType === 'Details' && fromDate > toDate) {
             Alert.alert('Error', 'From date cannot be after To date', [{ text: 'OK', style: 'cancel' }]);
             return;
         }
 
         try {
-            dispatch({ type: SHOW_LOADING });
+            dispatch({ type: SHOW_LOADING , payload: { textColor: '#000000' }});
             const token = await AsyncStorage.getItem('token');
-            const endpoint =
-                reportType === 'Summary'
-                    ? `${API}/api/code-wise-collection-summary`
-                    : `${API}/api/code-wise-collection-details`;
+            // Use different endpoints based on reportType
+            const endpoint = reportType === 'Summary'
+                ? `${API}/api/code-wise-collection-summary`
+                : `${API}/api/code-wise-collection-details`;
 
             const response = await axios.post(
                 endpoint,
@@ -135,8 +139,7 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
                     project_code: selectedProject.value.toString(),
                     designation: selectedDesignation,
                     code,
-                    // from_date: moment(fromDate).format('YYYY-MM-DD'),
-                    // to_date: moment(toDate).format('YYYY-MM-DD')
+                    // Do not send from_date or to_date to the API
                 },
                 {
                     headers: {
@@ -148,10 +151,15 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
             );
 
             if (response.status === 200 && response.data?.data) {
-                console.log('Code Wise Collection', response.data);
-                setData(response.data.data);
+                console.log('Code Wise Collection Response:', JSON.stringify(response.data, null, 2)); // Debug log
+                if (Array.isArray(response.data.data) && response.data.data.length === 0) {
+                    Alert.alert('Alert', 'No data found.', [{ text: 'OK', style: 'cancel' }]);
+                    setData(null);
+                } else {
+                    setData(response.data.data);
+                }
             } else {
-                console.log('Code Wise Collection', response.data);
+                console.log('Code Wise Collection No Data:', response.data);
                 Alert.alert('Error', 'No data found for the provided inputs.', [
                     { text: 'OK', style: 'cancel' },
                 ]);
@@ -172,7 +180,18 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
 
     // Render Summary Table
     const renderSummaryTable = () => {
-        if (!data || !data.months) return null;
+        if (!data || !data.data) {
+            console.log('No data or data.data is undefined'); // Debug log
+            return null;
+        }
+
+        const projectName = selectedProject.label;
+        const years = Object.keys(data.data); // Get all years dynamically
+
+        if (years.length === 0) {
+            console.log('No years found in data.data'); // Debug log
+            return null;
+        }
 
         return (
             <View style={styles.table}>
@@ -180,44 +199,65 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
                     Popular Life Insurance Co.Ltd.
                 </Text>
                 <Text style={[globalStyle.fontMedium, styles.subtitle]}>
-                    Alamina Bima Prokolpo - Code Wise Collection Summary
+                    {projectName} - Code Wise Collection Summary
                 </Text>
                 <Text style={[globalStyle.fontMedium, styles.codeInfo]}>
-                    Code No: {data.code} {data.name}
+                    Code No: {code}
                 </Text>
-                <View style={styles.tableHeader}>
-                    <Text style={[styles.headerCell, { flex: 2 }]}>Month</Text>
-                    <Text style={styles.headerCell}>Type</Text>
-                    <Text style={styles.headerCell}>Amount</Text>
-                    <Text style={styles.headerCell}>No of Trns.</Text>
-                </View>
-                {Object.keys(data.months).map((month, index) => (
-                    <View key={index}>
-                        <View style={styles.row}>
-                            <Text style={[styles.cell, { flex: 2 }]}>{month}</Text>
-                            <Text style={styles.cell}>Deferred</Text>
-                            <Text style={styles.cell}>{data.months[month].Deferred?.amount || 0}</Text>
-                            <Text style={styles.cell}>{data.months[month].Deferred?.transactions || 0}</Text>
+                {years.map((year, yearIndex) => (
+                    <View key={yearIndex}>
+                        <Text style={[globalStyle.fontMedium, styles.yearHeader]}>{year}</Text>
+                        <View style={styles.tableHeader}>
+                            <Text style={[styles.headerCell, { flex: 1 }]}>Month</Text>
+                            <Text style={styles.headerCell}>Type</Text>
+                            <Text style={styles.headerCell}>Amount</Text>
+                            <Text style={styles.headerCell}>No of Trns.</Text>
                         </View>
-                        <View style={styles.row}>
-                            <Text style={[styles.cell, { flex: 2 }]}></Text>
-                            <Text style={styles.cell}>Renewal</Text>
-                            <Text style={styles.cell}>{data.months[month].Renewal?.amount || 0}</Text>
-                            <Text style={styles.cell}>{data.months[month].Renewal?.transactions || 0}</Text>
-                        </View>
-                        <View style={styles.row}>
-                            <Text style={[styles.cell, { flex: 2 }]}></Text>
-                            <Text style={styles.cell}>Total</Text>
-                            <Text style={styles.cell}>{data.months[month].Total?.amount || 0}</Text>
-                            <Text style={styles.cell}>{data.months[month].Total?.transactions || 0}</Text>
-                        </View>
+                        {Object.keys(data.data[year].data || {}).map((month, monthIndex) => {
+                            const monthData = data.data[year].data[month];
+                            const deferredCount = monthData.deffered_count || 0; // Use deffered_count
+                            const renewalCount = monthData.renewal_count || 0; // Use renewal_count
+                            const totalCount = monthData.total_count || 0; // Use total_count
+                            const transactionCount = Array.isArray(monthData.data) ? monthData.data.length : 0; // Safe check
+                            console.log(`Year: ${year}, Month: ${month}, Data:`, monthData); // Debug log
+                            return (
+                                <View key={monthIndex}>
+                                    <View style={styles.row}>
+                                        <Text style={[styles.cell, { flex: 1 }]}>{month}</Text>
+                                        <Text style={styles.cell}>Deferred</Text>
+                                        <Text style={styles.cell}>0.00</Text>
+                                        <Text style={styles.cell}>{deferredCount}</Text>
+                                    </View>
+                                    <View style={styles.row}>
+                                        <Text style={[styles.cell, { flex: 1 }]}></Text>
+                                        <Text style={styles.cell}>Renewal</Text>
+                                        <Text style={styles.cell}>{monthData.total || '0.00'}</Text>
+                                        <Text style={styles.cell}>{renewalCount}</Text>
+                                    </View>
+                                    <View style={styles.row}>
+                                        <Text style={[styles.cell, { flex: 1 }]}></Text>
+                                        <Text style={styles.cell}>Total</Text>
+                                        <Text style={styles.cell}>{monthData.total || '0.00'}</Text>
+                                        <Text style={styles.cell}>{totalCount}</Text>
+                                    </View>
+                                </View>
+                            );
+                        })}
                     </View>
                 ))}
                 <View style={[styles.row, styles.grandTotal]}>
-                    <Text style={[styles.cell, { flex: 2 }]}>Grand Total</Text>
+                    <Text style={[styles.cell, { flex: 1 }]}>Grand Total</Text>
                     <Text style={styles.cell}></Text>
-                    <Text style={styles.cell}>{data.grandTotal?.amount || 0}</Text>
-                    <Text style={styles.cell}>{data.grandTotal?.transactions || 0}</Text>
+                    <Text style={styles.cell}>{data.total || '0.00'}</Text>
+                    <Text style={styles.cell}>
+                        {years.reduce((sum, year) =>
+                            sum + Object.values(data.data[year].data || {}).reduce(
+                                (monthSum, month) => monthSum + (month.total_count || 0),
+                                0
+                            ),
+                            0
+                        )}
+                    </Text>
                 </View>
             </View>
         );
@@ -225,7 +265,44 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
 
     // Render Details Table
     const renderDetailsTable = () => {
-        if (!data || !data.months) return null;
+        if (!data || !data.data) {
+            console.log('No data or data.data is undefined for Details'); // Debug log
+            return null;
+        }
+
+        const projectName = selectedProject.label || 'Alamina Bima Prokolpo';
+        const fromDateMoment = moment(fromDate);
+        const toDateMoment = moment(toDate);
+        const years = Object.keys(data.data); // Get all years dynamically
+
+        // Filter transactions within the selected date range
+        const filteredData = {};
+        years.forEach(year => {
+            const months = Object.keys(data.data[year].data || {});
+            months.forEach(month => {
+                const transactions = (Array.isArray(data.data[year].data[month].data) ? data.data[year].data[month].data : []).filter(txn => {
+                    const txnDate = moment(txn.date?.original);
+                    return txnDate.isBetween(fromDateMoment, toDateMoment, 'day', '[]');
+                });
+                if (transactions.length > 0) {
+                    if (!filteredData[year]) {
+                        filteredData[year] = {};
+                    }
+                    filteredData[year][month] = {
+                        total: transactions.reduce((sum, txn) => sum + parseFloat(txn.amount || 0), 0).toFixed(2),
+                        data: transactions,
+                    };
+                }
+            });
+        });
+
+        if (Object.keys(filteredData).length === 0) {
+            return (
+                <Text style={[globalStyle.fontMedium, { textAlign: 'center', marginTop: 20 }]}>
+                    No data found for the selected date range.
+                </Text>
+            );
+        }
 
         return (
             <View style={styles.table}>
@@ -233,58 +310,87 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
                     Popular Life Insurance Co.Ltd.
                 </Text>
                 <Text style={[globalStyle.fontMedium, styles.subtitle]}>
-                    Alamina Bima Prokolpo - Code Wise Collection Detail
+                    {projectName} - Code Wise Collection Summary Details
                 </Text>
                 <Text style={[globalStyle.fontMedium, styles.codeInfo]}>
-                    Code No: {data.code} {data.name}
+                    Code No: {code}
                 </Text>
-                {Object.keys(data.months).map((month, index) => (
-                    <View key={index}>
-                        <Text style={[globalStyle.fontMedium, styles.monthHeader]}>{month}</Text>
-                        <View style={styles.tableHeader}>
-                            <Text style={styles.headerCell}>Trns. No</Text>
-                            <Text style={styles.headerCell}>Amount</Text>
-                            <Text style={styles.headerCell}>D/R</Text>
-                            <Text style={styles.headerCell}>Date</Text>
-                        </View>
-                        {data.months[month].map((txn, idx) => (
-                            <View style={styles.row} key={idx}>
-                                <Text style={styles.cell}>{txn.transaction_no || 'N/A'}</Text>
-                                <Text style={styles.cell}>{txn.amount || 0}</Text>
-                                <Text style={styles.cell}>{txn.type || 'N/A'}</Text>
-                                <Text style={styles.cell}>
-                                    {txn.date ? moment(txn.date).format('YYYY-MM-DD') : 'N/A'}
-                                </Text>
+                <Text style={[globalStyle.fontMedium, styles.dateRange]}>
+                    Date Range: {moment(fromDate).format('DD-MM-YYYY')} to {moment(toDate).format('DD-MM-YYYY')}
+                </Text>
+                {Object.keys(filteredData).map((year, yearIndex) => (
+                    <View key={yearIndex}>
+                        <Text style={[globalStyle.fontMedium, styles.yearHeader]}>{year}</Text>
+                        {Object.keys(filteredData[year]).map((month, monthIndex) => (
+                            <View key={monthIndex}>
+                                <Text style={[globalStyle.fontMedium, styles.monthHeader]}>{month}</Text>
+                                <View style={styles.tableHeader}>
+                                    <Text style={styles.headerCell}>Trns. No</Text>
+                                    <Text style={styles.headerCell}>Amount</Text>
+                                    <Text style={styles.headerCell}>D/R</Text>
+                                    <Text style={styles.headerCell}>Date</Text>
+                                </View>
+                                {filteredData[year][month].data.map((txn, idx) => (
+                                    <View style={styles.row} key={idx}>
+                                        <Text style={styles.cell}>{txn.transaction_no || 'N/A'}</Text>
+                                        <Text style={styles.cell}>{txn.amount || '0.00'}</Text>
+                                        <Text style={styles.cell}>{txn.type || 'N/A'}</Text>
+                                        <Text style={styles.cell}>
+                                            {txn.date ? moment(txn.date.original).format('DD-MM-YYYY') : 'N/A'}
+                                        </Text>
+                                    </View>
+                                ))}
+                                <View style={[styles.row, styles.subTotal]}>
+                                    <Text style={styles.cell}>Sub Total</Text>
+                                    <Text style={styles.cell}>{filteredData[year][month].total}</Text>
+                                    <Text style={styles.cell}></Text>
+                                    <Text style={styles.cell}></Text>
+                                </View>
                             </View>
                         ))}
-                        <View style={[styles.row, styles.subTotal]}>
-                            <Text style={styles.cell}>Sub Total</Text>
-                            <Text style={styles.cell}>
-                                {data.months[month].reduce((sum, txn) => sum + (txn.amount || 0), 0)}
-                            </Text>
-                            <Text style={styles.cell}></Text>
-                            <Text style={styles.cell}></Text>
-                        </View>
                     </View>
                 ))}
                 <View style={styles.totals}>
                     <View style={styles.row}>
                         <Text style={styles.cell}>Deferred Collection</Text>
-                        <Text style={styles.cell}>{data.totals?.Deferred?.amount || 0}</Text>
+                        <Text style={styles.cell}>{data.deffered_total || '0.00'}</Text>
+                        <Text style={styles.cell}>
+                            {Object.keys(filteredData).reduce((sum, year) =>
+                                sum + Object.values(filteredData[year]).reduce((monthSum, month) =>
+                                    monthSum + month.data.filter(txn => txn.type === 'D').length, 0
+                                ), 0)}
+                        </Text>
                         <Text style={styles.cell}></Text>
-                        <Text style={styles.cell}>{data.totals?.Deferred?.transactions || 0}</Text>
                     </View>
                     <View style={styles.row}>
                         <Text style={styles.cell}>Renewal Collection</Text>
-                        <Text style={styles.cell}>{data.totals?.Renewal?.amount || 0}</Text>
+                        <Text style={styles.cell}>
+                            {Object.keys(filteredData).reduce((sum, year) =>
+                                sum + Object.values(filteredData[year]).reduce((monthSum, month) => monthSum + parseFloat(month.total), 0), 0).toFixed(2)
+                            }
+                        </Text>
+                        <Text style={styles.cell}>
+                            {Object.keys(filteredData).reduce((sum, year) =>
+                                sum + Object.values(filteredData[year]).reduce((monthSum, month) =>
+                                    monthSum + month.data.filter(txn => txn.type === 'R').length, 0
+                                ), 0)}
+                        </Text>
                         <Text style={styles.cell}></Text>
-                        <Text style={styles.cell}>{data.totals?.Renewal?.transactions || 0}</Text>
                     </View>
                     <View style={[styles.row, styles.grandTotal]}>
                         <Text style={styles.cell}>Grand Total</Text>
-                        <Text style={styles.cell}>{data.totals?.GrandTotal?.amount || 0}</Text>
+                        <Text style={styles.cell}>
+                            {Object.keys(filteredData).reduce((sum, year) =>
+                                sum + Object.values(filteredData[year]).reduce((monthSum, month) => monthSum + parseFloat(month.total), 0), 0).toFixed(2)
+                            }
+                        </Text>
                         <Text style={styles.cell}></Text>
-                        <Text style={styles.cell}>{data.totals?.GrandTotal?.transactions || 0}</Text>
+                        <Text style={styles.cell}></Text>
+                        {/* <Text style={styles.cell}>
+                            {Object.keys(filteredData).reduce((sum, year) =>
+                                sum + Object.values(filteredData[year]).reduce((monthSum, month) => monthSum + month.data.length, 0), 0)
+                            }
+                        </Text> */}
                     </View>
                 </View>
             </View>
@@ -319,32 +425,6 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
                                 required
                             />
                             <Input label={'Code'} value={code} onChangeText={setCode} required />
-                            <DatePickerComponent
-                                date={fromDate}
-                                setDate={setFromDate}
-                                defaultDate={new Date('2020-01-01')}
-                                label={
-                                    <Text>
-                                        From Date<Text style={{ color: 'red' }}>*</Text>
-                                    </Text>
-                                }
-                                minimumDate={minDate}
-                                maximumDate={toDate} // Ensure from date is before to date
-                                required
-                            />
-                            <DatePickerComponent
-                                date={toDate}
-                                setDate={setToDate}
-                                defaultDate={new Date('2020-01-01')}
-                                label={
-                                    <Text>
-                                        To Date<Text style={{ color: 'red' }}>*</Text>
-                                    </Text>
-                                }
-                                minimumDate={fromDate} // Ensure to date is after from date
-                                maximumDate={new Date()}
-                                required
-                            />
                             <PickerComponent
                                 items={[
                                     { label: 'Summary', value: 'Summary' },
@@ -356,8 +436,39 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
                                 placeholder={'Select report type'}
                                 required
                             />
+                            {/* Conditionally render date pickers for Details only */}
+                            {reportType === 'Details' && (
+                                <>
+                                    <DatePickerComponent
+                                        date={fromDate}
+                                        setDate={setFromDate}
+                                        defaultDate={new Date('2020-01-01')}
+                                        label={
+                                            <Text>
+                                                From Date<Text style={{ color: 'red' }}>*</Text>
+                                            </Text>
+                                        }
+                                        minimumDate={minDate}
+                                        maximumDate={toDate}
+                                        required
+                                    />
+                                    <DatePickerComponent
+                                        date={toDate}
+                                        setDate={setToDate}
+                                        defaultDate={new Date('2020-01-01')}
+                                        label={
+                                            <Text>
+                                                To Date<Text style={{ color: 'red' }}>*</Text>
+                                            </Text>
+                                        }
+                                        minimumDate={fromDate}
+                                        maximumDate={new Date()}
+                                        required
+                                    />
+                                </>
+                            )}
                             <FilledButton
-                                title="Fetch Summary"
+                                title="Fetch Data"
                                 style={styles.fetchButton}
                                 onPress={fetchCollectionData}
                             />
@@ -366,11 +477,11 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
                         {/* Data Display */}
                         {data && reportType === 'Summary' && renderSummaryTable()}
                         {data && reportType === 'Details' && renderDetailsTable()}
-                        {/* {data === null && projects.trim() && designation.trim() && code.trim() && (
+                        {data === null && projects.length > 0 && selectedDesignation && code.trim() && (
                             <Text style={[globalStyle.fontMedium, { textAlign: 'center', marginTop: 20 }]}>
-                                No data found.
+                                
                             </Text>
-                        )} */}
+                        )}
                     </View>
                 </ScrollView>
             </ImageBackground>
@@ -435,6 +546,17 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 14,
         marginBottom: 10,
+    },
+    dateRange: {
+        textAlign: 'center',
+        fontSize: 14,
+        marginBottom: 10,
+    },
+    yearHeader: {
+        fontSize: 18,
+        fontFamily: globalStyle.fontBold.fontFamily,
+        marginVertical: 10,
+        marginLeft: 10,
     },
     tableHeader: {
         flexDirection: 'row',

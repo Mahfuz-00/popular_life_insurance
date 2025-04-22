@@ -37,7 +37,7 @@ const FirstPremiumTransactionsScreen = ({ navigation }) => {
         }
 
         try {
-            dispatch({ type: SHOW_LOADING });
+            dispatch({ type: SHOW_LOADING , payload: { textColor: '#000000' }});
             const token = await AsyncStorage.getItem('token');
             const response = await axios.get(`${API}/api/first-payment/transactions/${nid}`, {
                 headers: {
@@ -197,6 +197,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 5,
         fontFamily: globalStyle.fontMedium.fontFamily,
         color: '#000',
+    },
+    loadingText: {
+        color: '#000', // Ensure black text for loading
+        fontFamily: globalStyle.fontMedium.fontFamily,
+        fontSize: 16,
+        marginLeft: 10, // Space after loading indicator
     },
 });
 

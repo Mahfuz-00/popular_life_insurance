@@ -154,7 +154,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
 
   const handleFirstPremiumSubmission = async () => {
     try {
-      dispatch({ type: SHOW_LOADING }); // Keep loading if needed
+      dispatch({ type: SHOW_LOADING , payload: { textColor: '#000000' }}); // Keep loading if needed
 
       const token = await AsyncStorage.getItem('token');
 
@@ -379,7 +379,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
           console.log('Bkash: ', JSON.stringify(data));
           if (JSON.stringify(data).includes('status=success')) {
             await setBkashUrl('');
-            dispatch({ type: SHOW_LOADING });
+            dispatch({ type: SHOW_LOADING, payload: { textColor: '#000000' } });
             const createExecuteResult = await bkashExecutePayment(
               bkashToken,
               bkashPaymentId,
@@ -559,7 +559,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
             // }
 
 
-            dispatch({ type: SHOW_LOADING });
+            dispatch({ type: SHOW_LOADING , payload: { textColor: '#000000' }});
             let postData = {
               project_name: code,
               policy_no: nid,
@@ -737,6 +737,12 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     paddingHorizontal: 5,
     fontFamily: globalStyle.fontMedium.fontFamily,
+  },
+  loadingText: {
+    color: '#000', // Ensure black text for loading
+    fontFamily: globalStyle.fontMedium.fontFamily,
+    fontSize: 16,
+    marginLeft: 10, // Space after loading indicator
   },
 });
 
