@@ -191,7 +191,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
       return Alert.alert('Error', 'Please fill all required fields');
     }
 
-    const combinedPlan = selectedProject.id && plan ? `${selectedProject.id}${plan}` : '';
+    const combinedPlan = `${selectedProject.id}${plan}`;
 
     if (!combinedPlan) {
       console.log(com);
