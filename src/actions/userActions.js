@@ -1,4 +1,4 @@
-import {BackHandler, Alert, ToastAndroid} from 'react-native';
+import { BackHandler, Alert, ToastAndroid } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
@@ -39,8 +39,8 @@ import {
   LOGOUT_FAIL,
   CLEAR_ERRORS,
 } from '../constants/userConstants';
-import {API} from '../config';
-import {HIDE_LOADING, SHOW_LOADING} from './../constants/commonConstants';
+import { API } from '../config';
+import { HIDE_LOADING, SHOW_LOADING } from './../constants/commonConstants';
 import axios from '../utils/axios';
 
 const config = {
@@ -61,7 +61,7 @@ export const createClaim = async postData => {
       },
     };
 
-    const {data} = await axios.post(
+    const { data } = await axios.post(
       `${API}/api/claims/create`,
       postData,
       config,
@@ -105,17 +105,17 @@ export const getAuthPolicyDetails = postData => async dispatch => {
       },
     };
 
-    dispatch({type: SHOW_LOADING});
-    const {data} = await axios.post(
+    dispatch({ type: SHOW_LOADING });
+    const { data } = await axios.post(
       `${API}/api/policy-details/auth`,
       postData,
       config,
     );
-    dispatch({type: HIDE_LOADING});
+    dispatch({ type: HIDE_LOADING });
 
     return data;
   } catch (error) {
-    dispatch({type: HIDE_LOADING});
+    dispatch({ type: HIDE_LOADING });
     ToastAndroid.show(error.message, ToastAndroid.LONG);
   }
 };
@@ -130,7 +130,7 @@ export const userPolicyPaymentList = async postData => {
         Authorization: `Bearer ${JSON.parse(token)}`,
       },
     };
-    const {data} = await axios.post(
+    const { data } = await axios.post(
       `${API}/api/policy/payments`,
       postData,
       config,
@@ -153,14 +153,14 @@ export const userPayPremium = async postData => {
         Authorization: `Bearer ${JSON.parse(token)}`,
       },
     };
-    const {data} = await axios.post(`${API}/api/payment`, postData, config);
+    const { data } = await axios.post(`${API}/api/payment`, postData, config);
     console.log('userPayPremium: ', JSON.stringify(data));
 
     ToastAndroid.show(data.message, ToastAndroid.LONG);
-    return true;
+    return { data, success: true };
   } catch (error) {
     ToastAndroid.show('Failed to pay. Try again..', ToastAndroid.LONG);
-    return false;
+    return { data: null, success: false };
   }
 };
 
@@ -175,9 +175,9 @@ export const getDuePremiumDetails = async policyNo => {
         Authorization: `Bearer ${JSON.parse(token)}`,
       },
     };
-    const {data} = await axios.post(
+    const { data } = await axios.post(
       `${API}/api/policy-due-premium`,
-      {policyNo: policyNo},
+      { policyNo: policyNo },
       config,
     );
 
@@ -189,7 +189,7 @@ export const getDuePremiumDetails = async policyNo => {
 
 export const getPrListByUser = policyNo => async dispatch => {
   try {
-    dispatch({type: SHOW_LOADING});
+    dispatch({ type: SHOW_LOADING });
     const token = await AsyncStorage.getItem('token');
 
     const config = {
@@ -199,16 +199,16 @@ export const getPrListByUser = policyNo => async dispatch => {
         Authorization: `Bearer ${JSON.parse(token)}`,
       },
     };
-    const {data} = await axios.post(
+    const { data } = await axios.post(
       `${API}/api/policy-pr-list-year-wise/${policyNo}`,
       {},
       config,
     );
     // const { data } = await axios.post(`${API}/api/policy-pr-list/${policyNo}`, {}, config);
-    dispatch({type: HIDE_LOADING});
+    dispatch({ type: HIDE_LOADING });
     return data.data;
   } catch (error) {
-    dispatch({type: HIDE_LOADING});
+    dispatch({ type: HIDE_LOADING });
     return [];
   }
 };
@@ -224,7 +224,7 @@ export const getPolicyDetailsByUser = async policyNo => {
         Authorization: `Bearer ${JSON.parse(token)}`,
       },
     };
-    const {data} = await axios.get(
+    const { data } = await axios.get(
       `${API}/api/policy-details/${policyNo}`,
       config,
     );
@@ -246,7 +246,7 @@ export const getPolicyListByUser = async () => {
         Authorization: `Bearer ${JSON.parse(token)}`,
       },
     };
-    const {data} = await axios.post(`${API}/api/policy-list/auth`, {}, config);
+    const { data } = await axios.post(`${API}/api/policy-list/auth`, {}, config);
 
     return data.data;
   } catch (error) {
@@ -257,8 +257,8 @@ export const getPolicyListByUser = async () => {
 // Login
 export const login = postData => async dispatch => {
   try {
-    dispatch({type: SHOW_LOADING});
-    dispatch({type: LOGIN_REQUEST});
+    dispatch({ type: SHOW_LOADING });
+    dispatch({ type: LOGIN_REQUEST });
 
     const config = {
       headers: {
@@ -266,9 +266,9 @@ export const login = postData => async dispatch => {
       },
     };
 
-    const {data} = await axios.post(`${API}/api/login`, postData, config);
+    const { data } = await axios.post(`${API}/api/login`, postData, config);
 
-    dispatch({type: HIDE_LOADING});
+    dispatch({ type: HIDE_LOADING });
 
     if (data.errors) return data;
 
@@ -282,20 +282,20 @@ export const login = postData => async dispatch => {
       var savedcredentials =
         JSON.parse(await AsyncStorage.getItem('savedcredentials')) ?? [];
       savedcredentials?.findIndex(cred => cred.userName == postData.phone) !==
-      -1
+        -1
         ? console.log('ache: ')
         : await AsyncStorage.setItem(
-            'savedcredentials',
-            JSON.stringify([
-              ...savedcredentials,
-              {userName: postData.phone, password: postData.password},
-            ]),
-          );
+          'savedcredentials',
+          JSON.stringify([
+            ...savedcredentials,
+            { userName: postData.phone, password: postData.password },
+          ]),
+        );
     }
 
     dispatch({
       type: LOGIN_SUCCESS,
-      payload: {token: data.data.token, user: data.data.user},
+      payload: { token: data.data.token, user: data.data.user },
     });
   } catch (error) {
     dispatch({
@@ -303,13 +303,13 @@ export const login = postData => async dispatch => {
       payload: 'Failed',
     });
 
-    dispatch({type: HIDE_LOADING});
+    dispatch({ type: HIDE_LOADING });
   }
 };
 
 export const resetPassword = postData => async dispatch => {
   try {
-    const {data} = await axios.post(
+    const { data } = await axios.post(
       `${API}/api/reset-password`,
       postData,
       config,
@@ -330,7 +330,7 @@ export const resetPassword = postData => async dispatch => {
 
 export const verifyForgotPasswordOtp = postData => async dispatch => {
   try {
-    const {data} = await axios.post(
+    const { data } = await axios.post(
       `${API}/api/verify-forgot-password-otp`,
       postData,
       config,
@@ -351,7 +351,7 @@ export const verifyForgotPasswordOtp = postData => async dispatch => {
 
 export const getforgotPasswordOtp = postData => async dispatch => {
   try {
-    const {data} = await axios.post(
+    const { data } = await axios.post(
       `${API}/api/forgot-password`,
       postData,
       config,
@@ -379,7 +379,7 @@ export const verifyRegistration = postData => async dispatch => {
       },
     };
 
-    const {data} = await axios.post(
+    const { data } = await axios.post(
       `${API}/api/verify-registration`,
       postData,
       config,
@@ -393,7 +393,7 @@ export const verifyRegistration = postData => async dispatch => {
 
       dispatch({
         type: LOGIN_SUCCESS,
-        payload: {token: data.data.token, user: data.data.user},
+        payload: { token: data.data.token, user: data.data.user },
       });
       ToastAndroid.show(data.message, ToastAndroid.LONG);
     }
@@ -413,7 +413,7 @@ export const register = postData => async dispatch => {
       },
     };
 
-    const {data} = await axios.post(
+    const { data } = await axios.post(
       `${API}/api/registration`,
       postData,
       config,
@@ -435,7 +435,7 @@ export const register = postData => async dispatch => {
 // Load user
 export const loadUser = () => async dispatch => {
   try {
-    dispatch({type: LOAD_USER_REQUEST});
+    dispatch({ type: LOAD_USER_REQUEST });
 
     const user = await AsyncStorage.getItem('user');
     const token = await AsyncStorage.getItem('token');
@@ -448,10 +448,10 @@ export const loadUser = () => async dispatch => {
           Authorization: `Bearer ${JSON.parse(token)}`,
         },
       };
-      const {data} = await axios.get(`${API}/api/user`, config);
+      const { data } = await axios.get(`${API}/api/user`, config);
       dispatch({
         type: LOGIN_SUCCESS,
-        payload: {token: JSON.parse(token), user: data.data.user},
+        payload: { token: JSON.parse(token), user: data.data.user },
       });
 
       await AsyncStorage.setItem('user', JSON.stringify(data.data.user));
@@ -471,7 +471,7 @@ export const loadUser = () => async dispatch => {
 // Update profile
 export const updateProfile = userData => async dispatch => {
   try {
-    dispatch({type: UPDATE_PROFILE_REQUEST});
+    dispatch({ type: UPDATE_PROFILE_REQUEST });
 
     const config = {
       headers: {
@@ -479,7 +479,7 @@ export const updateProfile = userData => async dispatch => {
       },
     };
 
-    const {data} = await axios.put(`${API}/api/v1/me/update`, userData, config);
+    const { data } = await axios.put(`${API}/api/v1/me/update`, userData, config);
 
     dispatch({
       type: UPDATE_PROFILE_SUCCESS,
@@ -496,7 +496,7 @@ export const updateProfile = userData => async dispatch => {
 // Update password
 export const updatePassword = passwords => async dispatch => {
   try {
-    dispatch({type: UPDATE_PASSWORD_REQUEST});
+    dispatch({ type: UPDATE_PASSWORD_REQUEST });
 
     const config = {
       headers: {
@@ -504,7 +504,7 @@ export const updatePassword = passwords => async dispatch => {
       },
     };
 
-    const {data} = await axios.put(
+    const { data } = await axios.put(
       `${API}/api/v1/password/update`,
       passwords,
       config,
@@ -525,7 +525,7 @@ export const updatePassword = passwords => async dispatch => {
 // Forgot password
 export const forgotPassword = email => async dispatch => {
   try {
-    dispatch({type: FORGOT_PASSWORD_REQUEST});
+    dispatch({ type: FORGOT_PASSWORD_REQUEST });
 
     const config = {
       headers: {
@@ -533,7 +533,7 @@ export const forgotPassword = email => async dispatch => {
       },
     };
 
-    const {data} = await axios.post(
+    const { data } = await axios.post(
       `${API}/api/v1/password/forgot`,
       email,
       config,
@@ -592,7 +592,7 @@ export const logout = navigation => async dispatch => {
 // Update user - ADMIN
 export const updateUser = (id, userData) => async dispatch => {
   try {
-    dispatch({type: UPDATE_USER_REQUEST});
+    dispatch({ type: UPDATE_USER_REQUEST });
 
     const config = {
       headers: {
@@ -600,7 +600,7 @@ export const updateUser = (id, userData) => async dispatch => {
       },
     };
 
-    const {data} = await axios.put(
+    const { data } = await axios.put(
       `${API}/api/v1/admin/user/${id}`,
       userData,
       config,
@@ -635,7 +635,7 @@ export const fetchProjects = async () => {
         Authorization: `Bearer ${JSON.parse(token)}`,
       },
     };
-    const {data} = await axios.get(`${API}/api/projects`, config);
+    const { data } = await axios.get(`${API}/api/projects`, config);
     console.log(data.data);
     return data;
   } catch (error) {
