@@ -67,7 +67,7 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
     useEffect(() => {
         const fetchDesignations = async () => {
             try {
-                dispatch({ type: SHOW_LOADING , payload: { textColor: '#000000' }});
+                dispatch({ type: SHOW_LOADING, payload: { textColor: '#000000' } });
                 const token = await AsyncStorage.getItem('token');
                 const response = await axios.get(`${API}/api/designations`, {
                     headers: {
@@ -79,18 +79,33 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
 
                 if (response.status === 200 && response.data?.data) {
                     console.log('Designation response.data', response.data);
-                    const formattedDesignations = response.data.data.map(item => {
-                        const displayLabel = {
-                            'Agent': 'FA',
-                            'Manager': 'BM',
-                            'Am': 'UM',
-                            'Agm': 'AGM',
-                        }[item] || item; // Use mapped label or original if not in mapping
-                        return {
-                            label: displayLabel,
-                            value: item, // Preserve original API value
-                        };
-                    });
+                    const allowedDesignations = ['Agent', 'Manager', 'Am', 'Agm'];
+                    const formattedDesignations = response.data.data
+                        .filter(item => allowedDesignations.includes(item))
+                        .map(item => {
+                            const displayLabel = {
+                                'Agent': 'FA',
+                                'Manager': 'BM',
+                                'Am': 'UM',
+                                'Agm': 'AGM',
+                            }[item] || item;
+                            return {
+                                label: displayLabel,
+                                value: item,
+                            };
+                        });
+                    // const formattedDesignations = response.data.data.map(item => {
+                    //     const displayLabel = {
+                    //         'Agent': 'FA',
+                    //         'Manager': 'BM',
+                    //         'Am': 'UM',
+                    //         'Agm': 'AGM',
+                    //     }[item] || item; // Use mapped label or original if not in mapping
+                    //     return {
+                    //         label: displayLabel,
+                    //         value: item, // Preserve original API value
+                    //     };
+                    // });
                     setDesignations(formattedDesignations);
                     // if (formattedDesignations.length > 0) {
                     //     setSelectedDesignation(formattedDesignations[0].value);
@@ -126,7 +141,7 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
         }
 
         try {
-            dispatch({ type: SHOW_LOADING , payload: { textColor: '#000000' }});
+            dispatch({ type: SHOW_LOADING, payload: { textColor: '#000000' } });
             const token = await AsyncStorage.getItem('token');
             // Use different endpoints based on reportType
             const endpoint = reportType === 'Summary'
@@ -479,7 +494,7 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
                         {data && reportType === 'Details' && renderDetailsTable()}
                         {data === null && projects.length > 0 && selectedDesignation && code.trim() && (
                             <Text style={[globalStyle.fontMedium, { textAlign: 'center', marginTop: 20 }]}>
-                                
+
                             </Text>
                         )}
                     </View>

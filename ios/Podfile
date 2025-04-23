@@ -40,7 +40,7 @@ target 'InsuranceCompanyApp' do
     # you should disable the next line.
     :flipper_configuration => flipper_config,
     # An absolute path to your application root.
-    :app_path => "#{Pod::Config.instance.installation_root}/.."
+    :app_path => "#{Pod::Config.instance.installation_root}/..",
   )
 
   target 'InsuranceCompanyAppTests' do
@@ -56,5 +56,15 @@ target 'InsuranceCompanyApp' do
       :mac_catalyst_enabled => false
     )
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
+    installer.pods_project.targets.each do |target|
+      if target.name == 'RCT-Folly'
+        target.build_configurations.each do |config|
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+          config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+          config.build_settings['VALID_ARCHS'] = 'arm64 x86_64'
+          config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = ''
+        end
+      end
+    end
   end
 end

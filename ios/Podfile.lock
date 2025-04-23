@@ -1,4 +1,5 @@
 PODS:
+  - BEMCheckBox (1.4.1)
   - boost (1.76.0)
   - CocoaAsyncSocket (7.6.5)
   - DoubleConversion (1.1.6)
@@ -331,6 +332,13 @@ PODS:
     - glog
   - react-native-date-picker (4.2.9):
     - React-Core
+  - react-native-in-app-updates (0.1.3):
+    - RCT-Folly (= 2021.07.22.00)
+    - React-Core
+  - react-native-restart (0.0.27):
+    - React-Core
+  - react-native-rsa-native (2.0.5):
+    - React
   - react-native-safe-area-context (4.5.0):
     - RCT-Folly
     - RCTRequired
@@ -339,7 +347,7 @@ PODS:
     - ReactCommon/turbomodule/core
   - react-native-version-check (3.4.7):
     - React-Core
-  - react-native-webview (12.0.0):
+  - react-native-webview (12.4.0):
     - React-Core
   - React-perflogger (0.71.4)
   - React-RCTActionSheet (0.71.4):
@@ -427,9 +435,16 @@ PODS:
     - React-perflogger (= 0.71.4)
   - RNCAsyncStorage (1.17.11):
     - React-Core
-  - RNCPicker (2.4.8):
+  - RNCCheckbox (0.5.17):
+    - BEMCheckBox (~> 1.4)
     - React-Core
-  - RNGestureHandler (2.9.0):
+  - RNCPicker (2.11.0):
+    - React-Core
+  - RNDeviceInfo (14.0.4):
+    - React-Core
+  - RNFS (2.20.0):
+    - React-Core
+  - RNGestureHandler (2.8.0):
     - React-Core
   - RNReanimated (3.0.2):
     - DoubleConversion
@@ -463,7 +478,7 @@ PODS:
     - React-RCTImage
   - RNVectorIcons (9.2.0):
     - React-Core
-  - SocketRocket (0.6.0)
+  - SocketRocket (0.6.1)
   - Yoga (1.14.0)
   - YogaKit (1.18.1):
     - Yoga (~> 1.14)
@@ -515,6 +530,9 @@ DEPENDENCIES:
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - react-native-date-picker (from `../node_modules/react-native-date-picker`)
+  - react-native-in-app-updates (from `../node_modules/react-native-in-app-updates`)
+  - react-native-restart (from `../node_modules/react-native-restart`)
+  - react-native-rsa-native (from `../node_modules/react-native-rsa-native`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-version-check (from `../node_modules/react-native-version-check`)
   - react-native-webview (from `../node_modules/react-native-webview`)
@@ -532,7 +550,10 @@ DEPENDENCIES:
   - React-runtimeexecutor (from `../node_modules/react-native/ReactCommon/runtimeexecutor`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
+  - "RNCCheckbox (from `../node_modules/@react-native-community/checkbox`)"
   - "RNCPicker (from `../node_modules/@react-native-picker/picker`)"
+  - RNDeviceInfo (from `../node_modules/react-native-device-info`)
+  - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -541,6 +562,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - BEMCheckBox
     - CocoaAsyncSocket
     - Flipper
     - Flipper-Boost-iOSX
@@ -600,6 +622,12 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/logger"
   react-native-date-picker:
     :path: "../node_modules/react-native-date-picker"
+  react-native-in-app-updates:
+    :path: "../node_modules/react-native-in-app-updates"
+  react-native-restart:
+    :path: "../node_modules/react-native-restart"
+  react-native-rsa-native:
+    :path: "../node_modules/react-native-rsa-native"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-version-check:
@@ -634,8 +662,14 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
+  RNCCheckbox:
+    :path: "../node_modules/@react-native-community/checkbox"
   RNCPicker:
     :path: "../node_modules/@react-native-picker/picker"
+  RNDeviceInfo:
+    :path: "../node_modules/react-native-device-info"
+  RNFS:
+    :path: "../node_modules/react-native-fs"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNReanimated:
@@ -648,7 +682,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  boost: 57d2868c099736d80fcd648bf211b4431e51a558
+  BEMCheckBox: 5ba6e37ade3d3657b36caecc35c8b75c6c2b1a4e
+  boost: 1ec660ea89aca7bfee0694bba9c5a23aa856a696
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DoubleConversion: 5189b271737e1565bdce30deb4a08d647e3f5f54
   FBLazyVector: 446e84642979fff0ba57f3c804c2228a473aeac2
@@ -667,29 +702,32 @@ SPEC CHECKSUMS:
   hermes-engine: a1f157c49ea579c28b0296bda8530e980c45bdb3
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
-  RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
+  RCT-Folly: 8dc08ca5a393b48b1c523ab6220dfdcc0fe000ad
   RCTRequired: 5a024fdf458fa8c0d82fc262e76f982d4dcdecdd
   RCTTypeSafety: b6c253064466411c6810b45f66bc1e43ce0c54ba
   React: 715292db5bd46989419445a5547954b25d2090f0
   React-callinvoker: 105392d1179058585b564d35b4592fe1c46d6fba
-  React-Codegen: b75333b93d835afce84b73472927cccaef2c9f8c
-  React-Core: 88838ed1724c64905fc6c0811d752828a92e395b
-  React-CoreModules: cd238b4bb8dc8529ccc8b34ceae7267b04ce1882
-  React-cxxreact: 291bfab79d8098dc5ebab98f62e6bdfe81b3955a
-  React-hermes: b1e67e9a81c71745704950516f40ee804349641c
-  React-jsi: c9d5b563a6af6bb57034a82c2b0d39d0a7483bdc
-  React-jsiexecutor: d6b7fa9260aa3cb40afee0507e3bc1d17ecaa6f2
+  React-Codegen: 461f51156fcc5c51c4274b38a657b9b699f6b586
+  React-Core: 7b99c36a5c5b518a997a5b0422df18b727f48b33
+  React-CoreModules: b1c40fe963d0046f5f7cf4363b4019880833b23d
+  React-cxxreact: ef36d116c4d7d8cc83fad130ee88fed304cceac7
+  React-hermes: 7f8c1a152c96bbb9b9d764b8e4c27d68f41577c6
+  React-jsi: ce6cbda214b748c31a5a4196cfd08781f2979d29
+  React-jsiexecutor: e0f6466ba9aacb50d675eba63a0fc6481b644b07
   React-jsinspector: 1f51e775819199d3fe9410e69ee8d4c4161c7b06
-  React-logger: 0d58569ec51d30d1792c5e86a8e3b78d24b582c6
-  react-native-date-picker: c063a8967058c58a02d7d0e1d655f0453576fb0d
-  react-native-safe-area-context: 39c2d8be3328df5d437ac1700f4f3a4f75716acc
-  react-native-version-check: 6cd36aad4e30b8e3216747e3b4ddeb09e0647af8
-  react-native-webview: 5f77c6612654fa517a4ae8252717a65871a7134e
+  React-logger: 23dec780f302f526c6ee95d4fe05d6b3203d8f1f
+  react-native-date-picker: 27841798f012b06daa647a2236b7ce705bbdbc5a
+  react-native-in-app-updates: 43da2e4be482cb0cbcf50cee9bba94e81be8a027
+  react-native-restart: 0bc732f4461709022a742bb29bcccf6bbc5b4863
+  react-native-rsa-native: a7931cdda1f73a8576a46d7f431378c5550f0c38
+  react-native-safe-area-context: 863c9695a24b9e6bb6c412f1c8ddb4dfc3ae3862
+  react-native-version-check: c7b4269cd18781b51009fa4b5a8ad9ab5131ce6f
+  react-native-webview: 7feb9c48944d08ef6d7a3bbbe3f12eb76058e39b
   React-perflogger: 0bb0522a12e058f6eb69d888bc16f40c16c4b907
   React-RCTActionSheet: bfd675a10f06a18728ea15d82082d48f228a213a
   React-RCTAnimation: 2fa220b2052ec75b733112aca39143d34546a941
-  React-RCTAppDelegate: 8564f93c1d9274e95e3b0c746d08a87ff5a621b2
-  React-RCTBlob: d0336111f46301ae8aba2e161817e451aad72dd6
+  React-RCTAppDelegate: 54a54c4d8f4b6cc8db1104c55a60cc3ea994ffdc
+  React-RCTBlob: ca4159f7442bcad8f2295aed4623d1d3e6e35acf
   React-RCTImage: fec592c46edb7c12a9cde08780bdb4a688416c62
   React-RCTLinking: 14eccac5d2a3b34b89dbfa29e8ef6219a153fe2d
   React-RCTNetwork: 1fbce92e772e39ca3687a2ebb854501ff6226dd7
@@ -697,17 +735,20 @@ SPEC CHECKSUMS:
   React-RCTText: 15355c41561a9f43dfd23616d0a0dd40ba05ed61
   React-RCTVibration: ad17efcfb2fa8f6bfd8ac0cf48d96668b8b28e0b
   React-runtimeexecutor: 8fa50b38df6b992c76537993a2b0553d3b088004
-  ReactCommon: b49a4b00ca6d181ff74b17c12b2d59ac4add0bde
-  RNCAsyncStorage: 8616bd5a58af409453ea4e1b246521bb76578d60
-  RNCPicker: 0bf8ef8f7800524f32d2bb2a8bcadd53eda0ecd1
-  RNGestureHandler: 071d7a9ad81e8b83fe7663b303d132406a7d8f39
-  RNReanimated: f0dd6b881808e635ef0673f89642937d6c141314
-  RNScreens: 218801c16a2782546d30bd2026bb625c0302d70f
-  RNVectorIcons: fcc2f6cb32f5735b586e66d14103a74ce6ad61f8
-  SocketRocket: fccef3f9c5cedea1353a9ef6ada904fde10d6608
+  ReactCommon: e1431c04f9b2c7d4e7e4be8d43d1717251180c23
+  RNCAsyncStorage: 357676e1dc19095208c80d4271066c407cd02ed1
+  RNCCheckbox: 450ce156f3e29e25efa0315c96cfbabe5a39ded1
+  RNCPicker: 124b4fb5859ba1a3fd53a91e16d1e7a0fc016e59
+  RNDeviceInfo: d863506092aef7e7af3a1c350c913d867d795047
+  RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
+  RNGestureHandler: 253c9ca37ac9ae12cfc7d30ad3171f9a3ecf85fa
+  RNReanimated: 09319ab62ef36feea9a04d1a266a5ef597799276
+  RNScreens: c6ae949c292bee8ed7f355ab2adcfc9a51629951
+  RNVectorIcons: 5784330be9dddb5474e8b378d5f6947996c84e55
+  SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   Yoga: 79dd7410de6f8ad73a77c868d3d368843f0c93e0
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: 9a2be6158fc6e418a718f19d217c400a24876c9e
+PODFILE CHECKSUM: e78a5b5995670d1693f12091e6cccf090359b3af
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

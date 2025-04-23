@@ -152,9 +152,9 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
 
   console.log(tableData);
 
-  const handleFirstPremiumSubmission = async () => {
+  const handleFirstPremiumSubmission = async (transactionID) => {
     try {
-      dispatch({ type: SHOW_LOADING , payload: { textColor: '#000000' }}); // Keep loading if needed
+      dispatch({ type: SHOW_LOADING, payload: { textColor: '#000000' } }); // Keep loading if needed
 
       const token = await AsyncStorage.getItem('token');
 
@@ -166,9 +166,13 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
         throw new Error('Project ID (code) is required');
       }
 
+      const project = projectCode.toString();
+      console.log(typeof project);
+
       const postData = {
+        payment_id: transactionID,
         nid,
-        project: projectCode,
+        project: project,
         code: codeString,
         name,
         entrydate,
@@ -196,14 +200,28 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
 
       if (response.status === 200) {
         console.log('Data submitted successfully:', response.data);
+        if (response.data.errors) {
+          const errorMessage = response.data.message || response.data.errors || 'Unexpected error';
+          throw new Error(errorMessage);
+        } else {
+          return true;
+        }
         // ToastAndroid.show('Data submitted successfully', ToastAndroid.SHORT);
+      } else {
+        console.error('Submission failed:', error);
+        ToastAndroid.show(
+          `Submission failed: ${error.response?.data?.message || error.message || 'Server error'}`,
+          ToastAndroid.LONG,
+        );
+        return false;
       }
     } catch (error) {
       console.error('Submission failed:', error);
-      // ToastAndroid.show(
-      //   `Submission failed: ${error.response?.data?.message || 'Server error'}`,
-      //   ToastAndroid.LONG,
-      // );
+      ToastAndroid.show(
+        `Submission failed: ${error.response?.data?.message || error.message || 'Server error'}`,
+        ToastAndroid.LONG,
+      );
+      return false;
     } finally {
       dispatch({ type: HIDE_LOADING });
     }
@@ -234,32 +252,62 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
       );
     }
 
-    // Step 1: Run handleFirstPremiumSubmission and check success
-    let submissionSuccess = false;
-    try {
-      submissionSuccess = await handleFirstPremiumSubmission();
-      submissionSuccess = true; // Assume success if no error is thrown and status is 200
-    } catch (error) {
-      submissionSuccess = false;
-      Alert.alert(
-        'Payment Failed',
-        `Failed to submit initial data: ${error.response?.data?.message || error.message || 'Server error'}`,
-        [{ text: 'OK', style: 'cancel' }],
-      );
-      return; // Stop further processing if submission fails
-    }
+    if (method === 'bkash') {
+      console.log('Processing bkash payment...');
 
+      if (isFirstPayment) {
+        console.log('First payment, obtaining grant token...');
+        try {
+          const tokenResult = await bkashGetToken();
+          const token = tokenResult.id_token;
+          console.log('Grant token obtained:', token);
 
-    if (submissionSuccess) {
-      if (method === 'bkash') {
-        console.log('Processing bkash payment...');
+          const createPaymentResult = await bkashCreatePayment(
+            token,
+            amount,
+            nid,
+          );
+          console.log(
+            'First payment created successfully:',
+            createPaymentResult,
+          );
 
-        if (isFirstPayment) {
-          console.log('First payment, obtaining grant token...');
+          setBkashPaymentId(createPaymentResult.paymentID);
+          setBkashUrl(createPaymentResult.bkashURL);
+
+          setBkashToken(token);
+          setIsFirstPayment(false);
+        } catch (error) {
+          alert('First failed: ' + error.message);
+        }
+      } else {
+        const storedToken = await AsyncStorage.getItem('bkashToken');
+        console.log('Retrieved bkashToken:', storedToken);
+
+        if (storedToken) {
+          console.log('Payment with stored refresh token...');
+          try {
+            const createPaymentResult = await bkashCreatePayment(
+              storedToken,
+              amount,
+              nid,
+            );
+            console.log(
+              'Payment created successfully with refresh token:',
+              createPaymentResult,
+            );
+
+            setBkashPaymentId(createPaymentResult.paymentID);
+            setBkashUrl(createPaymentResult.bkashURL);
+          } catch (error) {
+            alert('Payment failed: ' + error.message);
+          }
+        } else {
+          console.log('No stored token, obtaining grant token again...');
           try {
             const tokenResult = await bkashGetToken();
             const token = tokenResult.id_token;
-            console.log('Grant token obtained:', token);
+            console.log('New grant token obtained:', token);
 
             const createPaymentResult = await bkashCreatePayment(
               token,
@@ -267,7 +315,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
               nid,
             );
             console.log(
-              'First payment created successfully:',
+              'Payment created successfully with new grant token:',
               createPaymentResult,
             );
 
@@ -275,87 +323,39 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
             setBkashUrl(createPaymentResult.bkashURL);
 
             setBkashToken(token);
-            setIsFirstPayment(false);
+            await AsyncStorage.setItem('bkashToken', token);
+            console.log('New refresh token stored in AsyncStorage.');
+
+            setTimeout(async () => {
+              console.log(
+                '55 minutes elapsed. Removing bkashToken from AsyncStorage...',
+              );
+              await AsyncStorage.removeItem('bkashToken');
+              setBkashToken(null);
+              setIsFirstPayment(true);
+              console.log('bkashToken removed and isFirstPayment set to true.');
+            }, 55 * 60 * 1000);
           } catch (error) {
-            alert('First failed: ' + error.message);
-          }
-        } else {
-          const storedToken = await AsyncStorage.getItem('bkashToken');
-          console.log('Retrieved bkashToken:', storedToken);
-
-          if (storedToken) {
-            console.log('Payment with stored refresh token...');
-            try {
-              const createPaymentResult = await bkashCreatePayment(
-                storedToken,
-                amount,
-                nid,
-              );
-              console.log(
-                'Payment created successfully with refresh token:',
-                createPaymentResult,
-              );
-
-              setBkashPaymentId(createPaymentResult.paymentID);
-              setBkashUrl(createPaymentResult.bkashURL);
-            } catch (error) {
-              alert('Payment failed: ' + error.message);
-            }
-          } else {
-            console.log('No stored token, obtaining grant token again...');
-            try {
-              const tokenResult = await bkashGetToken();
-              const token = tokenResult.id_token;
-              console.log('New grant token obtained:', token);
-
-              const createPaymentResult = await bkashCreatePayment(
-                token,
-                amount,
-                nid,
-              );
-              console.log(
-                'Payment created successfully with new grant token:',
-                createPaymentResult,
-              );
-
-              setBkashPaymentId(createPaymentResult.paymentID);
-              setBkashUrl(createPaymentResult.bkashURL);
-
-              setBkashToken(token);
-              await AsyncStorage.setItem('bkashToken', token);
-              console.log('New refresh token stored in AsyncStorage.');
-
-              setTimeout(async () => {
-                console.log(
-                  '55 minutes elapsed. Removing bkashToken from AsyncStorage...',
-                );
-                await AsyncStorage.removeItem('bkashToken');
-                setBkashToken(null);
-                setIsFirstPayment(true);
-                console.log('bkashToken removed and isFirstPayment set to true.');
-              }, 55 * 60 * 1000);
-            } catch (error) {
-              alert('Payment failed: ' + error.message);
-            }
+            alert('Payment failed: ' + error.message);
           }
         }
       }
-      if (method === 'nagad') {
-        const trnxNo = moment().format('YYYYMMDDHHmmss');
-        setTransactionNo(trnxNo);
-        const postData = {
-          policyNo: nid,
-          amount: amount,
-          mobileNo: mobile,
-          transactionNo: trnxNo,
-        };
-        const url = await nagadPaymentUrl(postData);
-        if (url === '') {
-          return ToastAndroid.show('Something went wrong!', ToastAndroid.LONG);
-        } else {
-          setNagadPGUrl(url);
-          setShowNagadPG(true);
-        }
+    }
+    if (method === 'nagad') {
+      const trnxNo = moment().format('YYYYMMDDHHmmss');
+      setTransactionNo(trnxNo);
+      const postData = {
+        policyNo: nid,
+        amount: amount,
+        mobileNo: mobile,
+        transactionNo: trnxNo,
+      };
+      const url = await nagadPaymentUrl(postData);
+      if (url === '') {
+        return ToastAndroid.show('Something went wrong!', ToastAndroid.LONG);
+      } else {
+        setNagadPGUrl(url);
+        setShowNagadPG(true);
       }
     }
   };
@@ -427,9 +427,11 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
               // }
 
 
+              const project = projectCode.toString();
+              console.log(typeof project);
 
               let postData = {
-                project_name: projectCode,
+                project_name: project,
                 policy_no: nid,
                 method: method,
                 amount: amount,
@@ -448,7 +450,33 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
 
               console.log('Sync Payments: ', syncPayments);
               const isSuccess = await userPayPremium(postData);
-              console.log('Is Success: ', isSuccess);
+              console.log('Response', isSuccess);
+              console.log('Is Success: ', isSuccess.data);
+              console.log('ID: ', isSuccess.data.data.id);
+              if (!isSuccess || !isSuccess.data?.data.id) {
+                dispatch({ type: HIDE_LOADING });
+                ToastAndroid.show(
+                  'Payment processing failed: Invalid response from server.',
+                  ToastAndroid.LONG,
+                );
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'HomeScreen' }],
+                });
+                return;
+              }
+
+              // Submit first premium with transaction ID
+              const submissionSuccess = await handleFirstPremiumSubmission(isSuccess.data.data.id);
+              if (!submissionSuccess) {
+                dispatch({ type: HIDE_LOADING });
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'HomeScreen' }],
+                });
+                return;
+              }
+
               // Show success alert with download option
               Alert.alert(
                 'Payment Successful',
@@ -462,7 +490,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
                 ],
               );
 
-              if (isSuccess) {
+              if (isSuccess.success) {
                 var syncPayments =
                   JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
                 console.log('Sync Payments: ', syncPayments);
@@ -558,10 +586,15 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
             //   alert('Payment Completed\nNo eReceipt available.');
             // }
 
+            dispatch({ type: SHOW_LOADING, payload: { textColor: '#000000' } });
 
-            dispatch({ type: SHOW_LOADING , payload: { textColor: '#000000' }});
+
+            const project = projectCode.toString();
+            console.log(typeof project);
+
+            dispatch({ type: SHOW_LOADING, payload: { textColor: '#000000' } });
             let postData = {
-              project_name: code,
+              project_name: project,
               policy_no: nid,
               method: method,
               amount: amount,
@@ -576,6 +609,33 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
               JSON.stringify([...syncPayments, postData]),
             );
             const isSuccess = await userPayPremium(postData);
+            console.log('Response', isSuccess);
+            console.log('Is Success: ', isSuccess.data);
+            console.log('ID: ', isSuccess.data.data.id);
+            if (!isSuccess || !isSuccess.data?.data.id) {
+              dispatch({ type: HIDE_LOADING });
+              ToastAndroid.show(
+                'Payment processing failed: Invalid response from server.',
+                ToastAndroid.LONG,
+              );
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'HomeScreen' }],
+              });
+              return;
+            }
+
+            // Submit first premium with transaction ID
+            const submissionSuccess = await handleFirstPremiumSubmission(isSuccess.data.data.id);
+            if (!submissionSuccess) {
+              setShowNagadPG(false);
+              dispatch({ type: HIDE_LOADING });
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'HomeScreen' }],
+              });
+              return;
+            }
 
             // Show success alert with download option
             Alert.alert(
@@ -590,7 +650,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
               ],
             );
 
-            if (isSuccess) {
+            if (isSuccess.success) {
               var syncPayments =
                 JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
               updateSyncPayments = syncPayments.filter(
