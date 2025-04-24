@@ -52,11 +52,17 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
             console.log('Project response.data', response.data);
 
             if (response?.data) {
-                const formattedProjects = response.data.map(project => ({
-                    label: project.name,
-                    value: project.code,
-                }));
-                setProjects(formattedProjects);
+                // List of project codes to exclude (second codes from the 7 sets)
+                const codesToExclude = ['ABAD', 'ADPS', 'IBDPS', 'ALAD', 'JBAD', 'IAD', 'JBADK'];
+
+                // Filter out the unwanted project codes
+                const filteredProjects = response.data
+                    .filter(project => !codesToExclude.includes(project.code))
+                    .map(project => ({
+                        label: project.name,
+                        value: project.code,
+                    }));
+                setProjects(filteredProjects);
             }
         }
 

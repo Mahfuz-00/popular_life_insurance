@@ -201,7 +201,12 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
       if (response.status === 200) {
         console.log('Data submitted successfully:', response.data);
         if (response.data.errors) {
-          const errorMessage = response.data.message || response.data.errors || 'Unexpected error';
+          const errorMessage = [
+            response.data.errors ? `Errors: ${JSON.stringify(response.data.errors)}` : '',
+            response.data.message ? `Message: ${response.data.message}` : '',
+          ]
+            .filter(Boolean) // Remove empty strings
+            .join(' , ') || 'Unexpected error'; // Fallback if both are empty
           throw new Error(errorMessage);
         } else {
           return true;
@@ -292,6 +297,17 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
               amount,
               nid,
             );
+
+
+            // Check for expired token message
+            if (createPaymentResult?.message === 'The incoming token has expired') {
+              ToastAndroid.show('Payment token has expired. Please try again.', ToastAndroid.LONG);
+              await AsyncStorage.removeItem('bkashToken');
+              setBkashToken(null);
+              setIsFirstPayment(true);
+              return;
+            }
+
             console.log(
               'Payment created successfully with refresh token:',
               createPaymentResult,
