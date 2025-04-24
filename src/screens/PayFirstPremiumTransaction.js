@@ -69,8 +69,8 @@ const FirstPremiumTransactionsScreen = ({ navigation }) => {
     };
 
     // Handle download receipt
-    const handleDownloadReceipt = async (code, nid) => {
-        const receiptUrl = `${API}/api/first-payment/e-receipt/${nid}/${code}`;
+    const handleDownloadReceipt = async (transaction, nid) => {
+        const receiptUrl = `${API}/api/first-payment/e-receipt/${nid}/${transaction}`;
         console.log('Opening receipt URL:', receiptUrl);
         try {
             await Linking.openURL(receiptUrl);
@@ -129,7 +129,7 @@ const FirstPremiumTransactionsScreen = ({ navigation }) => {
                                         <Text style={styles.rowValue}>{parseFloat(item.Total_Premium).toFixed(2)}</Text>
                                         <TouchableOpacity
                                             style={[styles.rowValue, { alignItems: 'center' }]}
-                                            onPress={() => handleDownloadReceipt(item.Project_Name, item.NID_NO)}
+                                            onPress={() => handleDownloadReceipt(item.transaction_no, item.NID_NO)}
                                         >
                                             <Icon name="download-outline" size={26} color="blue" />
                                         </TouchableOpacity>

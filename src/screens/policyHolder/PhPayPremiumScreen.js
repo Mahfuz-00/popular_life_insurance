@@ -10,19 +10,19 @@ import {
   ToastAndroid,
   Alert,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import RadioButtonRN from 'radio-buttons-react-native';
 import moment from 'moment';
-import {WebView} from 'react-native-webview';
-import {useDispatch, useSelector} from 'react-redux';
+import { WebView } from 'react-native-webview';
+import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {RSA} from 'react-native-rsa-native';
+import { RSA } from 'react-native-rsa-native';
 
 import Header from '../../components/Header';
 import globalStyle from '../../styles/globalStyle';
 import BackgroundImage from '../../assets/BackgroundImage.png';
-import {Input} from '../../components/Input';
-import {FilledButton} from '../../components/FilledButton';
+import { Input } from '../../components/Input';
+import { FilledButton } from '../../components/FilledButton';
 import {
   getDuePremiumDetails,
   userPayPremium,
@@ -33,11 +33,11 @@ import {
   bkashGetToken,
   nagadPaymentUrl,
 } from '../../actions/paymentServiceActions';
-import {HIDE_LOADING, SHOW_LOADING} from '../../constants/commonConstants';
+import { HIDE_LOADING, SHOW_LOADING } from '../../constants/commonConstants';
 
 var numberOptions = [
-  {label: 'Proposal No', value: false},
-  {label: 'Policy No', value: true},
+  { label: 'Proposal No', value: false },
+  { label: 'Policy No', value: true },
 ];
 
 var gatewayOptions = [
@@ -45,7 +45,7 @@ var gatewayOptions = [
     label: (
       <Image
         source={require('../../assets/nagad.png')}
-        style={{width: 80, height: 35}}
+        style={{ width: 80, height: 35 }}
       />
     ),
     value: 'nagad',
@@ -54,7 +54,7 @@ var gatewayOptions = [
     label: (
       <Image
         source={require('../../assets/bkash.png')}
-        style={{width: 80, height: 35}}
+        style={{ width: 80, height: 35 }}
       />
     ),
     value: 'bkash',
@@ -63,16 +63,16 @@ var gatewayOptions = [
     label: (
       <Image
         source={require('../../assets/otherCards.png')}
-        style={{height: 35}}
+        style={{ height: 35 }}
       />
     ),
     value: 'ssl',
   },
 ];
 
-const PhPayPremiumScreen = ({navigation, route}) => {
+const PhPayPremiumScreen = ({ navigation, route }) => {
   const dispatch = useDispatch();
-  const {user} = useSelector(state => state.auth);
+  const { user } = useSelector(state => state.auth);
   const policyNo = route.params.policyNo;
   const [amount, setAmount] = useState('0');
   const [policyDetails, setPolicyDetails] = useState(null);
@@ -152,6 +152,17 @@ const PhPayPremiumScreen = ({navigation, route}) => {
               amount,
               policyNo,
             );
+
+            // Check for expired token message
+            if (createPaymentResult?.message === 'The incoming token has expired') {
+              ToastAndroid.show('Payment token has expired. Please try again.', ToastAndroid.LONG);
+              await AsyncStorage.removeItem('bkashToken');
+              setBkashToken(null);
+              setIsFirstPayment(true);
+              return;
+            }
+
+
             console.log(
               'Payment created successfully with refresh token:',
               createPaymentResult,
@@ -296,7 +307,7 @@ const PhPayPremiumScreen = ({navigation, route}) => {
         source={{
           uri: bkashUrl,
         }}
-        style={{marginTop: 20}}
+        style={{ marginTop: 20 }}
         onNavigationStateChange={async data => {
           // if (!data || data.status === undefined || data.status !== 'success') {
           //   Alert.alert(
@@ -308,7 +319,7 @@ const PhPayPremiumScreen = ({navigation, route}) => {
           console.log('Bkash: ', JSON.stringify(data));
           if (JSON.stringify(data).includes('status=success')) {
             await setBkashUrl('');
-            dispatch({type: SHOW_LOADING});
+            dispatch({ type: SHOW_LOADING });
             const createExecuteResult = await bkashExecutePayment(
               bkashToken,
               bkashPaymentId,
@@ -326,13 +337,13 @@ const PhPayPremiumScreen = ({navigation, route}) => {
             ) {
               alert(
                 createExecuteResult.statusMessage +
-                  '\n\nThe transaction failed.\nA payment of the same amount has already been made recently. Please try again after a 2-5 minutes.',
+                '\n\nThe transaction failed.\nA payment of the same amount has already been made recently. Please try again after a 2-5 minutes.',
               );
             } else {
               alert(createExecuteResult.statusMessage);
             }
 
-            dispatch({type: HIDE_LOADING});
+            dispatch({ type: HIDE_LOADING });
 
             if (createExecuteResult.transactionStatus == 'Completed') {
               let postData = {
@@ -372,7 +383,7 @@ const PhPayPremiumScreen = ({navigation, route}) => {
               }
             }
           } else {
-            dispatch({type: HIDE_LOADING});
+            dispatch({ type: HIDE_LOADING });
             // ToastAndroid.show('Payment Failed !', ToastAndroid.LONG);
           }
         }}
@@ -387,21 +398,21 @@ const PhPayPremiumScreen = ({navigation, route}) => {
           uri: nagadPGUrl,
           method: 'post',
         }}
-        style={{marginTop: 20}}
+        style={{ marginTop: 20 }}
         onNavigationStateChange={async data => {
           console.log(data);
           if (JSON.stringify(data).includes('Aborted')) {
             setShowNagadPG(false);
-            dispatch({type: HIDE_LOADING});
+            dispatch({ type: HIDE_LOADING });
             return ToastAndroid.show('Aborted !', ToastAndroid.LONG);
           }
           if (JSON.stringify(data).includes('Failed')) {
             setShowNagadPG(false);
-            dispatch({type: HIDE_LOADING});
+            dispatch({ type: HIDE_LOADING });
             return ToastAndroid.show('Failed !', ToastAndroid.LONG);
           }
           if (JSON.stringify(data).includes('Success')) {
-            dispatch({type: SHOW_LOADING});
+            dispatch({ type: SHOW_LOADING });
             let postData = {
               policy_no: policyNo,
               method: method,
@@ -431,7 +442,7 @@ const PhPayPremiumScreen = ({navigation, route}) => {
               navigation.pop();
             }
             setShowNagadPG(false);
-            dispatch({type: HIDE_LOADING});
+            dispatch({ type: HIDE_LOADING });
             return ToastAndroid.show('Payment Success !', ToastAndroid.LONG);
           }
         }}
@@ -441,7 +452,7 @@ const PhPayPremiumScreen = ({navigation, route}) => {
 
   return (
     <View style={globalStyle.container}>
-      <ImageBackground source={BackgroundImage} style={{flex: 1}}>
+      <ImageBackground source={BackgroundImage} style={{ flex: 1 }}>
         <Header navigation={navigation} title={'Pay Premium'} />
 
         <ScrollView>
@@ -513,7 +524,7 @@ const PhPayPremiumScreen = ({navigation, route}) => {
                 <Text
                   style={[
                     globalStyle.fontMedium,
-                    {color: '#FFF', marginTop: 15},
+                    { color: '#FFF', marginTop: 15 },
                   ]}>
                   Choose Your Payment Method
                 </Text>
@@ -523,8 +534,8 @@ const PhPayPremiumScreen = ({navigation, route}) => {
                   selectedBtn={e => setMethod(e.value)}
                   initial={1}
                   boxActiveBgColor={'#FFF'}
-                  textStyle={{height: 60, textAlign: 'center', width: '100%'}}
-                  boxStyle={{height: 60, justifyContent: 'center'}}
+                  textStyle={{ height: 60, textAlign: 'center', width: '100%' }}
+                  boxStyle={{ height: 60, justifyContent: 'center' }}
                 />
 
                 <Input
@@ -535,7 +546,7 @@ const PhPayPremiumScreen = ({navigation, route}) => {
                   onChangeText={e => setAmount(e)}
                   labelStyle={[
                     globalStyle.fontMedium,
-                    {color: '#FFF', marginTop: 5},
+                    { color: '#FFF', marginTop: 5 },
                   ]}
                 />
 
@@ -549,14 +560,14 @@ const PhPayPremiumScreen = ({navigation, route}) => {
                     flexWrap: 'wrap',
                   }}>
                   <Switch
-                    trackColor={{false: '#767577', true: 'green'}}
+                    trackColor={{ false: '#767577', true: 'green' }}
                     thumbColor={isEnabled ? 'black' : 'black'}
                     ios_backgroundColor="green"
                     onValueChange={toggleSwitch}
                     value={isEnabled}
                   />
 
-                  <Text style={[globalStyle.fontMedium, {fontSize: 16}]}>
+                  <Text style={[globalStyle.fontMedium, { fontSize: 16 }]}>
                     I Agree to the{' '}
                   </Text>
                   <TouchableOpacity
@@ -568,7 +579,7 @@ const PhPayPremiumScreen = ({navigation, route}) => {
                     <Text
                       style={[
                         globalStyle.fontMedium,
-                        {color: 'green', fontSize: 16},
+                        { color: 'green', fontSize: 16 },
                       ]}>
                       Terms & Conditions
                     </Text>
