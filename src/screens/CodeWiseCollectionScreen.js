@@ -43,7 +43,7 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
     const [toDate, setToDate] = useState(new Date());
 
     // Minimum date (Jan 1, 2020)
-    const minDate = new Date(2020, 0, 1);
+    // const minDate = new Date(2020, 0, 1);
 
     // Fetch projects on component mount
     useEffect(() => {
@@ -291,42 +291,54 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
             return null;
         }
 
-        const projectName = selectedProject.label || 'Alamina Bima Prokolpo';
-        const fromDateMoment = moment(fromDate);
-        const toDateMoment = moment(toDate);
-        const years = Object.keys(data.data); // Get all years dynamically
+        const projectName = selectedProject.label;
 
-        // Filter transactions within the selected date range
-        const filteredData = {};
-        years.forEach(year => {
-            const months = Object.keys(data.data[year].data || {});
-            months.forEach(month => {
-                const transactions = (Array.isArray(data.data[year].data[month].data) ? data.data[year].data[month].data : []).filter(txn => {
-                    const txnDate = moment(txn.date?.original);
-                    return txnDate.isBetween(fromDateMoment, toDateMoment, 'day', '[]');
-                });
-                if (transactions.length > 0) {
-                    if (!filteredData[year]) {
-                        filteredData[year] = {};
-                    }
-                    filteredData[year][month] = {
-                        total: transactions.reduce((sum, txn) => sum + parseFloat(txn.amount || 0), 0).toFixed(2),
-                        data: transactions,
-                    };
-                }
-            });
-        });
-
-        if (Object.keys(filteredData).length === 0) {
+        const projects = Object.keys(data.data);
+        if (projects.length === 0) {
             return (
                 <Text style={[globalStyle.fontMedium, { textAlign: 'center', marginTop: 20 }]}>
-                    No data found for the selected date range.
+                    No data found for the selected projects.
                 </Text>
             );
         }
 
+
+        // const fromDateMoment = moment(fromDate);
+        // const toDateMoment = moment(toDate);
+        // const years = Object.keys(data.data); // Get all years dynamically
+
+        // Filter transactions within the selected date range
+        // const filteredData = {};
+        // years.forEach(year => {
+        //     const months = Object.keys(data.data[year].data || {});
+        //     months.forEach(month => {
+        //         const transactions = (Array.isArray(data.data[year].data[month].data) ? data.data[year].data[month].data : []).filter(txn => {
+        //             const txnDate = moment(txn.date?.original);
+        //             return txnDate.isBetween(fromDateMoment, toDateMoment, 'day', '[]');
+        //         });
+        //         if (transactions.length > 0) {
+        //             if (!filteredData[year]) {
+        //                 filteredData[year] = {};
+        //             }
+        //             filteredData[year][month] = {
+        //                 total: transactions.reduce((sum, txn) => sum + parseFloat(txn.amount || 0), 0).toFixed(2),
+        //                 data: transactions,
+        //             };
+        //         }
+        //     });
+        // });
+
+        // if (Object.keys(filteredData).length === 0) {
+        //     return (
+        //         <Text style={[globalStyle.fontMedium, { textAlign: 'center', marginTop: 20 }]}>
+        //             No data found for the selected date range.
+        //         </Text>
+        //     );
+        // }
+
         return (
             <View style={styles.table}>
+                {/* Heading remains unchanged */}
                 <Text style={[globalStyle.fontBold, styles.title]}>
                     Popular Life Insurance Co.Ltd.
                 </Text>
@@ -336,82 +348,124 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
                 <Text style={[globalStyle.fontMedium, styles.codeInfo]}>
                     Code No: {code}
                 </Text>
-                <Text style={[globalStyle.fontMedium, styles.dateRange]}>
-                    Date Range: {moment(fromDate).format('DD-MM-YYYY')} to {moment(toDate).format('DD-MM-YYYY')}
-                </Text>
-                {Object.keys(filteredData).map((year, yearIndex) => (
-                    <View key={yearIndex}>
-                        <Text style={[globalStyle.fontMedium, styles.yearHeader]}>{year}</Text>
-                        {Object.keys(filteredData[year]).map((month, monthIndex) => (
-                            <View key={monthIndex}>
-                                <Text style={[globalStyle.fontMedium, styles.monthHeader]}>{month}</Text>
-                                <View style={styles.tableHeader}>
-                                    <Text style={styles.headerCell}>Trns. No</Text>
-                                    <Text style={styles.headerCell}>Amount</Text>
-                                    <Text style={styles.headerCell}>D/R</Text>
-                                    <Text style={styles.headerCell}>Date</Text>
-                                </View>
-                                {filteredData[year][month].data.map((txn, idx) => (
-                                    <View style={styles.row} key={idx}>
-                                        <Text style={styles.cell}>{txn.transaction_no || 'N/A'}</Text>
-                                        <Text style={styles.cell}>{txn.amount || '0.00'}</Text>
-                                        <Text style={styles.cell}>{txn.type || 'N/A'}</Text>
-                                        <Text style={styles.cell}>
-                                            {txn.date ? moment(txn.date.original).format('DD-MM-YYYY') : 'N/A'}
-                                        </Text>
+
+                {/* Iterate over projects */}
+                {Object.keys(data.data).map((project, projectIndex) => (
+                    <View key={projectIndex}>
+                        {/* Project header */}
+                        <Text style={[globalStyle.fontMedium, styles.yearHeader]}>
+                            Project: {project}
+                        </Text>
+
+                        {/* Iterate over years for this project */}
+                        {Object.keys(data.data[project].data).map((year, yearIndex) => (
+                            <View key={yearIndex}>
+                                <Text style={[globalStyle.fontMedium, styles.yearHeader]}>{year}</Text>
+                                {/* Iterate over months for this year */}
+                                {Object.keys(data.data[project].data[year].data).map((month, monthIndex) => (
+                                    <View key={monthIndex}>
+                                        <Text style={[globalStyle.fontMedium, styles.monthHeader]}>{month}</Text>
+                                        <View style={styles.tableHeader}>
+                                            <Text style={styles.headerCell}>Trns. No</Text>
+                                            <Text style={styles.headerCell}>Amount</Text>
+                                            <Text style={styles.headerCell}>D/R</Text>
+                                            <Text style={styles.headerCell}>Date</Text>
+                                        </View>
+                                        {/* Render transactions (assuming API provides transaction-level data) */}
+                                        {(data.data[project].data[year].data[month].transactions || []).map((txn, idx) => (
+                                            <View style={styles.row} key={idx}>
+                                                <Text style={styles.cell}>{txn.transaction_no || 'N/A'}</Text>
+                                                <Text style={styles.cell}>{txn.amount || '0.00'}</Text>
+                                                <Text style={styles.cell}>{txn.type || 'N/A'}</Text>
+                                                <Text style={styles.cell}>
+                                                    {txn.date ? moment(txn.date.original).format('DD-MM-YYYY') : 'N/A'}
+                                                </Text>
+                                            </View>
+                                        ))}
+                                        <View style={[styles.row, styles.subTotal]}>
+                                            <Text style={styles.cell}>Sub Total</Text>
+                                            <Text style={styles.cell}>{data.data[project].data[year].data[month].total}</Text>
+                                            <Text style={styles.cell}></Text>
+                                            <Text style={styles.cell}></Text>
+                                        </View>
                                     </View>
                                 ))}
-                                <View style={[styles.row, styles.subTotal]}>
-                                    <Text style={styles.cell}>Sub Total</Text>
-                                    <Text style={styles.cell}>{filteredData[year][month].total}</Text>
-                                    <Text style={styles.cell}></Text>
-                                    <Text style={styles.cell}></Text>
-                                </View>
                             </View>
                         ))}
+
+                        {/* Project-specific totals (optional, if you want per-project totals) */}
+                        <View style={styles.totals}>
+                            <View style={styles.row}>
+                                <Text style={styles.cell}>Deferred Collection</Text>
+                                <Text style={styles.cell}>{data.data[project].data.deffered_total || '0.00'}</Text>
+                                <Text style={styles.cell}>
+                                    {Object.keys(data.data[project].data).reduce((sum, year) =>
+                                        sum + Object.values(data.data[project].data[year].data).reduce((monthSum, month) =>
+                                            monthSum + (month.transactions || []).filter(txn => txn.type === 'D').length, 0
+                                        ), 0)}
+                                </Text>
+                                <Text style={styles.cell}></Text>
+                            </View>
+                            <View style={styles.row}>
+                                <Text style={styles.cell}>Renewal Collection</Text>
+                                <Text style={styles.cell}>
+                                    {Object.keys(data.data[project].data).reduce((sum, year) =>
+                                        sum + parseFloat(data.data[project].data[year].total || 0), 0).toFixed(2)}
+                                </Text>
+                                <Text style={styles.cell}>
+                                    {Object.keys(data.data[project].data).reduce((sum, year) =>
+                                        sum + Object.values(data.data[project].data[year].data).reduce((monthSum, month) =>
+                                            monthSum + (month.transactions || []).filter(txn => txn.type === 'R').length, 0
+                                        ), 0)}
+                                </Text>
+                                <Text style={styles.cell}></Text>
+                            </View>
+                            <View style={[styles.row, styles.grandTotal]}>
+                                <Text style={styles.cell}>Grand Total</Text>
+                                <Text style={styles.cell}>
+                                    {Object.keys(data.data[project].data).reduce((sum, year) =>
+                                        sum + parseFloat(data.data[project].data[year].total || 0), 0).toFixed(2)}
+                                </Text>
+                                <Text style={styles.cell}></Text>
+                                <Text style={styles.cell}></Text>
+                            </View>
+                        </View>
                     </View>
                 ))}
+
+                {/* Overall totals across all projects */}
                 <View style={styles.totals}>
                     <View style={styles.row}>
                         <Text style={styles.cell}>Deferred Collection</Text>
                         <Text style={styles.cell}>{data.deffered_total || '0.00'}</Text>
                         <Text style={styles.cell}>
-                            {Object.keys(filteredData).reduce((sum, year) =>
-                                sum + Object.values(filteredData[year]).reduce((monthSum, month) =>
-                                    monthSum + month.data.filter(txn => txn.type === 'D').length, 0
+                            {Object.keys(data.data).reduce((sum, project) =>
+                                sum + Object.keys(data.data[project].data).reduce((yearSum, year) =>
+                                    yearSum + Object.values(data.data[project].data[year].data).reduce((monthSum, month) =>
+                                        monthSum + (month.transactions || []).filter(txn => txn.type === 'D').length, 0
+                                    ), 0
                                 ), 0)}
                         </Text>
                         <Text style={styles.cell}></Text>
                     </View>
                     <View style={styles.row}>
                         <Text style={styles.cell}>Renewal Collection</Text>
+                        <Text style={styles.cell}>{data.renewal_total || '0.00'}</Text>
                         <Text style={styles.cell}>
-                            {Object.keys(filteredData).reduce((sum, year) =>
-                                sum + Object.values(filteredData[year]).reduce((monthSum, month) => monthSum + parseFloat(month.total), 0), 0).toFixed(2)
-                            }
-                        </Text>
-                        <Text style={styles.cell}>
-                            {Object.keys(filteredData).reduce((sum, year) =>
-                                sum + Object.values(filteredData[year]).reduce((monthSum, month) =>
-                                    monthSum + month.data.filter(txn => txn.type === 'R').length, 0
+                            {Object.keys(data.data).reduce((sum, project) =>
+                                sum + Object.keys(data.data[project].data).reduce((yearSum, year) =>
+                                    yearSum + Object.values(data.data[project].data[year].data).reduce((monthSum, month) =>
+                                        monthSum + (month.transactions || []).filter(txn => txn.type === 'R').length, 0
+                                    ), 0
                                 ), 0)}
                         </Text>
                         <Text style={styles.cell}></Text>
                     </View>
                     <View style={[styles.row, styles.grandTotal]}>
                         <Text style={styles.cell}>Grand Total</Text>
-                        <Text style={styles.cell}>
-                            {Object.keys(filteredData).reduce((sum, year) =>
-                                sum + Object.values(filteredData[year]).reduce((monthSum, month) => monthSum + parseFloat(month.total), 0), 0).toFixed(2)
-                            }
-                        </Text>
+                        <Text style={styles.cell}>{data.total || '0.00'}</Text>
                         <Text style={styles.cell}></Text>
                         <Text style={styles.cell}></Text>
-                        {/* <Text style={styles.cell}>
-                            {Object.keys(filteredData).reduce((sum, year) =>
-                                sum + Object.values(filteredData[year]).reduce((monthSum, month) => monthSum + month.data.length, 0), 0)
-                            }
-                        </Text> */}
                     </View>
                 </View>
             </View>
@@ -458,9 +512,12 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
                                 required
                             />
                             {/* Conditionally render date pickers for Details only */}
-                            {reportType === 'Details' && (
-                                <>
-                                    <DatePickerComponent
+                            {['Summary', 'Details'].includes(reportType) && (
+                                <View>
+                                    <Text style={[globalStyle.fontMedium, { textAlign: 'center', marginTop: 5, marginBottom: 5 }]}>
+                                        Report {reportType} will show only current year's Transactions.
+                                    </Text>
+                                    {/* <DatePickerComponent
                                         date={fromDate}
                                         setDate={setFromDate}
                                         defaultDate={new Date('2020-01-01')}
@@ -472,8 +529,8 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
                                         minimumDate={minDate}
                                         maximumDate={toDate}
                                         required
-                                    />
-                                    <DatePickerComponent
+                                    /> */}
+                                    {/* <DatePickerComponent
                                         date={toDate}
                                         setDate={setToDate}
                                         defaultDate={new Date('2020-01-01')}
@@ -485,8 +542,8 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
                                         minimumDate={fromDate}
                                         maximumDate={new Date()}
                                         required
-                                    />
-                                </>
+                                    /> */}
+                                </View>
                             )}
                             <FilledButton
                                 title="Fetch Data"
