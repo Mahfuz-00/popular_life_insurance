@@ -89,6 +89,8 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
   const [nagadPGUrl, setNagadPGUrl] = useState('');
   const [showNagadPG, setShowNagadPG] = useState(false);
   const [transactionNo, setTransactionNo] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const isProcessingRef = React.useRef(false);
 
   const handleSubmit = async () => {
     if (!isEnabled)
@@ -400,7 +402,13 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
         }}
         style={{ marginTop: 20 }}
         onNavigationStateChange={async data => {
-          console.log(data);
+          console.log('Nagad WebView State:', data, 'URL:', data.url);
+          if (isProcessingRef.current) {
+            console.log('Transaction already processing, ignoring state change');
+            return;
+          }
+
+
           if (JSON.stringify(data).includes('Aborted')) {
             setShowNagadPG(false);
             dispatch({ type: HIDE_LOADING });
@@ -412,6 +420,10 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
             return ToastAndroid.show('Failed !', ToastAndroid.LONG);
           }
           if (JSON.stringify(data).includes('Success')) {
+            isProcessingRef.current = true; // Lock processing
+            setShowNagadPG(false); // Clear WebView immediately
+
+
             dispatch({ type: SHOW_LOADING });
             let postData = {
               policy_no: policyNo,
@@ -427,25 +439,54 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
               'syncPayments',
               JSON.stringify([...syncPayments, postData]),
             );
-            const isSuccess = await userPayPremium(postData);
 
-            if (isSuccess) {
-              var syncPayments =
-                JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
-              updateSyncPayments = syncPayments.filter(
-                item => item.transaction_no != postData.transaction_no,
+
+            // Check for duplicate transaction ID in lastTransactionId
+            var lastTransactionId = await AsyncStorage.getItem('lastTransactionId') ?? '';
+            console.log('Last Transaction ID Before Check', lastTransactionId);
+            console.log('Checking Transaction ID', postData.transaction_no);
+            const isDuplicate = lastTransactionId === postData.transaction_no;
+            console.log('Is Duplicate Transaction', isDuplicate);
+
+            if (!isDuplicate) {
+              // Store new transaction ID in lastTransactionId
+              await AsyncStorage.setItem('lastTransactionId', postData.transaction_no);
+              console.log('Stored Last Transaction ID', postData.transaction_no);
+
+
+              const isSuccess = await userPayPremium(postData);
+              console.log('Response', isSuccess);
+
+              if (isSuccess) {
+                var syncPayments =
+                  JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
+                updateSyncPayments = syncPayments.filter(
+                  item => item.transaction_no != postData.transaction_no,
+                );
+                await AsyncStorage.setItem(
+                  'syncPayments',
+                  JSON.stringify(updateSyncPayments),
+                );
+                navigation.pop();
+              }
+              setShowNagadPG(false);
+              dispatch({ type: HIDE_LOADING });
+              isProcessingRef.current = false; // Unlock processing
+              // return ToastAndroid.show('Payment Success !', ToastAndroid.LONG);
+            } else {
+              console.log('Duplicate transaction detected, skipping userPayPremium');
+              setShowNagadPG(false);
+              dispatch({ type: HIDE_LOADING });
+              isProcessingRef.current = false; // Unlock processing
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'HomeScreen' }],
+              }
               );
-              await AsyncStorage.setItem(
-                'syncPayments',
-                JSON.stringify(updateSyncPayments),
-              );
-              navigation.pop();
             }
-            setShowNagadPG(false);
-            dispatch({ type: HIDE_LOADING });
-            return ToastAndroid.show('Payment Success !', ToastAndroid.LONG);
           }
-        }}
+        }
+        }
       />
     );
   }

@@ -112,6 +112,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   useEffect(() => {
     async function fetchTerms() {
       const response = await getTermList(plan);
+      console.log('Terms :', response);
       if (response) {
         setTerms(response);
       }
@@ -139,45 +140,45 @@ const PayFirstPremiumScreen = ({ navigation }) => {
     setAge(calculatedAge);
   }, [dateOfBirth]);
 
-  // Automatic Premium Calculation with Debouncing
-  useEffect(() => {
-    const calculatePremium = async () => {
-      if (plan && age && term && sumAssured) {
-        const postData = {
-          plan: plan,
-          tarm: term,
-          mode: mode,
-          dob: moment(dateOfBirth).format('YYYY-MM-DD'),
-          sumAssured: sumAssured,
-        };
+  // // Automatic Premium Calculation with Debouncing
+  // useEffect(() => {
+  //   const calculatePremium = async () => {
+  //     if (plan && age && term && sumAssured) {
+  //       const postData = {
+  //         plan: plan,
+  //         tarm: term,
+  //         mode: mode,
+  //         dob: moment(dateOfBirth).format('YYYY-MM-DD'),
+  //         sumAssured: sumAssured,
+  //       };
 
-        console.log('Calculator Data:', postData); // For debugging
+  //       console.log('Calculator Data:', postData); // For debugging
 
-        const calculatedPremium = await getCalculatedPremium(postData);
-        if (calculatedPremium !== undefined) {
-          setTotalPremium(Math.ceil(calculatedPremium).toString());
-        } else {
-          setTotalPremium('');
-          ToastAndroid.show('Failed to calculate premium', ToastAndroid.SHORT);
-        }
-      } else {
-        setTotalPremium('');
-      }
-    };
+  //       const calculatedPremium = await getCalculatedPremium(postData);
+  //       if (calculatedPremium !== undefined) {
+  //         setTotalPremium(Math.ceil(calculatedPremium).toString());
+  //       } else {
+  //         setTotalPremium('');
+  //         ToastAndroid.show('Failed to calculate premium', ToastAndroid.SHORT);
+  //       }
+  //     } else {
+  //       setTotalPremium('');
+  //     }
+  //   };
 
-    const timeoutId = setTimeout(() => {
-      calculatePremium();
-    }, 500); // Debounce by 500ms
+  //   const timeoutId = setTimeout(() => {
+  //     calculatePremium();
+  //   }, 500); // Debounce by 500ms
 
-    return () => clearTimeout(timeoutId);
-  }, [plan, age, term, mode, sumAssured, dateOfBirth]);
+  //   return () => clearTimeout(timeoutId);
+  // }, [plan, age, term, mode, sumAssured, dateOfBirth]);
 
-  const handleSumAssuredChange = (text) => {
-    setSumAssured(text);
-    if (plan && age && term && text) {
-      ToastAndroid.show('Calculating premium...', ToastAndroid.SHORT);
-    }
-  };
+  // const handleSumAssuredChange = (text) => {
+  //   setSumAssured(text);
+  //   if (plan && age && term && text) {
+  //     ToastAndroid.show('Calculating premium...', ToastAndroid.SHORT);
+  //   }
+  // };
   // useEffect(() => {
   //   if (selectedProject) {
   //     const project = projects.find(p => p.code === selectedProject.code);
@@ -309,6 +310,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
               { label: 'Half Yearly', value: 'hly' },
               { label: 'Quarterly', value: 'qly' },
               { label: 'Monthly', value: 'mly' },
+              { label: 'Single', value: 'single' },
             ]}
             value={mode}
             setValue={setMode}
@@ -319,16 +321,30 @@ const PayFirstPremiumScreen = ({ navigation }) => {
           <Input
             label={'Sum Assured'}
             value={sumAssured}
-            onChangeText={handleSumAssuredChange} // Updated handler
+            onChangeText={setSumAssured}
             required
             keyboardType="numeric"
           />
+          {/* <Input
+            label={'Sum Assured'}
+            value={sumAssured}
+            onChangeText={handleSumAssuredChange} // Updated handler
+            required
+            keyboardType="numeric"
+          /> */}
           <Input
+            label={'Total Premium'}
+            value={totalPremium}
+            onChangeText={setTotalPremium}
+            required
+            keyboardType="numeric"
+          />
+          {/* <Input
             label={'Total Premium'}
             value={totalPremium}
             editable={false} // Read-only since it's calculated
             required
-          />
+          /> */}
           <Input
             label={'Servicing Cell Code'}
             value={servicingCell}
@@ -342,10 +358,27 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             required
           />
           <Text style={styles.sectionTitle}>Code Setup</Text>
-          <Input label={'FA'} value={fa} onChangeText={setFa} required />
-          <Input label={'UM'} value={um} onChangeText={setUm} />
-          <Input label={'BM'} value={bm} onChangeText={setBm} />
-          <Input label={'AGM'} value={agm} onChangeText={setAgm} />
+          <Input
+            label={'FA'}
+            value={fa}
+            onChangeText={setFa}
+            maxLength={8}
+            required />
+          <Input
+            label={'UM'}
+            value={um}
+            onChangeText={setUm}
+            maxLength={8} />
+          <Input
+            label={'BM'}
+            value={bm}
+            onChangeText={setBm}
+            maxLength={8} />
+          <Input
+            label={'AGM'}
+            value={agm}
+            onChangeText={setAgm}
+            maxLength={8} />
           <FilledButton
             title={'Submit'}
             onPress={handleSubmit}
@@ -394,7 +427,7 @@ const styles = StyleSheet.create({
     fontFamily: globalStyle.fontMedium.fontFamily,
     fontSize: 16,
     marginLeft: 10, // Space after loading indicator
-},
+  },
 });
 
 export default PayFirstPremiumScreen;
