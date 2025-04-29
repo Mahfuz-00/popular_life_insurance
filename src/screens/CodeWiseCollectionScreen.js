@@ -29,6 +29,7 @@ import { API } from '../config';
 const CodeWiseCollectionScreen = ({ navigation }) => {
     const dispatch = useDispatch();
     const [projects, setProjects] = useState([]);
+    const [projectsUnfiltered, setProjectsUnfiltered] = useState([]);
     const [selectedProject, setSelectedProject] = useState({
         code: '',
         id: null,
@@ -52,6 +53,15 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
             console.log('Project response.data', response.data);
 
             if (response?.data) {
+                // Store unfiltered projects
+                const unfilteredProjects = response.data.map(project => ({
+                    label: project.name,
+                    value: project.code,
+                }));
+                setProjectsUnfiltered(unfilteredProjects);
+
+
+
                 // List of project codes to exclude (second codes from the 7 sets)
                 const codesToExclude = ['ABAD', 'ADPS', 'IBDPS', 'ALAD', 'JBAD', 'IAD', 'JBADK'];
 
@@ -286,15 +296,11 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
 
     // Render Details Table
     const renderDetailsTable = () => {
-        if (!data || !data.data) {
-            console.log('No data or data.data is undefined for Details'); // Debug log
-            return null;
-        }
+        console.log('Fetched data:', JSON.stringify(data, null, 2));
 
-        const projectName = selectedProject.label;
-
-        const projects = Object.keys(data.data);
-        if (projects.length === 0) {
+        // Check if data is undefined or null
+        if (!data) {
+            console.log('No data is available');
             return (
                 <Text style={[globalStyle.fontMedium, { textAlign: 'center', marginTop: 20 }]}>
                     No data found for the selected projects.
@@ -302,168 +308,178 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
             );
         }
 
+        const projectName = selectedProject?.label || 'Unknown Project';
+        const projects = Object.keys(data);
 
-        // const fromDateMoment = moment(fromDate);
-        // const toDateMoment = moment(toDate);
-        // const years = Object.keys(data.data); // Get all years dynamically
 
-        // Filter transactions within the selected date range
-        // const filteredData = {};
-        // years.forEach(year => {
-        //     const months = Object.keys(data.data[year].data || {});
-        //     months.forEach(month => {
-        //         const transactions = (Array.isArray(data.data[year].data[month].data) ? data.data[year].data[month].data : []).filter(txn => {
-        //             const txnDate = moment(txn.date?.original);
-        //             return txnDate.isBetween(fromDateMoment, toDateMoment, 'day', '[]');
-        //         });
-        //         if (transactions.length > 0) {
-        //             if (!filteredData[year]) {
-        //                 filteredData[year] = {};
-        //             }
-        //             filteredData[year][month] = {
-        //                 total: transactions.reduce((sum, txn) => sum + parseFloat(txn.amount || 0), 0).toFixed(2),
-        //                 data: transactions,
-        //             };
-        //         }
-        //     });
-        // });
+           // Function to get project label from code
+           const getProjectLabel = (projectCode) => {
+            const project = projectsUnfiltered.find(p => p.value === projectCode);
+            return project ? project.label : projectCode; // Fallback to code if not found
+        };
 
-        // if (Object.keys(filteredData).length === 0) {
-        //     return (
-        //         <Text style={[globalStyle.fontMedium, { textAlign: 'center', marginTop: 20 }]}>
-        //             No data found for the selected date range.
-        //         </Text>
-        //     );
-        // }
+        // Check if all projects are empty arrays
+        if (projects.length === 0 || projects.every(project => Array.isArray(data[project]) && data[project].length === 0)) {
+            return (
+                <Text style={[globalStyle.fontMedium, { textAlign: 'center', marginTop: 20 }]}>
+                    No data found for the selected projects.
+                </Text>
+            );
+        }
 
         return (
             <View style={styles.table}>
-                {/* Heading remains unchanged */}
                 <Text style={[globalStyle.fontBold, styles.title]}>
                     Popular Life Insurance Co.Ltd.
                 </Text>
                 <Text style={[globalStyle.fontMedium, styles.subtitle]}>
-                    {projectName} - Code Wise Collection Summary Details
+                    Code Wise Collection Summary Details
                 </Text>
                 <Text style={[globalStyle.fontMedium, styles.codeInfo]}>
-                    Code No: {code}
+                    Code No: {code || 'N/A'}
                 </Text>
 
-                {/* Iterate over projects */}
-                {Object.keys(data.data).map((project, projectIndex) => (
+                {projects.map((project, projectIndex) => (
                     <View key={projectIndex}>
-                        {/* Project header */}
                         <Text style={[globalStyle.fontMedium, styles.yearHeader]}>
-                            Project: {project}
+                            Project: {getProjectLabel(project)}
                         </Text>
 
-                        {/* Iterate over years for this project */}
-                        {Object.keys(data.data[project].data).map((year, yearIndex) => (
-                            <View key={yearIndex}>
-                                <Text style={[globalStyle.fontMedium, styles.yearHeader]}>{year}</Text>
-                                {/* Iterate over months for this year */}
-                                {Object.keys(data.data[project].data[year].data).map((month, monthIndex) => (
-                                    <View key={monthIndex}>
-                                        <Text style={[globalStyle.fontMedium, styles.monthHeader]}>{month}</Text>
-                                        <View style={styles.tableHeader}>
-                                            <Text style={styles.headerCell}>Trns. No</Text>
-                                            <Text style={styles.headerCell}>Amount</Text>
-                                            <Text style={styles.headerCell}>D/R</Text>
-                                            <Text style={styles.headerCell}>Date</Text>
-                                        </View>
-                                        {/* Render transactions (assuming API provides transaction-level data) */}
-                                        {(data.data[project].data[year].data[month].transactions || []).map((txn, idx) => (
-                                            <View style={styles.row} key={idx}>
-                                                <Text style={styles.cell}>{txn.transaction_no || 'N/A'}</Text>
-                                                <Text style={styles.cell}>{txn.amount || '0.00'}</Text>
-                                                <Text style={styles.cell}>{txn.type || 'N/A'}</Text>
-                                                <Text style={styles.cell}>
-                                                    {txn.date ? moment(txn.date.original).format('DD-MM-YYYY') : 'N/A'}
-                                                </Text>
+                        {/* Check if project data is an empty array */}
+                        {Array.isArray(data[project]) && data[project].length === 0 ? (
+                            <Text style={[globalStyle.fontMedium, { textAlign: 'center', marginTop: 10 }]}>
+                                No data found for the current year.
+                            </Text>
+                        ) : (
+                            Object.keys(data[project]?.data || {}).map((year, yearIndex) => (
+                                <View key={yearIndex}>
+                                    <Text style={[globalStyle.fontMedium, styles.yearHeader]}>{year}</Text>
+                                    {Object.keys(data[project].data[year]?.data || {}).map((month, monthIndex) => (
+                                        <View key={monthIndex}>
+                                            <Text style={[globalStyle.fontMedium, styles.monthHeader]}>{month}</Text>
+                                            <View style={styles.tableHeader}>
+                                                <Text style={styles.headerCell}>Trns. No</Text>
+                                                <Text style={styles.headerCell}>Amount</Text>
+                                                <Text style={styles.headerCell}>D/R</Text>
+                                                <Text style={styles.headerCell}>Date</Text>
                                             </View>
-                                        ))}
-                                        <View style={[styles.row, styles.subTotal]}>
-                                            <Text style={styles.cell}>Sub Total</Text>
-                                            <Text style={styles.cell}>{data.data[project].data[year].data[month].total}</Text>
-                                            <Text style={styles.cell}></Text>
-                                            <Text style={styles.cell}></Text>
+                                            {(data[project].data[year].data[month]?.data || []).map((txn, idx) => (
+                                                <View style={styles.row} key={idx}>
+                                                    <Text style={styles.cell}>{txn.transaction_no || 'N/A'}</Text>
+                                                    <Text style={styles.cell}>{txn.amount || '0.00'}</Text>
+                                                    <Text style={styles.cell}>{txn.type || 'N/A'}</Text>
+                                                    <Text style={styles.cell}>
+                                                        {txn.date ? moment(txn.date.original).format('DD-MM-YYYY') : 'N/A'}
+                                                    </Text>
+                                                </View>
+                                            ))}
+                                            <View style={[styles.row, styles.subTotal]}>
+                                                <Text style={styles.cell}>Sub Total</Text>
+                                                <Text style={styles.cell}>{data[project].data[year].data[month]?.total || '0.00'}</Text>
+                                                <Text style={styles.cell}></Text>
+                                                <Text style={styles.cell}></Text>
+                                            </View>
                                         </View>
-                                    </View>
-                                ))}
-                            </View>
-                        ))}
+                                    ))}
+                                </View>
+                            ))
+                        )}
 
-                        {/* Project-specific totals (optional, if you want per-project totals) */}
-                        <View style={styles.totals}>
-                            <View style={styles.row}>
-                                <Text style={styles.cell}>Deferred Collection</Text>
-                                <Text style={styles.cell}>{data.data[project].data.deffered_total || '0.00'}</Text>
-                                <Text style={styles.cell}>
-                                    {Object.keys(data.data[project].data).reduce((sum, year) =>
-                                        sum + Object.values(data.data[project].data[year].data).reduce((monthSum, month) =>
-                                            monthSum + (month.transactions || []).filter(txn => txn.type === 'D').length, 0
-                                        ), 0)}
-                                </Text>
-                                <Text style={styles.cell}></Text>
+                        {/* Project-specific totals */}
+                        {!Array.isArray(data[project]) && (
+                            <View style={styles.totals}>
+                                <View style={styles.row}>
+                                    <Text style={styles.cell}>Deferred Collection</Text>
+                                    <Text style={styles.cell}>{data[project]?.deffered_total || '0.00'}</Text>
+                                    <Text style={styles.cell}>
+                                        {Object.keys(data[project]?.data || {}).reduce((sum, year) =>
+                                            sum + Object.values(data[project].data[year]?.data || {}).reduce((monthSum, month) =>
+                                                monthSum + (month.data || []).filter(txn => txn.type === 'D').length, 0
+                                            ), 0)}
+                                    </Text>
+                                    <Text style={styles.cell}></Text>
+                                </View>
+                                <View style={styles.row}>
+                                    <Text style={styles.cell}>Renewal Collection</Text>
+                                    <Text style={styles.cell}>
+                                        {Object.keys(data[project]?.data || {}).reduce((sum, year) =>
+                                            sum + parseFloat(data[project].data[year]?.total || 0), 0).toFixed(2)}
+                                    </Text>
+                                    <Text style={styles.cell}>
+                                        {Object.keys(data[project]?.data || {}).reduce((sum, year) =>
+                                            sum + Object.values(data[project].data[year]?.data || {}).reduce((monthSum, month) =>
+                                                monthSum + (month.data || []).filter(txn => txn.type === 'R').length, 0
+                                            ), 0)}
+                                    </Text>
+                                    <Text style={styles.cell}></Text>
+                                </View>
+                                <View style={[styles.row, styles.grandTotal]}>
+                                    <Text style={styles.cell}>Grand Total</Text>
+                                    <Text style={styles.cell}>
+                                        {Object.keys(data[project]?.data || {}).reduce((sum, year) =>
+                                            sum + parseFloat(data[project].data[year]?.total || 0), 0).toFixed(2)}
+                                    </Text>
+                                    <Text style={styles.cell}></Text>
+                                    <Text style={styles.cell}></Text>
+                                </View>
                             </View>
-                            <View style={styles.row}>
-                                <Text style={styles.cell}>Renewal Collection</Text>
-                                <Text style={styles.cell}>
-                                    {Object.keys(data.data[project].data).reduce((sum, year) =>
-                                        sum + parseFloat(data.data[project].data[year].total || 0), 0).toFixed(2)}
-                                </Text>
-                                <Text style={styles.cell}>
-                                    {Object.keys(data.data[project].data).reduce((sum, year) =>
-                                        sum + Object.values(data.data[project].data[year].data).reduce((monthSum, month) =>
-                                            monthSum + (month.transactions || []).filter(txn => txn.type === 'R').length, 0
-                                        ), 0)}
-                                </Text>
-                                <Text style={styles.cell}></Text>
-                            </View>
-                            <View style={[styles.row, styles.grandTotal]}>
-                                <Text style={styles.cell}>Grand Total</Text>
-                                <Text style={styles.cell}>
-                                    {Object.keys(data.data[project].data).reduce((sum, year) =>
-                                        sum + parseFloat(data.data[project].data[year].total || 0), 0).toFixed(2)}
-                                </Text>
-                                <Text style={styles.cell}></Text>
-                                <Text style={styles.cell}></Text>
-                            </View>
-                        </View>
+                        )}
                     </View>
                 ))}
+
+                {/* Indicator before overall totals */}
+                <Text style={[globalStyle.fontBold, { textAlign: 'center', marginVertical: 20 }]}>
+                    Overall Totals for All Projects
+                </Text>
 
                 {/* Overall totals across all projects */}
                 <View style={styles.totals}>
                     <View style={styles.row}>
                         <Text style={styles.cell}>Deferred Collection</Text>
-                        <Text style={styles.cell}>{data.deffered_total || '0.00'}</Text>
                         <Text style={styles.cell}>
-                            {Object.keys(data.data).reduce((sum, project) =>
-                                sum + Object.keys(data.data[project].data).reduce((yearSum, year) =>
-                                    yearSum + Object.values(data.data[project].data[year].data).reduce((monthSum, month) =>
-                                        monthSum + (month.transactions || []).filter(txn => txn.type === 'D').length, 0
-                                    ), 0
-                                ), 0)}
+                            {projects.reduce((sum, project) =>
+                                !Array.isArray(data[project]) ? sum + Object.keys(data[project]?.data || {}).reduce((yearSum, year) =>
+                                    yearSum + Object.values(data[project].data[year]?.data || {}).reduce((monthSum, month) =>
+                                        monthSum + (month.data || []).reduce((txnSum, txn) =>
+                                            txn.type === 'D' ? txnSum + parseFloat(txn.amount || 0) : txnSum, 0
+                                        ), 0
+                                    ), 0) : sum, 0).toFixed(2)}
+                        </Text>
+                        <Text style={styles.cell}>
+                            {projects.reduce((sum, project) =>
+                                !Array.isArray(data[project]) ? sum + Object.keys(data[project]?.data || {}).reduce((yearSum, year) =>
+                                    yearSum + Object.values(data[project].data[year]?.data || {}).reduce((monthSum, month) =>
+                                        monthSum + (month.data || []).filter(txn => txn.type === 'D').length, 0
+                                    ), 0) : sum, 0)}
                         </Text>
                         <Text style={styles.cell}></Text>
                     </View>
                     <View style={styles.row}>
                         <Text style={styles.cell}>Renewal Collection</Text>
-                        <Text style={styles.cell}>{data.renewal_total || '0.00'}</Text>
                         <Text style={styles.cell}>
-                            {Object.keys(data.data).reduce((sum, project) =>
-                                sum + Object.keys(data.data[project].data).reduce((yearSum, year) =>
-                                    yearSum + Object.values(data.data[project].data[year].data).reduce((monthSum, month) =>
-                                        monthSum + (month.transactions || []).filter(txn => txn.type === 'R').length, 0
-                                    ), 0
-                                ), 0)}
+                            {projects.reduce((sum, project) =>
+                                !Array.isArray(data[project]) ? sum + Object.keys(data[project]?.data || {}).reduce((yearSum, year) =>
+                                    yearSum + Object.values(data[project].data[year]?.data || {}).reduce((monthSum, month) =>
+                                        monthSum + (month.data || []).reduce((txnSum, txn) =>
+                                            txn.type === 'R' ? txnSum + parseFloat(txn.amount || 0) : txnSum, 0
+                                        ), 0
+                                    ), 0) : sum, 0).toFixed(2)}
+                        </Text>
+                        <Text style={styles.cell}>
+                            {projects.reduce((sum, project) =>
+                                !Array.isArray(data[project]) ? sum + Object.keys(data[project]?.data || {}).reduce((yearSum, year) =>
+                                    yearSum + Object.values(data[project].data[year]?.data || {}).reduce((monthSum, month) =>
+                                        monthSum + (month.data || []).filter(txn => txn.type === 'R').length, 0
+                                    ), 0) : sum, 0)}
                         </Text>
                         <Text style={styles.cell}></Text>
                     </View>
                     <View style={[styles.row, styles.grandTotal]}>
                         <Text style={styles.cell}>Grand Total</Text>
-                        <Text style={styles.cell}>{data.total || '0.00'}</Text>
+                        <Text style={styles.cell}>
+                            {projects.reduce((sum, project) =>
+                                !Array.isArray(data[project]) ? sum + parseFloat(data[project]?.total || 0) : sum, 0).toFixed(2)}
+                        </Text>
                         <Text style={styles.cell}></Text>
                         <Text style={styles.cell}></Text>
                     </View>
