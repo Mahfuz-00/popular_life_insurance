@@ -74,6 +74,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
   const [showNagadPG, setShowNagadPG] = useState(false);
   const [transactionNo, setTransactionNo] = useState('');
   const [isFirstPayment, setIsFirstPayment] = useState(true);
+  const isProcessingRef = React.useRef(false);
 
   // Back button handler setup
   useEffect(() => {
@@ -160,6 +161,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
 
       // Ensure code is a string
       const codeString = code.toString();
+      console.log('Code: ', codeString);
 
       // Validate required fields
       if (!codeString) {
@@ -233,8 +235,8 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
   };
 
   // Handle eReceipt download
-  const handleDownloadEReceipt = async () => {
-    eReceiptUrl = `${API}/api/first-payment/e-receipt/${nid}/${projectCode}`;
+  const handleDownloadEReceipt = async (TransactionID) => {
+    eReceiptUrl = `${API}/api/first-payment/e-receipt/${nid}/${TransactionID}`;
     console.log('Opening eReceipt URL:', eReceiptUrl);
     try {
       await Linking.openURL(eReceiptUrl);
@@ -500,7 +502,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
                 [
                   {
                     text: 'Download',
-                    onPress: handleDownloadEReceipt,
+                    onPress: handleDownloadEReceipt(createExecuteResult.trxID),
                     style: 'default',
                   },
                 ],
@@ -560,7 +562,12 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
         }}
         style={{ marginTop: 20 }}
         onNavigationStateChange={async data => {
-          console.log(data);
+          console.log('Nagad WebView State:', data, 'URL:', data.url);
+          if (isProcessingRef.current) {
+            console.log('Transaction already processing, ignoring state change');
+            return;
+          }
+
           if (JSON.stringify(data).includes('Aborted')) {
             setShowNagadPG(false);
             dispatch({ type: HIDE_LOADING });
@@ -572,7 +579,8 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
             return ToastAndroid.show('Failed !', ToastAndroid.LONG);
           }
           if (JSON.stringify(data).includes('Success')) {
-
+            isProcessingRef.current = true; // Lock processing
+            // setShowNagadPG(false); // Clear WebView immediately
 
             // console.log('Download Link: ', data.link);
 
@@ -624,72 +632,116 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
               'syncPayments',
               JSON.stringify([...syncPayments, postData]),
             );
-            const isSuccess = await userPayPremium(postData);
-            console.log('Response', isSuccess);
-            console.log('Is Success: ', isSuccess.data);
-            console.log('ID: ', isSuccess.data.data.id);
-            if (!isSuccess || !isSuccess.data?.data.id) {
-              dispatch({ type: HIDE_LOADING });
-              ToastAndroid.show(
-                'Payment processing failed: Invalid response from server.',
-                ToastAndroid.LONG,
-              );
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'HomeScreen' }],
-              });
-              return;
-            }
 
-            // Submit first premium with transaction ID
-            const submissionSuccess = await handleFirstPremiumSubmission(isSuccess.data.data.id);
-            if (!submissionSuccess) {
+
+            // Check for duplicate transaction ID in lastTransactionId
+            var lastTransactionId = await AsyncStorage.getItem('lastTransactionId') ?? '';
+            console.log('Last Transaction ID Before Check', lastTransactionId);
+            console.log('Checking Transaction ID', postData.transaction_no);
+            const isDuplicate = lastTransactionId === postData.transaction_no;
+            console.log('Is Duplicate Transaction', isDuplicate);
+
+            if (!isDuplicate) {
+              // Store new transaction ID in lastTransactionId
+              await AsyncStorage.setItem('lastTransactionId', postData.transaction_no);
+              console.log('Stored Last Transaction ID', postData.transaction_no);
+
+
+              const isSuccess = await userPayPremium(postData);
+              console.log('Response', isSuccess);
+              console.log('Is Success: ', isSuccess.data);
+              console.log('ID: ', isSuccess.data.data.id);
+
+
+              if (!isSuccess || !isSuccess.data?.data.id) {
+                dispatch({ type: HIDE_LOADING });
+                ToastAndroid.show(
+                  'Payment processing failed: Invalid response from server.',
+                  ToastAndroid.LONG,
+                );
+                isProcessingRef.current = false;
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'HomeScreen' }],
+                });
+                return;
+              }
+
+              // Submit first premium with transaction ID
+              const submissionSuccess = await handleFirstPremiumSubmission(isSuccess.data.data.id);
+              if (!submissionSuccess) {
+                setShowNagadPG(false);
+                isProcessingRef.current = false;
+                dispatch({ type: HIDE_LOADING });
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'HomeScreen' }],
+                });
+                return;
+              } else {
+                dispatch({ type: HIDE_LOADING });
+                isProcessingRef.current = false; // Unlock processing
+                // Reset navigation to HomeScreen instead of popping
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'HomeScreen' }],
+                });
+
+                // Show success alert with download option
+                console.log('Showing Payment Successful Alert'); // Debug log
+                // Show success alert with download option
+                setTimeout(() => {
+                  Alert.alert(
+                    'Payment Successful',
+                    'Your payment has been completed. Download your eReceipt below.',
+                    [
+                      {
+                        text: 'Download',
+                        onPress: () => handleDownloadEReceipt(transactionNo),
+                        style: 'default',
+                      },
+                    ],
+                  );
+                }, 500);
+              }
+
+              if (isSuccess.success) {
+                var syncPayments =
+                  JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
+                updateSyncPayments = syncPayments.filter(
+                  item => item.transaction_no != postData.transaction_no,
+                );
+                await AsyncStorage.setItem(
+                  'syncPayments',
+                  JSON.stringify(updateSyncPayments),
+                );
+                navigation.pop();
+              }
               setShowNagadPG(false);
               dispatch({ type: HIDE_LOADING });
+              isProcessingRef.current = false; // Unlock processing
+
+              // Reset navigation to HomeScreen instead of popping
               navigation.reset({
                 index: 0,
                 routes: [{ name: 'HomeScreen' }],
               });
-              return;
-            }
 
-            // Show success alert with download option
-            Alert.alert(
-              'Payment Successful',
-              'Your payment has been completed. Download your eReceipt below.',
-              [
-                {
-                  text: 'Download',
-                  onPress: handleDownloadEReceipt,
-                  style: 'default',
-                },
-              ],
-            );
-
-            if (isSuccess.success) {
-              var syncPayments =
-                JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
-              updateSyncPayments = syncPayments.filter(
-                item => item.transaction_no != postData.transaction_no,
+              // return ToastAndroid.show('Payment Success !', ToastAndroid.LONG);
+            } else {
+              console.log('Duplicate transaction detected, skipping userPayPremium');
+              setShowNagadPG(false);
+              dispatch({ type: HIDE_LOADING });
+              isProcessingRef.current = false; // Unlock processing
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'HomeScreen' }],
+              }
               );
-              await AsyncStorage.setItem(
-                'syncPayments',
-                JSON.stringify(updateSyncPayments),
-              );
-              navigation.pop();
             }
-            setShowNagadPG(false);
-            dispatch({ type: HIDE_LOADING });
-
-            // Reset navigation to HomeScreen instead of popping
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'HomeScreen' }],
-            });
-
-            // return ToastAndroid.show('Payment Success !', ToastAndroid.LONG);
           }
-        }}
+        }
+        }
       />
     );
   }
