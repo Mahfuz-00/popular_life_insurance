@@ -959,9 +959,9 @@ const HomeScreen = ({navigation}) => {
   //   }
   // };
 
-  useEffect(() => {
-    checkAppVersion();
-  }, []);
+  // useEffect(() => {
+  //   checkAppVersion();
+  // }, []);
 
   const navigateToDashboard = () => {
     if (user.type == 'policy holder') {

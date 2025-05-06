@@ -113,7 +113,7 @@
 
 package com.insurancecompanyapp;
 
-import com.insurancecompanyapp.InstallApkPackage;
+// import com.insurancecompanyapp.InstallApkPackage;
 
 import android.app.Application;
 import com.facebook.react.PackageList;
@@ -171,3 +171,12 @@ public class MainApplication extends Application implements ReactApplication {
     }
   }
 }
+
+// <!-- <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+//     <!-- <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/> -->
+//     <!-- <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" /> -->
+//     <!-- <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+//     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+//     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/> -->
+//     <!-- <uses-feature android:name="android.hardware.type.pc" android:required="false"/> -->
+//       <!-- android:requestLegacyExternalStorage="true" -->

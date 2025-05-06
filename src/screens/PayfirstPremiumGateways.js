@@ -502,7 +502,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
                 [
                   {
                     text: 'Download',
-                    onPress: handleDownloadEReceipt(createExecuteResult.trxID),
+                    onPress: () => handleDownloadEReceipt(createExecuteResult.trxID),
                     style: 'default',
                   },
                 ],
