@@ -130,109 +130,140 @@
 //   }
 // }
 
+// package com.insurancecompanyapp;
+
+// import android.content.Intent;
+// import android.net.Uri;
+// import android.os.Build;
+// import android.os.Bundle;
+// import android.provider.Settings;
+// import android.widget.Toast;
+// import androidx.core.content.FileProvider;
+// import com.facebook.react.ReactActivity;
+// import com.facebook.react.ReactActivityDelegate;
+// import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
+// import com.facebook.react.defaults.DefaultReactActivityDelegate;
+// import java.io.File;
+
+// public class MainActivity extends ReactActivity {
+//   private static final int REQUEST_CODE_ENABLE_INSTALL = 100;
+//   private String apkPath;
+
+//   @Override
+//   protected String getMainComponentName() {
+//     return "InsuranceCompanyApp"; // Replace with your app's main component name
+//   }
+
+//   @Override
+//   protected void onCreate(Bundle savedInstanceState) {
+//     super.onCreate(savedInstanceState);
+//   }
+
+//   // Method to trigger APK installation (call this from JavaScript via a native
+//   // module)
+//   public void startInstallation(String path) {
+//     apkPath = path;
+//     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//       if (!getPackageManager().canRequestPackageInstalls()) {
+//         Toast.makeText(this, "Requesting install permission", Toast.LENGTH_SHORT).show();
+//         Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+//         intent.setData(Uri.parse("package:" + getPackageName()));
+//         startActivityForResult(intent, REQUEST_CODE_ENABLE_INSTALL);
+//         return;
+//       } else {
+//         Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show();
+//       }
+//     }
+//     installApk(apkPath);
+//   }
+
+//   private void installApk(String apkPath) {
+//     File apkFile = new File(apkPath);
+//     Toast.makeText(this, "Installing: " + apkPath, Toast.LENGTH_LONG).show();
+
+//     // Check file accessibility
+//     if (apkFile.exists()) {
+//       Toast.makeText(this, "File exists, size: " + apkFile.length(), Toast.LENGTH_LONG).show();
+//     } else {
+//       Toast.makeText(this, "File does NOT exist!", Toast.LENGTH_LONG).show();
+//       return;
+//     }
+
+//     if (apkFile.canRead()) {
+//       Toast.makeText(this, "File is readable", Toast.LENGTH_SHORT).show();
+//     } else {
+//       Toast.makeText(this, "File NOT readable", Toast.LENGTH_LONG).show();
+//       return;
+//     }
+//     try {
+//       Uri apkUri = FileProvider.getUriForFile(this, "com.insurancecompanyapp.fileprovider", apkFile);
+//       Toast.makeText(this, "URI: " + apkUri.toString(), Toast.LENGTH_LONG).show();
+//       Intent intent = new Intent(Intent.ACTION_VIEW);
+//       intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+//       intent.putExtra(Intent.EXTRA_ALLOW_REPLACE, true);
+//       intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+//       intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//       startActivity(intent);
+//       Toast.makeText(this, "Install intent launched", Toast.LENGTH_SHORT).show();
+//     } catch (Exception e) {
+//       Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+//     }
+//   }
+
+//   @Override
+//   public void onActivityResult(int requestCode, int resultCode, Intent data) {
+//     super.onActivityResult(requestCode, resultCode, data);
+//     Toast.makeText(this, "Result: " + requestCode + ", " + resultCode, Toast.LENGTH_SHORT).show();
+//     if (requestCode == REQUEST_CODE_ENABLE_INSTALL) {
+//       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//         if (getPackageManager().canRequestPackageInstalls()) {
+//           Toast.makeText(this, "Permission granted, installing", Toast.LENGTH_SHORT).show();
+//           installApk(apkPath);
+//         } else {
+//           // Handle permission denial (e.g., show a message to the user)
+//           Toast.makeText(this, "Permission denied", Toast.LENGTH_LONG).show();
+//         }
+//       }
+//     }
+//   }
+
+//   @Override
+//   protected ReactActivityDelegate createReactActivityDelegate() {
+//     return new DefaultReactActivityDelegate(
+//         this,
+//         getMainComponentName(),
+//         DefaultNewArchitectureEntryPoint.getFabricEnabled(),
+//         DefaultNewArchitectureEntryPoint.getConcurrentReactEnabled());
+//   }
+// }
+
+
 package com.insurancecompanyapp;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
-import android.widget.Toast;
-import androidx.core.content.FileProvider;
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactActivityDelegate;
-import java.io.File;
 
 public class MainActivity extends ReactActivity {
-  private static final int REQUEST_CODE_ENABLE_INSTALL = 100;
-  private String apkPath;
 
-  @Override
-  protected String getMainComponentName() {
-    return "InsuranceCompanyApp"; // Replace with your app's main component name
-  }
-
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-  }
-
-  // Method to trigger APK installation (call this from JavaScript via a native
-  // module)
-  public void startInstallation(String path) {
-    apkPath = path;
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      if (!getPackageManager().canRequestPackageInstalls()) {
-        Toast.makeText(this, "Requesting install permission", Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
-        intent.setData(Uri.parse("package:" + getPackageName()));
-        startActivityForResult(intent, REQUEST_CODE_ENABLE_INSTALL);
-        return;
-      } else {
-        Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show();
-      }
-    }
-    installApk(apkPath);
-  }
-
-  private void installApk(String apkPath) {
-    File apkFile = new File(apkPath);
-    Toast.makeText(this, "Installing: " + apkPath, Toast.LENGTH_LONG).show();
-
-    // Check file accessibility
-    if (apkFile.exists()) {
-      Toast.makeText(this, "File exists, size: " + apkFile.length(), Toast.LENGTH_LONG).show();
-    } else {
-      Toast.makeText(this, "File does NOT exist!", Toast.LENGTH_LONG).show();
-      return;
+    @Override
+    protected String getMainComponentName() {
+        return "InsuranceCompanyApp";
     }
 
-    if (apkFile.canRead()) {
-      Toast.makeText(this, "File is readable", Toast.LENGTH_SHORT).show();
-    } else {
-      Toast.makeText(this, "File NOT readable", Toast.LENGTH_LONG).show();
-      return;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
     }
-    try {
-      Uri apkUri = FileProvider.getUriForFile(this, "com.insurancecompanyapp.fileprovider", apkFile);
-      Toast.makeText(this, "URI: " + apkUri.toString(), Toast.LENGTH_LONG).show();
-      Intent intent = new Intent(Intent.ACTION_VIEW);
-      intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
-      intent.putExtra(Intent.EXTRA_ALLOW_REPLACE, true);
-      intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-      startActivity(intent);
-      Toast.makeText(this, "Install intent launched", Toast.LENGTH_SHORT).show();
-    } catch (Exception e) {
-      Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-    }
-  }
 
-  @Override
-  public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    super.onActivityResult(requestCode, resultCode, data);
-    Toast.makeText(this, "Result: " + requestCode + ", " + resultCode, Toast.LENGTH_SHORT).show();
-    if (requestCode == REQUEST_CODE_ENABLE_INSTALL) {
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        if (getPackageManager().canRequestPackageInstalls()) {
-          Toast.makeText(this, "Permission granted, installing", Toast.LENGTH_SHORT).show();
-          installApk(apkPath);
-        } else {
-          // Handle permission denial (e.g., show a message to the user)
-          Toast.makeText(this, "Permission denied", Toast.LENGTH_LONG).show();
-        }
-      }
+    @Override
+    protected ReactActivityDelegate createReactActivityDelegate() {
+        return new DefaultReactActivityDelegate(
+            this,
+            getMainComponentName(),
+            DefaultNewArchitectureEntryPoint.getFabricEnabled(),
+            DefaultNewArchitectureEntryPoint.getConcurrentReactEnabled());
     }
-  }
-
-  @Override
-  protected ReactActivityDelegate createReactActivityDelegate() {
-    return new DefaultReactActivityDelegate(
-        this,
-        getMainComponentName(),
-        DefaultNewArchitectureEntryPoint.getFabricEnabled(),
-        DefaultNewArchitectureEntryPoint.getConcurrentReactEnabled());
-  }
 }

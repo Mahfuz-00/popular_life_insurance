@@ -56,13 +56,26 @@ target 'InsuranceCompanyApp' do
       :mac_catalyst_enabled => false
     )
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
+
     installer.pods_project.targets.each do |target|
-      if target.name == 'RCT-Folly'
-        target.build_configurations.each do |config|
+      target.build_configurations.each do |config|
+        # Set the deployment target to 12.0 for all pods
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+
+        # Exclude arm64 for the iOS Simulator only in Debug
+        if config.name == 'Debug'
+          config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+        end
+
+        # Specific settings for RCT-Folly
+        if target.name == 'RCT-Folly'
           config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
           config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
-          config.build_settings['VALID_ARCHS'] = 'arm64 x86_64'
-          config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = ''
+
+          # Exclude arm64 for RCT-Folly only in Debug
+          if config.name == 'Debug'
+            config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+          end
         end
       end
     end
