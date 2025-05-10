@@ -175,30 +175,30 @@
 // }
 // }
 
-package com.insurancecompanyapp;
+// package com.insurancecompanyapp;
 
-import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.bridge.ReactContextBaseJavaModule;
-import com.facebook.react.bridge.ReactMethod;
-import android.widget.Toast;
+// import com.facebook.react.bridge.ReactApplicationContext;
+// import com.facebook.react.bridge.ReactContextBaseJavaModule;
+// import com.facebook.react.bridge.ReactMethod;
+// import android.widget.Toast;
 
-public class InstallApkModule extends ReactContextBaseJavaModule {
-    public InstallApkModule(ReactApplicationContext reactContext) {
-        super(reactContext);
-    }
+// public class InstallApkModule extends ReactContextBaseJavaModule {
+//     public InstallApkModule(ReactApplicationContext reactContext) {
+//         super(reactContext);
+//     }
 
-    @Override
-    public String getName() {
-        return "RNApkInstaller";
-    }
+//     @Override
+//     public String getName() {
+//         return "RNApkInstaller";
+//     }
 
-    @ReactMethod
-    public void install(String filePath) {
-        MainActivity activity = (MainActivity) getCurrentActivity();
-        if (activity != null) {
-            activity.startInstallation(filePath);
-        } else {
-            Toast.makeText(getReactApplicationContext(), "Activity not available", Toast.LENGTH_LONG).show();
-        }
-    }
-}
+//     @ReactMethod
+//     public void install(String filePath) {
+//         MainActivity activity = (MainActivity) getCurrentActivity();
+//         if (activity != null) {
+//             activity.startInstallation(filePath);
+//         } else {
+//             Toast.makeText(getReactApplicationContext(), "Activity not available", Toast.LENGTH_LONG).show();
+//         }
+//     }
+// }

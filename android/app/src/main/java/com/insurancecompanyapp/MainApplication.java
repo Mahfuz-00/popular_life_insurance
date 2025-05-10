@@ -111,9 +111,123 @@
 //   }
 // }
 
-package com.insurancecompanyapp;
+// package com.insurancecompanyapp;
 
-// import com.insurancecompanyapp.InstallApkPackage;
+// // import com.insurancecompanyapp.InstallApkPackage;
+
+// import android.app.Application;
+// import com.facebook.react.PackageList;
+// import com.facebook.react.ReactApplication;
+// import com.facebook.react.ReactNativeHost;
+// import com.facebook.react.ReactPackage;
+// import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
+// import com.facebook.react.defaults.DefaultReactNativeHost;
+// import com.facebook.soloader.SoLoader;
+// import java.util.List;
+
+// public class MainApplication extends Application implements ReactApplication {
+
+//   private final ReactNativeHost mReactNativeHost = new DefaultReactNativeHost(this) {
+//     @Override
+//     public boolean getUseDeveloperSupport() {
+//       return BuildConfig.DEBUG;
+//     }
+
+//     @Override
+//     protected List<ReactPackage> getPackages() {
+//       List<ReactPackage> packages = new PackageList(this).getPackages();
+//       // No custom packages added
+//       // packages.add(new InstallApkPackage());
+//       return packages;
+//     }
+
+//     @Override
+//     protected String getJSMainModuleName() {
+//       return "index";
+//     }
+
+//     @Override
+//     protected boolean isNewArchEnabled() {
+//       return BuildConfig.IS_NEW_ARCHITECTURE_ENABLED;
+//     }
+
+//     @Override
+//     protected Boolean isHermesEnabled() {
+//       return BuildConfig.IS_HERMES_ENABLED;
+//     }
+//   };
+
+//   @Override
+//   public ReactNativeHost getReactNativeHost() {
+//     return mReactNativeHost;
+//   }
+
+//   @Override
+//   public void onCreate() {
+//     super.onCreate();
+//     SoLoader.init(this, false);
+//     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
+//       DefaultNewArchitectureEntryPoint.load();
+//     }
+//   }
+// }
+
+// <!-- <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+//     <!-- <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/> -->
+//     <!-- <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" /> -->
+//     <!-- <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+//     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+//     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/> -->
+//     <!-- <uses-feature android:name="android.hardware.type.pc" android:required="false"/> -->
+//       <!-- android:requestLegacyExternalStorage="true" -->
+
+
+// <!-- Add FileProvider -->
+// <!-- <provider
+//     android:name="androidx.core.content.FileProvider"
+//     android:authorities="${applicationId}.fileprovider"
+//     android:exported="false"
+//     android:grantUriPermissions="true"
+//     android:readPermission="android.permission.READ_EXTERNAL_STORAGE"
+//     android:writePermission="android.permission.WRITE_EXTERNAL_STORAGE">
+//     <meta-data
+//         android:name="android.support.FILE_PROVIDER_PATHS"
+//         android:resource="@xml/file_paths" />
+// </provider> -->
+
+// android:requestLegacyExternalStorage="true"
+
+// <!-- <?xml version="1.0" encoding="utf-8"?>
+// <paths>
+//     <!-- External storage (e.g., Downloads folder) -->
+//     <external-path name="download" path="Download/" />
+//     <external-path name="external" path="." />
+//     <!-- Internal app-specific storage -->
+//     <files-path name="files" path="." />
+//     <!-- External files directory (e.g., /sdcard/Android/data/com.insurancecompanyapp/files) -->
+//     <external-files-path name="external_files" path="." />
+//     <!-- <external-path name="external_files" path="."/> -->
+//     <cache-path name="cache" path="."/>
+//     <!-- <external-files-path name="external_files_root" path="."/> -->
+//     <external-cache-path name="external_cache_root" path="."/>
+//     <!-- <files-path name="internal_files" path="."/> -->
+// </paths> -->
+
+
+
+// <!-- <?xml version="1.0" encoding="utf-8"?>
+// <paths>
+//   <!-- Add this for Download directory access -->
+//   <external-path 
+//     name="download" 
+//     path="." />
+//   <!-- <root-path 
+//     name="root" 
+//     path="." /> -->
+// </paths> -->
+
+
+package com.insurancecompanyapp;
 
 import android.app.Application;
 import com.facebook.react.PackageList;
@@ -127,56 +241,45 @@ import java.util.List;
 
 public class MainApplication extends Application implements ReactApplication {
 
-  private final ReactNativeHost mReactNativeHost = new DefaultReactNativeHost(this) {
-    @Override
-    public boolean getUseDeveloperSupport() {
-      return BuildConfig.DEBUG;
-    }
+    private final ReactNativeHost mReactNativeHost = new DefaultReactNativeHost(this) {
+        @Override
+        public boolean getUseDeveloperSupport() {
+            return BuildConfig.DEBUG;
+        }
+
+        @Override
+        protected List<ReactPackage> getPackages() {
+            List<ReactPackage> packages = new PackageList(this).getPackages();
+            return packages;
+        }
+
+        @Override
+        protected String getJSMainModuleName() {
+            return "index";
+        }
+
+        @Override
+        protected boolean isNewArchEnabled() {
+            return BuildConfig.IS_NEW_ARCHITECTURE_ENABLED;
+        }
+
+        @Override
+        protected Boolean isHermesEnabled() {
+            return BuildConfig.IS_HERMES_ENABLED;
+        }
+    };
 
     @Override
-    protected List<ReactPackage> getPackages() {
-      List<ReactPackage> packages = new PackageList(this).getPackages();
-      // No custom packages added
-      // packages.add(new InstallApkPackage());
-      return packages;
+    public ReactNativeHost getReactNativeHost() {
+        return mReactNativeHost;
     }
 
     @Override
-    protected String getJSMainModuleName() {
-      return "index";
+    public void onCreate() {
+        super.onCreate();
+        SoLoader.init(this, false);
+        if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
+            DefaultNewArchitectureEntryPoint.load();
+        }
     }
-
-    @Override
-    protected boolean isNewArchEnabled() {
-      return BuildConfig.IS_NEW_ARCHITECTURE_ENABLED;
-    }
-
-    @Override
-    protected Boolean isHermesEnabled() {
-      return BuildConfig.IS_HERMES_ENABLED;
-    }
-  };
-
-  @Override
-  public ReactNativeHost getReactNativeHost() {
-    return mReactNativeHost;
-  }
-
-  @Override
-  public void onCreate() {
-    super.onCreate();
-    SoLoader.init(this, false);
-    if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
-      DefaultNewArchitectureEntryPoint.load();
-    }
-  }
 }
-
-// <!-- <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
-//     <!-- <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/> -->
-//     <!-- <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" /> -->
-//     <!-- <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-//     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
-//     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/> -->
-//     <!-- <uses-feature android:name="android.hardware.type.pc" android:required="false"/> -->
-//       <!-- android:requestLegacyExternalStorage="true" -->
