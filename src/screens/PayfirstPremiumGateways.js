@@ -61,6 +61,11 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
     um,
     bm,
     agm,
+    // ↓↓↓ NEW FIELDS (from PayFirstPremiumScreen) ↓↓↓
+    rateCode,           // 6-digit auto code: plan(2) + term(2) + age(2)
+    basePremium,        // Gross Premium = (SumAssured / 1000) × Rate
+    commission,         // 38% or 48% of basePremium
+    rate,               // Rate fetched from API (e.g., 106.8000)
   } = route.params;
 
   // State variables
@@ -142,7 +147,15 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
     { label: 'Term', value: term },
     { label: 'Mode', value: mode },
     { label: 'Sum assured', value: sumAssured },
-    { label: 'Total Premium', value: totalPremium },
+    // { label: 'Total Premium', value: totalPremium },
+    // === NEW CALCULATED FIELDS ===
+    { label: 'Rate Code (Auto)', value: rateCode },           // 6-digit code sent to backend
+    { label: 'Rate (per 1000)', value: rate },                // From /api/get-rate/...
+    { label: 'Base Premium', value: basePremium },            // Before commission
+    { label: 'Commission', value: commission },               // 38% or 48%
+    { label: 'Net Amount (Payable)', value: totalPremium },   // Final amount user pays
+
+    // === AGENT HIERARCHY ===
     { label: 'Servicing Cell', value: servicingCell },
     { label: 'Agent Mobile', value: agentMobile },
     { label: 'FA', value: fa },

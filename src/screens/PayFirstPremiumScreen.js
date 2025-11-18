@@ -17,7 +17,7 @@ import { PickerComponent } from './../components/PickerComponent';
 import { DatePickerComponent } from './../components/DatePickerComponent';
 import Header from './../components/Header';
 import BackgroundImage from '../assets/BackgroundImage.png';
-import { fetchProjects } from '../actions/userActions';
+import { fetchProjects, getRate, getAgentCodes } from '../actions/userActions';
 import { getPlanList, getTermList, getCalculatedPremium } from '../actions/calculatePremiumActions';
 
 const PayFirstPremiumScreen = ({ navigation }) => {
@@ -49,6 +49,14 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   const entrydate = moment().format('YYYY-MM-DD');
 
   const [projects, setProjects] = useState([]);
+
+  const [code6Digit, setCode6Digit] = useState('');        // New: 6-digit code (no edit)
+  const [rate, setRate] = useState('');                    // New: Rate from API
+  const [premium, setPremium] = useState('');              // New: Calculated Premium
+  const [commission, setCommission] = useState('');        // New: 38% or 48%
+  const [netAmount, setNetAmount] = useState('');          // New: Premium - Commission (round up)
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [isFetchingAgent, setIsFetchingAgent] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -140,6 +148,88 @@ const PayFirstPremiumScreen = ({ navigation }) => {
     setAge(calculatedAge);
   }, [dateOfBirth]);
 
+  // MAIN: Auto Calculate Premium (Smart + Debounced)
+  const calculatePremium = useCallback(async () => {
+    if (!selectedProject?.code || !plan || !term || !age || !sumAssured || parseFloat(sumAssured) <= 0) {
+      setCode6Digit('');
+      setRate('');
+      setPremium('');
+      setCommission('');
+      setNetAmount('');
+      return;
+    }
+
+    setIsCalculating(true);
+
+    try {
+      const paddedAge = age.toString().padStart(2, '0');
+      const paddedTerm = term.toString().padStart(2, '0');
+      const code = `${plan}${paddedTerm}${paddedAge}`;
+      setCode6Digit(code);
+
+      const result = await getRate(selectedProject.code, plan, paddedTerm, paddedAge);
+
+      if (result.success && result.rate > 0) {
+        const rateVal = parseFloat(result.rate);
+        const basePremium = (parseFloat(sumAssured) / 1000) * rateVal;
+        const roundedPremium = Number(basePremium.toFixed(2));
+
+        const commRate = parseInt(term) < 15 ? 0.38 : 0.48;
+        const commAmount = Number((roundedPremium * commRate).toFixed(2));
+        const finalPayable = Math.ceil((roundedPremium - commAmount) * 100) / 100;
+
+        setRate(rateVal.toFixed(4));
+        setPremium(roundedPremium.toFixed(2));
+        setCommission(commAmount.toFixed(2));
+        setNetAmount(finalPayable.toFixed(2));
+
+        ToastAndroid.show('Premium calculated!', ToastAndroid.SHORT);
+      } else {
+        ToastAndroid.show('Rate not found for this combination', ToastAndroid.LONG);
+        setRate('Not Found');
+        setPremium(''); setCommission(''); setNetAmount('');
+      }
+    } catch (err) {
+      ToastAndroid.show('Calculation failed', ToastAndroid.LONG);
+      setRate('Error');
+    } finally {
+      setIsCalculating(false);
+    }
+  }, [selectedProject?.code, plan, term, age, sumAssured]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => calculatePremium(), 200); // Smooth debounce
+    return () => clearTimeout(timer);
+  }, [calculatePremium]);
+
+  // Fetch Agent Codes
+  useEffect(() => {
+    if (!fa || fa.length !== 8 || !/^\d+$/.test(fa)) {
+      setUm(''); setBm(''); setAgm('');
+      return;
+    }
+
+    (async () => {
+      setIsFetchingAgent(true);
+      const result = await getAgentCodes(fa);
+      setIsFetchingAgent(false);
+
+      if (result.success) {
+        setUm(result.um || '');
+        setBm(result.bm || '');
+        setAgm(result.agm || '');
+        ToastAndroid.show('Agent details loaded', ToastAndroid.SHORT);
+      } else {
+        setUm(''); setBm(''); setAgm('');
+        ToastAndroid.show('Invalid FA Code', ToastAndroid.LONG);
+      }
+    })();
+  }, [fa]);
+
+
+
+
+
   // // Automatic Premium Calculation with Debouncing
   // useEffect(() => {
   //   const calculatePremium = async () => {
@@ -186,42 +276,44 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   //   }
   // }, [selectedProject, projects]);
 
-  const handleSubmit = () => {
-    // Validate required fields first
-    if (!selectedProject?.id || !nid || !name || !mobile || !totalPremium || !plan || !age || !term || !mode || !sumAssured) {
-      return Alert.alert('Error', 'Please fill all required fields');
-    }
+    const handleSubmit = () => {
+      if (!totalPremium || parseFloat(totalPremium) <= 0) {
+        return Alert.alert('Error', 'Please complete all fields and calculate premium');
+      }
 
-    const combinedPlan = `${selectedProject.id}${plan}`;
+      if (!netAmount || !code6Digit || !rate) {
+        return Alert.alert('Error', 'Premium calculation incomplete');
+      }
 
-    if (!combinedPlan) {
-      console.log(com);
-      return Alert.alert('Error', 'Invalid project or plan selection');
-    }
-
-    navigation.navigate('PayfirstPremiumGateways', {
-      project: selectedProject.name,
-      projectCode: selectedProject.code,
-      code: selectedProject.id,
-      nid,
-      entrydate: entrydate,
-      name,
-      mobile,
-      plan: combinedPlan,
-      planlabel: selectedPlanLabel,
-      age,
-      term,
-      mode,
-      sumAssured,
-      totalPremium,
-      servicingCell,
-      agentMobile,
-      fa,
-      um,
-      bm,
-      agm,
-    });
-  };
+      navigation.navigate('PayfirstPremiumGateways', {
+        project: selectedProject.name,
+        projectCode: selectedProject.code,
+        code: selectedProject.id,
+        nid,
+        entrydate,
+        name,
+        mobile,
+        plan: `${selectedProject.id}${plan}`,
+        planlabel: selectedPlanLabel,
+        age,
+        term,
+        mode,
+        sumAssured,
+        totalPremium: totalPremium,        // ← This is actual payable amount
+        servicingCell,
+        agentMobile,
+        fa,
+        um,
+        bm,
+        agm,
+        // New fields for backend
+        rateCode: code6Digit,
+        basePremium: premium,
+        commission: commission,
+        rate: rate,
+        netAmount: netAmount,
+      });
+    };
 
   return (
     <View style={globalStyle.container}>
@@ -325,6 +417,12 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             required
             keyboardType="numeric"
           />
+          <Input label="Code (Auto)" value={code6Digit} editable={false} />
+          <Input label="Rate" value={rate} editable={false} />
+          <Input label="Premium" value={premium} editable={false} />
+          <Input label="Commission" value={commission} editable={false} />
+          <Input label="Payment Amount" value={netAmount} editable={false} />
+          {/* <Input label="Total Premium" value={totalPremium} editable={false} /> */}
           {/* <Input
             label={'Sum Assured'}
             value={sumAssured}
@@ -361,24 +459,41 @@ const PayFirstPremiumScreen = ({ navigation }) => {
           <Input
             label={'FA'}
             value={fa}
-            onChangeText={setFa}
+            onChangeText={(text) => {
+              setFa(text.replace(/[^0-9]/g, '').slice(0, 8)); // only numbers, max 8
+            }}
             maxLength={8}
-            required />
-          <Input
+            keyboardType="numeric"
+            required
+            placeholder="Enter 8-digit FA code"
+          />
+          {isFetchingAgent && <Text style={{ marginLeft: 15, color: '#0066CC' }}>Fetching agent details...</Text>}
+          {fa.length === 8 && !isFetchingAgent && !um && <Text style={{ color: 'red', marginLeft: 15 }}>Invalid FA Code</Text>}
+          {um && <Text style={{ color: 'green', marginLeft: 15 }}>Agent verified</Text>}
+         <Input
             label={'UM'}
             value={um}
             onChangeText={setUm}
-            maxLength={8} />
+            maxLength={8}
+            editable={false}          // ← ADD THIS
+            style={{ backgroundColor: '#f0f0f0' }} // optional: grey background to show it's disabled
+          />
           <Input
             label={'BM'}
             value={bm}
             onChangeText={setBm}
-            maxLength={8} />
+            maxLength={8}
+            editable={false}          // ← ADD THIS
+            style={{ backgroundColor: '#f0f0f0' }}
+          />
           <Input
             label={'AGM'}
             value={agm}
             onChangeText={setAgm}
-            maxLength={8} />
+            maxLength={8}
+            editable={false}          // ← ADD THIS
+            style={{ backgroundColor: '#f0f0f0' }}
+          />
           <FilledButton
             title={'Submit'}
             onPress={handleSubmit}
@@ -427,6 +542,21 @@ const styles = StyleSheet.create({
     fontFamily: globalStyle.fontMedium.fontFamily,
     fontSize: 16,
     marginLeft: 10, // Space after loading indicator
+  },
+  loadingOverlay: {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: 'rgba(0,0,0,0.4)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 1000,
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    backgroundColor: '#000',
+    padding: 15,
+    borderRadius: 10,
   },
 });
 

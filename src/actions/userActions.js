@@ -643,3 +643,100 @@ export const fetchProjects = async () => {
     throw error;
   }
 };
+
+// Get Rate from API: /api/get-rate/{projectCode}/{plan}{term}{age}
+export const getRate = async (projectCode, plan, term, age) => {
+  try {
+    // Safeguard: Don't call API if any param is missing or invalid
+    if (!projectCode || !plan || !term || !age) {
+      console.warn('getRate: Missing required parameters', { projectCode, plan, term, age });
+      return { success: false, rate: 0 };
+    }
+
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+      ToastAndroid.show('Session expired. Please login again.', ToastAndroid.LONG);
+      return { success: false, rate: 0 };
+    }
+
+    // Ensure all values are strings and properly padded
+    const planStr = String(plan).trim().padStart(2, '0');
+    const termStr = String(term).trim().padStart(2, '0');
+    const ageStr = String(age).trim().padStart(2, '0');
+
+    const sixDigitCode = `${planStr}${termStr}${ageStr}`;
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${JSON.parse(token)}`,
+      },
+    };
+
+    console.log('Calling Rate API →', `${API}/api/get-rate/${projectCode}/${sixDigitCode}`);
+
+    const { data } = await axios.get(
+      `${API}/api/get-rate/${projectCode}/${sixDigitCode}`,
+      config
+    );
+
+    console.log('Rate API Full Response:', data);
+
+    // Handle success
+    if (data?.status === 200 && data?.data?.rate !== undefined && data?.data?.rate !== null) {
+      const rate = parseFloat(data.data.rate);
+      if (!isNaN(rate) && rate > 0) {
+        return { success: true, rate };
+      }
+    }
+
+    // If rate is 0 or missing → treat as not found
+    console.warn('Rate not found for code:', sixDigitCode);
+    return { success: false, rate: 0 };
+
+  } catch (error) {
+    // Network or server error
+    console.error('getRate() ERROR:', error.response?.data || error.message);
+
+    const msg = error.response?.data?.message || error.message || 'Network error';
+    ToastAndroid.show('Rate not available', ToastAndroid.SHORT);
+
+    return { success: false, rate: 0, error: msg };
+  }
+};
+
+//Get Agent Codes from FA (8-digit code)
+export const getAgentCodes = async (faCode) => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${JSON.parse(token)}`,
+      },
+    };
+
+    const { data } = await axios.get(
+      `${API}/api/get-agent-codes/IA/${faCode}`,
+      config
+    );
+
+    console.log('Agent Codes Response:', data);
+
+    if (data.status === 200 && data.data) {
+      return {
+        success: true,
+        um: data.data.UM || '',
+        bm: data.data.BM || '',
+        agm: data.data.AGM || '',
+      };
+    }
+
+    return { success: false };
+  } catch (error) {
+    console.error('Error fetching agent codes:', error);
+    ToastAndroid.show('Invalid FA Code', ToastAndroid.SHORT);
+    return { success: false };
+  }
+};
