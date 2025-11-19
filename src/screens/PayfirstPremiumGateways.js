@@ -61,15 +61,16 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
     um,
     bm,
     agm,
-    // ↓↓↓ NEW FIELDS (from PayFirstPremiumScreen) ↓↓↓
-    rateCode,           // 6-digit auto code: plan(2) + term(2) + age(2)
-    basePremium,        // Gross Premium = (SumAssured / 1000) × Rate
-    commission,         // 38% or 48% of basePremium
-    rate,               // Rate fetched from API (e.g., 106.8000)
+    // New fields
+    rateCode,           
+    basePremium,        
+    commission, //Commssion <- Api field      
+    rate,              
+    netAmount //Net_Pay <- Api field
   } = route.params;
 
   // State variables
-  const [amount] = useState(totalPremium);
+  const [amount] = useState(netAmount);
   const [method, setMethod] = useState('bkash');
   const [isEnabled, setIsEnabled] = useState(false);
   const [bkashToken, setBkashToken] = useState('');
@@ -147,13 +148,14 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
     { label: 'Term', value: term },
     { label: 'Mode', value: mode },
     { label: 'Sum assured', value: sumAssured },
-    // { label: 'Total Premium', value: totalPremium },
+    { label: 'Total Premium', value: totalPremium },
     // === NEW CALCULATED FIELDS ===
-    { label: 'Rate Code (Auto)', value: rateCode },           // 6-digit code sent to backend
-    { label: 'Rate (per 1000)', value: rate },                // From /api/get-rate/...
-    { label: 'Base Premium', value: basePremium },            // Before commission
-    { label: 'Commission', value: commission },               // 38% or 48%
-    { label: 'Net Amount (Payable)', value: totalPremium },   // Final amount user pays
+    { label: 'Rate Code (Auto)', value: rateCode },           
+    { label: 'Rate (per 1000)', value: rate },                
+    { label: 'Base Premium', value: basePremium },            
+    { label: 'Commission', value: commission },              
+    { label: 'Net Amount (Payable)', value: netAmount },      
+
 
     // === AGENT HIERARCHY ===
     { label: 'Servicing Cell', value: servicingCell },
@@ -204,6 +206,8 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
         bm: bm || null,
         agm: agm || null,
         agentMobile,
+        commission: commission || '0',        
+        net_pay: netAmount || '0',
       };
 
       const response = await axios.post(`${API}/api/first-premium`, postData, {

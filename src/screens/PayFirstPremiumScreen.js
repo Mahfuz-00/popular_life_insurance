@@ -50,11 +50,11 @@ const PayFirstPremiumScreen = ({ navigation }) => {
 
   const [projects, setProjects] = useState([]);
 
-  const [code6Digit, setCode6Digit] = useState('');        // New: 6-digit code (no edit)
-  const [rate, setRate] = useState('');                    // New: Rate from API
-  const [premium, setPremium] = useState('');              // New: Calculated Premium
-  const [commission, setCommission] = useState('');        // New: 38% or 48%
-  const [netAmount, setNetAmount] = useState('');          // New: Premium - Commission (round up)
+  const [code6Digit, setCode6Digit] = useState('');        
+  const [rate, setRate] = useState('');                   
+  const [premium, setPremium] = useState('');            
+  const [commission, setCommission] = useState('');       
+  const [netAmount, setNetAmount] = useState('');       
   const [isCalculating, setIsCalculating] = useState(false);
   const [isFetchingAgent, setIsFetchingAgent] = useState(false);
 
@@ -148,59 +148,51 @@ const PayFirstPremiumScreen = ({ navigation }) => {
     setAge(calculatedAge);
   }, [dateOfBirth]);
 
-  // MAIN: Auto Calculate Premium (Smart + Debounced)
-  const calculatePremium = useCallback(async () => {
-    if (!selectedProject?.code || !plan || !term || !age || !sumAssured || parseFloat(sumAssured) <= 0) {
-      setCode6Digit('');
-      setRate('');
-      setPremium('');
-      setCommission('');
-      setNetAmount('');
-      return;
-    }
-
-    setIsCalculating(true);
-
-    try {
-      const paddedAge = age.toString().padStart(2, '0');
-      const paddedTerm = term.toString().padStart(2, '0');
-      const code = `${plan}${paddedTerm}${paddedAge}`;
-      setCode6Digit(code);
-
-      const result = await getRate(selectedProject.code, plan, paddedTerm, paddedAge);
-
-      if (result.success && result.rate > 0) {
-        const rateVal = parseFloat(result.rate);
-        const basePremium = (parseFloat(sumAssured) / 1000) * rateVal;
-        const roundedPremium = Number(basePremium.toFixed(2));
-
-        const commRate = parseInt(term) < 15 ? 0.38 : 0.48;
-        const commAmount = Number((roundedPremium * commRate).toFixed(2));
-        const finalPayable = Math.ceil((roundedPremium - commAmount) * 100) / 100;
-
-        setRate(rateVal.toFixed(4));
-        setPremium(roundedPremium.toFixed(2));
-        setCommission(commAmount.toFixed(2));
-        setNetAmount(finalPayable.toFixed(2));
-
-        ToastAndroid.show('Premium calculated!', ToastAndroid.SHORT);
-      } else {
-        ToastAndroid.show('Rate not found for this combination', ToastAndroid.LONG);
-        setRate('Not Found');
-        setPremium(''); setCommission(''); setNetAmount('');
-      }
-    } catch (err) {
-      ToastAndroid.show('Calculation failed', ToastAndroid.LONG);
-      setRate('Error');
-    } finally {
-      setIsCalculating(false);
-    }
-  }, [selectedProject?.code, plan, term, age, sumAssured]);
-
+  // AUTO CALCULATE PREMIUM
   useEffect(() => {
-    const timer = setTimeout(() => calculatePremium(), 200); // Smooth debounce
+    const calculate = async () => {
+      if (!selectedProject?.code || !plan || !term || !age || !sumAssured || parseFloat(sumAssured) <= 0) {
+        setCode6Digit(''); setRate(''); setPremium(''); setCommission(''); setNetAmount('');
+        return;
+      }
+
+      setIsCalculating(true);
+      try {
+        const paddedAge = age.toString().padStart(2, '0');
+        const paddedTerm = term.toString().padStart(2, '0');
+        const code = `${plan}${paddedTerm}${paddedAge}`;
+        setCode6Digit(code);
+
+        const result = await getRate(selectedProject.code, plan, paddedTerm, paddedAge);
+
+        if (result?.success && result.rate > 0) {
+          const rateVal = parseFloat(result.rate);
+          const basePremium = (parseFloat(sumAssured) / 1000) * rateVal;
+          const roundedPremium = Number(basePremium.toFixed(2));
+          const commRate = parseInt(term) < 15 ? 0.38 : 0.48;
+          const commAmount = Number((roundedPremium * commRate).toFixed(2));
+          const finalPayable = Math.ceil((roundedPremium - commAmount) * 100) / 100;
+
+          setRate(rateVal.toFixed(4));
+          setPremium(roundedPremium.toFixed(2));
+          setCommission(commAmount.toFixed(2));
+          setNetAmount(finalPayable.toFixed(2));
+        } else {
+          setRate('');
+          setPremium(''); setCommission(''); setNetAmount('');
+          ToastAndroid.show('Rate not available for this combination', ToastAndroid.LONG);        }
+      } catch (e) {
+        console.error('Rate API Error:', error);
+        setRate('');
+        ToastAndroid.show('Failed to fetch rate. Check internet or try again.', ToastAndroid.LONG);
+      } finally {
+        setIsCalculating(false);
+      }
+    };
+
+    const timer = setTimeout(calculate, 300);
     return () => clearTimeout(timer);
-  }, [calculatePremium]);
+  }, [selectedProject?.code, plan, term, age, sumAssured]);
 
   // Fetch Agent Codes
   useEffect(() => {
@@ -208,6 +200,8 @@ const PayFirstPremiumScreen = ({ navigation }) => {
       setUm(''); setBm(''); setAgm('');
       return;
     }
+
+    ToastAndroid.show('Verifying agent code...', ToastAndroid.SHORT);
 
     (async () => {
       setIsFetchingAgent(true);
@@ -218,7 +212,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
         setUm(result.um || '');
         setBm(result.bm || '');
         setAgm(result.agm || '');
-        ToastAndroid.show('Agent details loaded', ToastAndroid.SHORT);
+      ToastAndroid.show('Agent verified successfully!', ToastAndroid.SHORT);
       } else {
         setUm(''); setBm(''); setAgm('');
         ToastAndroid.show('Invalid FA Code', ToastAndroid.LONG);
@@ -299,14 +293,13 @@ const PayFirstPremiumScreen = ({ navigation }) => {
         term,
         mode,
         sumAssured,
-        totalPremium: totalPremium,        // ← This is actual payable amount
+        totalPremium: totalPremium, 
         servicingCell,
         agentMobile,
         fa,
         um,
         bm,
         agm,
-        // New fields for backend
         rateCode: code6Digit,
         basePremium: premium,
         commission: commission,
@@ -388,6 +381,11 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             }
             required
           />
+          {age < 18 && (
+            <Text style={{ marginLeft: 15, color: 'red', fontWeight: 'bold', marginTop: 5 }}>
+              Age: {age} years, First payment not allowed under 18 years!
+            </Text>
+          )}
           <PickerComponent
             items={terms}
             value={term}
@@ -422,14 +420,6 @@ const PayFirstPremiumScreen = ({ navigation }) => {
           <Input label="Premium" value={premium} editable={false} />
           <Input label="Commission" value={commission} editable={false} />
           <Input label="Payment Amount" value={netAmount} editable={false} />
-          {/* <Input label="Total Premium" value={totalPremium} editable={false} /> */}
-          {/* <Input
-            label={'Sum Assured'}
-            value={sumAssured}
-            onChangeText={handleSumAssuredChange} // Updated handler
-            required
-            keyboardType="numeric"
-          /> */}
           <Input
             label={'Total Premium'}
             value={totalPremium}
@@ -437,12 +427,6 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             required
             keyboardType="numeric"
           />
-          {/* <Input
-            label={'Total Premium'}
-            value={totalPremium}
-            editable={false} // Read-only since it's calculated
-            required
-          /> */}
           <Input
             label={'Servicing Cell Code'}
             value={servicingCell}
@@ -467,23 +451,20 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             required
             placeholder="Enter 8-digit FA code"
           />
-          {isFetchingAgent && <Text style={{ marginLeft: 15, color: '#0066CC' }}>Fetching agent details...</Text>}
-          {fa.length === 8 && !isFetchingAgent && !um && <Text style={{ color: 'red', marginLeft: 15 }}>Invalid FA Code</Text>}
-          {um && <Text style={{ color: 'green', marginLeft: 15 }}>Agent verified</Text>}
          <Input
             label={'UM'}
             value={um}
             onChangeText={setUm}
             maxLength={8}
-            editable={false}          // ← ADD THIS
-            style={{ backgroundColor: '#f0f0f0' }} // optional: grey background to show it's disabled
+            editable={false}       
+            style={{ backgroundColor: '#f0f0f0' }} 
           />
           <Input
             label={'BM'}
             value={bm}
             onChangeText={setBm}
             maxLength={8}
-            editable={false}          // ← ADD THIS
+            editable={false}         
             style={{ backgroundColor: '#f0f0f0' }}
           />
           <Input
@@ -491,7 +472,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             value={agm}
             onChangeText={setAgm}
             maxLength={8}
-            editable={false}          // ← ADD THIS
+            editable={false}         
             style={{ backgroundColor: '#f0f0f0' }}
           />
           <FilledButton
