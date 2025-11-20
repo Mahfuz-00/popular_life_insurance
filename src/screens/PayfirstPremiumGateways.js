@@ -64,9 +64,20 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
     // New fields
     rateCode,           
     basePremium,        
-    commission, //Commssion <- Api field      
+    commission,   
     rate,              
-    netAmount //Net_Pay <- Api field
+    netAmount,
+    fatherHusbandName, 
+    motherName, 
+    address, 
+    district, 
+    gender,
+    nominee1Name, 
+    nominee1Percent,
+    nominee2Name, 
+    nominee2Percent,
+    nominee3Name, 
+    nominee3Percent,
   } = route.params;
 
   // State variables
@@ -137,7 +148,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
   const tableData = [
     { label: 'Project', value: project },
     { label: 'Project Code', value: projectCode },
-    { label: 'Project ID', value: code },
+    // { label: 'Project ID', value: code },
     { label: 'NID', value: nid },
     { label: 'Date', value: entrydate },
     { label: 'Name', value: name },
@@ -150,12 +161,24 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
     { label: 'Sum assured', value: sumAssured },
     { label: 'Total Premium', value: totalPremium },
     // === NEW CALCULATED FIELDS ===
-    { label: 'Rate Code (Auto)', value: rateCode },           
-    { label: 'Rate (per 1000)', value: rate },                
+    { label: 'Rate Code', value: rateCode },           
+    { label: 'Rate', value: rate },                
     { label: 'Base Premium', value: basePremium },            
     { label: 'Commission', value: commission },              
-    { label: 'Net Amount (Payable)', value: netAmount },      
-
+    { label: 'Payment Amount', value: netAmount }, 
+    
+    // === Family Info ===
+    { label: 'Father or Husband\'s Name', value: fatherHusbandName },           
+    { label: 'Mother \'s Name', value: motherName },                
+    { label: 'Address', value: address },            
+    { label: 'District', value: district },              
+    { label: 'Gender', value: gender }, 
+    { label: 'Nominee 1', value: nominee1Name }, 
+    { label: 'Nominee 1 Share (%)', value: nominee1Percent }, 
+    { label: 'Nominee 2', value: nominee2Name }, 
+    { label: 'Nominee 2 Share (%)', value: nominee2Percent }, 
+    { label: 'Nominee 3', value: nominee3Name }, 
+    { label: 'Nominee 3 Share (%)', value: nominee3Percent }, 
 
     // === AGENT HIERARCHY ===
     { label: 'Servicing Cell', value: servicingCell },
@@ -208,6 +231,17 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
         agentMobile,
         commission: commission || '0',        
         net_pay: netAmount || '0',
+        father_or_husband_name: fatherHusbandName, 
+        mother_name: motherName,
+        address: address,
+        district: district,
+        gender: gender,
+        nominee_1_name: nominee1Name,
+        nominee_1_percentage:nominee1Percent,
+        nominee_2_name: nominee2Name,
+        nominee_2_percentage: nominee2Percent,
+        nominee_3_name: nominee3Name,
+        nominee_3_percentage: nominee3Percent,
       };
 
       const response = await axios.post(`${API}/api/first-premium`, postData, {

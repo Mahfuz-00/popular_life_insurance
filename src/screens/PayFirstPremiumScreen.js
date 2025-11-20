@@ -6,8 +6,9 @@ import {
   ScrollView,
   StyleSheet,
   ImageBackground,
-  ToastAndroid, // Added for toast messages
+  ToastAndroid, 
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import moment from 'moment';
 import globalStyle from '../styles/globalStyle';
@@ -37,6 +38,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   const [age, setAge] = useState('');
   const [terms, setTerms] = useState([]);
   const [term, setTerm] = useState('');
+  const [modes, setModes] = useState([]);
   const [mode, setMode] = useState('');
   const [sumAssured, setSumAssured] = useState('');
   const [totalPremium, setTotalPremium] = useState('');
@@ -57,6 +59,39 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   const [netAmount, setNetAmount] = useState('');       
   const [isCalculating, setIsCalculating] = useState(false);
   const [isFetchingAgent, setIsFetchingAgent] = useState(false);
+  const [fatherHusbandName, setFatherHusbandName] = useState('');
+  const [motherName, setMotherName] = useState('');
+  const [address, setAddress] = useState('');
+  const [district, setDistrict] = useState('');
+  const [gender, setGender] = useState(''); 
+  const [nominee1Name, setNominee1Name] = useState('');
+  const [nominee1Percent, setNominee1Percent] = useState('');
+  const [nominee2Name, setNominee2Name] = useState('');
+  const [nominee2Percent, setNominee2Percent] = useState('');
+  const [nominee3Name, setNominee3Name] = useState('');
+  const [nominee3Percent, setNominee3Percent] = useState('');
+
+
+  // SPECIAL PROJECT CODES → Use mode multiplier
+  const SPECIAL_PROJECTS = ['ABA', 'AKOK', 'ALA', 'IA', 'JBA', 'JBAT', 'IBT'];
+
+  // Mode multiplier mapping
+  const MODE_MULTIPLIER = {
+    yly: 1,
+    hly: 2,
+    qly: 4,
+    mly: 12,
+    single: 1,
+  };
+
+  // Plan 73 special mode factor
+  const PLAN_73_FACTOR = {
+    mly: 1,
+    qly: 3,
+    hly: 6,
+    yly: 12,
+    single: 1,
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -98,13 +133,30 @@ const PayFirstPremiumScreen = ({ navigation }) => {
       console.log('Plan response.data', response);
       if (response) {
         // setPlans(response);
+
+        // If project is NOT special → ONLY allow Plan 28 & 57
+        if (selectedProject?.code && !SPECIAL_PROJECTS.includes(selectedProject.code)) {
+          filtered = response.filter(p => p.value === '28' || p.value === '57');
+        }
+
         // Format plans to show value in dropdown
         const formattedPlans = response.map(plan => ({
           label: plan.value, // Show value in dropdown
           value: plan.value, // Store value
           fullLabel: plan.label, // Store full label for display
+          modes: Object.values(plan.modes).filter(Boolean),
         }));
+        // setModes(modeList);
         setPlans(formattedPlans);
+        // Reset invalid plan
+        if (plan && !formattedPlans.find(p => p.value === plan)) {
+          setPlan('');
+          setModes([]);
+          setMode('');
+          setTerm('');
+          setTerms([]);
+        }
+
       }
     }
     fetchPlans();
@@ -113,7 +165,20 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   // Set selected plan label when plan changes
   useEffect(() => {
     const selected = plans.find(p => p.value === plan);
-    setSelectedPlanLabel(selected ? selected.fullLabel : '');
+    if (selected) {
+      setSelectedPlanLabel(selected ? selected.fullLabel : '');
+      const availableModes = selected.modes || [];
+      setModes(availableModes);
+      setMode('');
+
+      if (availableModes.length === 0) {
+        ToastAndroid.show('No payment mode available for this plan', ToastAndroid.LONG);
+      }
+    } else {
+      setSelectedPlanLabel('');
+      setModes([]);
+      setMode('');
+    }
   }, [plan, plans]);
 
   // Fetch Terms based on selected Plan
@@ -123,6 +188,8 @@ const PayFirstPremiumScreen = ({ navigation }) => {
       console.log('Terms :', response);
       if (response) {
         setTerms(response);
+      } else {
+        ToastAndroid.show('No term available for this plan', ToastAndroid.LONG);
       }
     }
     if (plan) {
@@ -151,48 +218,93 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   // AUTO CALCULATE PREMIUM
   useEffect(() => {
     const calculate = async () => {
-      if (!selectedProject?.code || !plan || !term || !age || !sumAssured || parseFloat(sumAssured) <= 0) {
-        setCode6Digit(''); setRate(''); setPremium(''); setCommission(''); setNetAmount('');
+      // Reset fields
+      setCode6Digit(''); setRate(''); setPremium(''); setCommission(''); setNetAmount('');
+
+      if (!selectedProject?.code || !plan || !term || age < 0 || !sumAssured || parseFloat(sumAssured) <= 0 || !mode) {
         return;
       }
 
-      setIsCalculating(true);
+      const isSpecialProject = SPECIAL_PROJECTS.includes(selectedProject.code);
+      const sa = parseFloat(sumAssured);
+      const paddedAge = age.toString().padStart(2, '0');
+      const paddedTerm = term.toString().padStart(2, '0');
+      const code = `${plan}${paddedTerm}${paddedAge}`;
+      setCode6Digit(code);
+
+      let basePremium = 0;
+      let fetchedRate = 0;
+      let commRate = parseInt(term) < 15 ? 0.38 : 0.48;
+
+      // Special commission for Plan 10 & 15
+      if (plan === '10' || plan === '15') {
+        commRate = 0.06;
+      }
+
       try {
-        const paddedAge = age.toString().padStart(2, '0');
-        const paddedTerm = term.toString().padStart(2, '0');
-        const code = `${plan}${paddedTerm}${paddedAge}`;
-        setCode6Digit(code);
+        let rateResult = null;
 
-        const result = await getRate(selectedProject.code, plan, paddedTerm, paddedAge);
+        // ALWAYS FETCH RATE — even for non-special projects
+        if (isSpecialProject || ['28', '57'].includes(plan)) {
+          rateResult = await getRate(selectedProject.code, plan, paddedTerm, paddedAge);
+        }
 
-        if (result?.success && result.rate > 0) {
-          const rateVal = parseFloat(result.rate);
-          const basePremium = (parseFloat(sumAssured) / 1000) * rateVal;
-          const roundedPremium = Number(basePremium.toFixed(2));
-          const commRate = parseInt(term) < 15 ? 0.38 : 0.48;
-          const commAmount = Number((roundedPremium * commRate).toFixed(2));
-          const finalPayable = Math.ceil((roundedPremium - commAmount) * 100) / 100;
-
-          setRate(rateVal.toFixed(4));
-          setPremium(roundedPremium.toFixed(2));
-          setCommission(commAmount.toFixed(2));
-          setNetAmount(finalPayable.toFixed(2));
+        if (rateResult?.success && rateResult.rate > 0) {
+          fetchedRate = parseFloat(rateResult.rate);
+          setRate(fetchedRate.toFixed(4));
         } else {
-          setRate('');
-          setPremium(''); setCommission(''); setNetAmount('');
-          ToastAndroid.show('Rate not available for this combination', ToastAndroid.LONG);        }
+          setRate('Not Found');
+          ToastAndroid.show('Rate not available for this combination', ToastAndroid.LONG);
+          return;
+        }
+
+        // NOW CALCULATE BASED ON PROJECT TYPE
+        if (isSpecialProject) {
+          // SPECIAL PROJECTS → Use rate + mode multiplier
+          if (plan === '72') {
+            // Plan 73 → sumAssured / rate → then apply mode factor
+            const preBase = sa / fetchedRate;
+            const factor = PLAN_73_FACTOR[mode] || 1;
+            basePremium = preBase * factor;
+          } else {
+            // Other special plans
+            const multiplier = MODE_MULTIPLIER[mode] || 1;
+            basePremium = (sa / 1000) * fetchedRate / multiplier;
+          }
+        } else {
+          // NON-SPECIAL PROJECTS (28 & 57) → Endowment formula
+          setRate('0');
+          basePremium = sa / (12 * parseInt(term));
+        }
+
+        const roundedPremium = Number(basePremium.toFixed(2));
+        console.log('Rounded Premium:', roundedPremium);
+        const commAmount = Number((roundedPremium * commRate).toFixed(2));
+        console.log('Commission Amount:', commAmount);
+        const netBeforeRound = roundedPremium - commAmount;
+        console.log('Net Amount before rounding:', netBeforeRound);
+
+        const decimal = netBeforeRound - Math.floor(netBeforeRound);
+        const netAmount =
+          decimal < 0.5
+            ? Math.floor(netBeforeRound)
+            : Math.floor(netBeforeRound) + 1;
+        console.log('Net Amount after rounding:', netAmount);
+
+        setPremium(roundedPremium.toFixed(2));
+        setCommission(commAmount.toFixed(2));
+        setNetAmount(netAmount.toString());
+
       } catch (e) {
-        console.error('Rate API Error:', error);
-        setRate('');
-        ToastAndroid.show('Failed to fetch rate. Check internet or try again.', ToastAndroid.LONG);
-      } finally {
-        setIsCalculating(false);
+        console.error('Calculation error:', e);
+        setRate('Error');
+        ToastAndroid.show('Failed to calculate. Try again.', ToastAndroid.LONG);
       }
     };
 
-    const timer = setTimeout(calculate, 300);
+    const timer = setTimeout(calculate, 500);
     return () => clearTimeout(timer);
-  }, [selectedProject?.code, plan, term, age, sumAssured]);
+  }, [selectedProject?.code, plan, term, age, sumAssured, mode]);
 
   // Fetch Agent Codes
   useEffect(() => {
@@ -219,6 +331,28 @@ const PayFirstPremiumScreen = ({ navigation }) => {
       }
     })();
   }, [fa]);
+
+
+  const handleNomineePercent = (setter) => (text) => {
+  // only digits, max 3 characters
+  const filtered = text.replace(/[^0-9]/g, '').slice(0, 3);
+  setter(filtered);
+  };
+
+  const checkNomineeTotal = () => {
+  const n1 = parseInt(nominee1Percent || '0');
+  const n2 = parseInt(nominee2Percent || '0');
+  const n3 = parseInt(nominee3Percent || '0');
+
+  const total = n1 + n2 + n3;
+
+  if (total > 100) {
+    Alert.alert('Error', 'Total Nominee Percentage cannot exceed 100%');
+    return false;
+  }
+  return true;
+  };
+
 
 
 
@@ -271,8 +405,12 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   // }, [selectedProject, projects]);
 
     const handleSubmit = () => {
-      if (!totalPremium || parseFloat(totalPremium) <= 0) {
-        return Alert.alert('Error', 'Please complete all fields and calculate premium');
+      if (!checkNomineeTotal()) return;
+
+      if (age < 18) return Alert.alert('Error', 'Age must be 18 or above');
+
+      if (!fatherHusbandName || !motherName || !nominee1Name || !nominee1Percent) {
+      return Alert.alert('Error', 'Please fill all required nominee & family details');
       }
 
       if (!netAmount || !code6Digit || !rate) {
@@ -305,6 +443,17 @@ const PayFirstPremiumScreen = ({ navigation }) => {
         commission: commission,
         rate: rate,
         netAmount: netAmount,
+        fatherHusbandName, 
+        motherName, 
+        address, 
+        district, 
+        gender,
+        nominee1Name, 
+        nominee1Percent,
+        nominee2Name, 
+        nominee2Percent,
+        nominee3Name, 
+        nominee3Percent,
       });
     };
 
@@ -329,7 +478,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             placeholder={'Select a project'}
             required
           />
-          <Input label={'Code'} value={selectedProject?.id?.toString() || ''} editable={false} />
+          {/* <Input label={'Code'} value={selectedProject?.id?.toString() || ''} editable={false} /> */}
           <Input label={'NID'} value={nid} onChangeText={setNid} required />
           <Input label={'Date'} value={entrydate} editable={false} />
           <Input
@@ -342,6 +491,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             label={'Proposers Mobile No.'}
             value={mobile}
             onChangeText={setMobile}
+            keyboardType="phone-pad"
             required
           />
           <PickerComponent
@@ -394,20 +544,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             placeholder={'Select a term'}
             required
           />
-          <PickerComponent
-            items={[
-              { label: 'Yearly', value: 'yly' },
-              { label: 'Half Yearly', value: 'hly' },
-              { label: 'Quarterly', value: 'qly' },
-              { label: 'Monthly', value: 'mly' },
-              { label: 'Single', value: 'single' },
-            ]}
-            value={mode}
-            setValue={setMode}
-            label={'Mode'}
-            placeholder={'Select a mode'}
-            required
-          />
+          <PickerComponent items={modes} value={mode} setValue={setMode} label="Mode"   placeholder={'Select a mode'} required />
           <Input
             label={'Sum Assured'}
             value={sumAssured}
@@ -437,8 +574,36 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             label={'Agent Mobile'}
             value={agentMobile}
             onChangeText={setAgentMobile}
+            keyboardType="phone-pad"
             required
           />
+
+          <Text style={styles.sectionTitle}>Personal & Nominee Details</Text>
+          <Input label="Father's / Husband's Name" value={fatherHusbandName} onChangeText={setFatherHusbandName} required />
+          <Input label="Mother's Name" value={motherName} onChangeText={setMotherName} required />
+          <Input label="Address" value={address} onChangeText={setAddress} required/>
+          <Input label="District" value={district} onChangeText={setDistrict} required/>
+
+          <Text style={{ marginLeft: 15, marginTop: 10, fontWeight: '600' }}>Gender</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10 }}>
+            {['Male', 'Female'].map(g => (
+              <TouchableOpacity key={g} onPress={() => setGender(g)} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#000', marginRight: 10, justifyContent: 'center', alignItems: 'center' }}>
+                  {gender === g && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#000' }} />}
+                </View>
+                <Text>{g}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.sectionTitle}>Nominee Details</Text>
+          <Input label="Nominee 1 Name" value={nominee1Name} onChangeText={setNominee1Name} required />
+          <Input label="Nominee 1 %" value={nominee1Percent} onChangeText={handleNomineePercent(setNominee1Percent)} keyboardType="numeric" required />
+          <Input label="Nominee 2 Name" value={nominee2Name} onChangeText={setNominee2Name} />
+          <Input label="Nominee 2 %" value={nominee2Percent} onChangeText={handleNomineePercent(setNominee2Percent)} keyboardType="numeric" />
+          <Input label="Nominee 3 Name" value={nominee3Name} onChangeText={setNominee3Name} />
+          <Input label="Nominee 3 %" value={nominee3Percent} onChangeText={handleNomineePercent(setNominee1Percent)} keyboardType="numeric" />
+
           <Text style={styles.sectionTitle}>Code Setup</Text>
           <Input
             label={'FA'}
