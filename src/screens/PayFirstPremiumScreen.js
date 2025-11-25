@@ -84,14 +84,33 @@ const PayFirstPremiumScreen = ({ navigation }) => {
     single: 1,
   };
 
-  // Plan 73 special mode factor
-  const PLAN_73_FACTOR = {
+  // Plan 72 special mode factor
+  const PLAN_72_FACTOR = {
     mly: 1,
     qly: 3,
     hly: 6,
     yly: 12,
     single: 1,
   };
+
+  const isSpecialProject = selectedProject?.code 
+    ? SPECIAL_PROJECTS.includes(selectedProject.code) 
+    : false;
+
+  // PERFECT: Reset premium-related fields when project changes
+  useEffect(() => {
+    setPlan('');
+    setModes([]);
+    setMode('');
+    setTerm('');
+    setTerms([]);
+    setCode6Digit('');
+    setRate('');
+    setPremium('');
+    setCommission('');
+    setNetAmount('');
+    setSelectedPlanLabel('');
+  }, [selectedProject?.code]);
 
   useEffect(() => {
     async function fetchData() {
@@ -111,56 +130,76 @@ const PayFirstPremiumScreen = ({ navigation }) => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    if (selectedProject?.value) {
-      setCode(selectedProject.value.toString());
-    }
-  }, [selectedProject]);
+  // useEffect(() => {
+  //   if (selectedProject?.value) {
+  //     setCode(selectedProject.value.toString());
+  //   }
+  // }, [selectedProject]);
 
-  useEffect(() => {
-    if (selectedProject?.id) {
-      setCode(selectedProject.id.toString());
-    } else {
-      setCode('');
-    }
-  }, [selectedProject]);
+useEffect(() => {
+  setCode(selectedProject?.id?.toString() || '');
+}, [selectedProject?.id]);
 
 
   // Fetch Plans
+  // FINAL: FETCH PLANS — ONLY 28 & 57 FOR NON-SPECIAL PROJECTS
   useEffect(() => {
     async function fetchPlans() {
-      const response = await getPlanList();
-      console.log('Plan response.data', response);
-      if (response) {
-        // setPlans(response);
+      try {
+        const response = await getPlanList();
+        if (!response || !Array.isArray(response)) return;
 
-        // If project is NOT special → ONLY allow Plan 28 & 57
+        // DEBUG: Specifically show 28, 57, and 72
+        const debugPlans = response.filter(p => 
+          ['28', '57', '72'].includes(p.value)
+        );
+        console.log('Plans 28, 57, 72 details:', debugPlans.map(p => ({
+          value: p.value,
+          label: p.label,
+          fullLabel: p.fullLabel || p.label,
+          modes: Object.values(p.modes || {}).filter(Boolean),
+        })));
+
+        let allowedPlans = response;
+
+        // NON-SPECIAL PROJECT → ONLY 28 & 57
         if (selectedProject?.code && !SPECIAL_PROJECTS.includes(selectedProject.code)) {
-          filtered = response.filter(p => p.value === '28' || p.value === '57');
+          allowedPlans = response.filter(p => p.value === '28' || p.value === '57');
         }
 
-        // Format plans to show value in dropdown
-        const formattedPlans = response.map(plan => ({
-          label: plan.value, // Show value in dropdown
-          value: plan.value, // Store value
-          fullLabel: plan.label, // Store full label for display
-          modes: Object.values(plan.modes).filter(Boolean),
+        // CRITICAL: Map from allowedPlans, NOT response
+        const formattedPlans = allowedPlans.map(plan => ({
+          label: plan.value,
+          value: plan.value,
+          fullLabel: plan.label,
+          modes: Object.values(plan.modes || {}).filter(Boolean),
         }));
-        // setModes(modeList);
+
         setPlans(formattedPlans);
-        // Reset invalid plan
-        if (plan && !formattedPlans.find(p => p.value === plan)) {
+
+        // RESET IF CURRENT PLAN IS NO LONGER ALLOWED
+        if (plan && !formattedPlans.some(p => p.value === plan)) {
           setPlan('');
           setModes([]);
           setMode('');
           setTerm('');
           setTerms([]);
+          setCode6Digit('');
+          setRate('');
+          setPremium('');
+          setCommission('');
+          setNetAmount('');
+          ToastAndroid.show('Only Plan 28 & 57 allowed for this project', ToastAndroid.LONG);
         }
 
+      } catch (err) {
+        console.error('Failed to fetch plans:', err);
+        ToastAndroid.show('Failed to load plans', ToastAndroid.LONG);
       }
     }
+
     fetchPlans();
-  }, []);
+  }, [selectedProject?.code]); // Re-run when project changes
 
   // Set selected plan label when plan changes
   useEffect(() => {
@@ -200,13 +239,13 @@ const PayFirstPremiumScreen = ({ navigation }) => {
     }
   }, [plan]);
 
-  useEffect(() => {
-    if (selectedProject?.id) {
-      setCode(selectedProject.id.toString());
-    } else {
-      setCode('');
-    }
-  }, [selectedProject]);
+  // useEffect(() => {
+  //   if (selectedProject?.id) {
+  //     setCode(selectedProject.id.toString());
+  //   } else {
+  //     setCode('');
+  //   }
+  // }, [selectedProject]);
 
 
   // Calculate Age from Date of Birth
@@ -242,37 +281,31 @@ const PayFirstPremiumScreen = ({ navigation }) => {
       }
 
       try {
-        let rateResult = null;
+      if (isSpecialProject) {
+          // ONLY SPECIAL PROJECTS → FETCH RATE
+          const result = await getRate(selectedProject.code, plan, paddedTerm, paddedAge);
 
-        // ALWAYS FETCH RATE — even for non-special projects
-        if (isSpecialProject || ['28', '57'].includes(plan)) {
-          rateResult = await getRate(selectedProject.code, plan, paddedTerm, paddedAge);
-        }
+          if (!result?.success || !result.rate || result.rate <= 0) {
+            setRate('Not Found');
+            ToastAndroid.show('Rate not available for this combination', ToastAndroid.LONG);
+            setPremium(''); setCommission(''); setNetAmount('');
+            return;
+          }
 
-        if (rateResult?.success && rateResult.rate > 0) {
-          fetchedRate = parseFloat(rateResult.rate);
-          setRate(fetchedRate.toFixed(4));
-        } else {
-          setRate('Not Found');
-          ToastAndroid.show('Rate not available for this combination', ToastAndroid.LONG);
-          return;
-        }
+          const rateVal = parseFloat(result.rate);
+          setRate(rateVal.toFixed(4));
 
-        // NOW CALCULATE BASED ON PROJECT TYPE
-        if (isSpecialProject) {
-          // SPECIAL PROJECTS → Use rate + mode multiplier
           if (plan === '72') {
-            // Plan 73 → sumAssured / rate → then apply mode factor
-            const preBase = sa / fetchedRate;
-            const factor = PLAN_73_FACTOR[mode] || 1;
+            const preBase = sa / rateVal;
+            const factor = PLAN_72_FACTOR[mode] || 1;
             basePremium = preBase * factor;
           } else {
-            // Other special plans
             const multiplier = MODE_MULTIPLIER[mode] || 1;
-            basePremium = (sa / 1000) * fetchedRate / multiplier;
+            basePremium = (sa / 1000) * rateVal * multiplier;
           }
+
         } else {
-          // NON-SPECIAL PROJECTS (28 & 57) → Endowment formula
+          // NON-SPECIAL (28 & 57) → NO RATE FETCH, DIRECT CALCULATION
           setRate('0');
           basePremium = sa / (12 * parseInt(term));
         }
@@ -413,7 +446,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
       return Alert.alert('Error', 'Please fill all required nominee & family details');
       }
 
-      if (!netAmount || !code6Digit || !rate) {
+      if (!netAmount || !code6Digit || !commission) {
         return Alert.alert('Error', 'Premium calculation incomplete');
       }
 
@@ -553,7 +586,11 @@ const PayFirstPremiumScreen = ({ navigation }) => {
             keyboardType="numeric"
           />
           <Input label="Code (Auto)" value={code6Digit} editable={false} />
-          <Input label="Rate" value={rate} editable={false} />
+         {isSpecialProject ? (
+            <Input label="Rate" value={rate} editable={false} />
+          ) : (
+            <Input label="Rate" value="0" editable={false} />
+          )}
           <Input label="Premium" value={premium} editable={false} />
           <Input label="Commission" value={commission} editable={false} />
           <Input label="Payment Amount" value={netAmount} editable={false} />
@@ -602,7 +639,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
           <Input label="Nominee 2 Name" value={nominee2Name} onChangeText={setNominee2Name} />
           <Input label="Nominee 2 %" value={nominee2Percent} onChangeText={handleNomineePercent(setNominee2Percent)} keyboardType="numeric" />
           <Input label="Nominee 3 Name" value={nominee3Name} onChangeText={setNominee3Name} />
-          <Input label="Nominee 3 %" value={nominee3Percent} onChangeText={handleNomineePercent(setNominee1Percent)} keyboardType="numeric" />
+          <Input label="Nominee 3 %" value={nominee3Percent} onChangeText={handleNomineePercent(setNominee3Percent)} keyboardType="numeric" />
 
           <Text style={styles.sectionTitle}>Code Setup</Text>
           <Input
