@@ -164,7 +164,7 @@ useEffect(() => {
 
         // NON-SPECIAL PROJECT → ONLY 28 & 57
         if (selectedProject?.code && !SPECIAL_PROJECTS.includes(selectedProject.code)) {
-          allowedPlans = response.filter(p => p.value === '28' || p.value === '57');
+          allowedPlans = response.filter(p => p.value === '28' || p.value === '57' || p.value === '72');
         }
 
         // CRITICAL: Map from allowedPlans, NOT response
@@ -225,9 +225,11 @@ useEffect(() => {
     async function fetchTerms() {
       const response = await getTermList(plan);
       console.log('Terms :', response);
-      if (response) {
+     if (response && Array.isArray(response) && response.length > 0) {
         setTerms(response);
       } else {
+        setTerms([]);
+        setTerm('');
         ToastAndroid.show('No term available for this plan', ToastAndroid.LONG);
       }
     }
@@ -271,7 +273,8 @@ useEffect(() => {
       const code = `${plan}${paddedTerm}${paddedAge}`;
       setCode6Digit(code);
 
-      let basePremium = 0;
+      let basePremiumInitial = 0;
+      let basePremiumFinal = 0;
       let fetchedRate = 0;
       let commRate = parseInt(term) < 15 ? 0.38 : 0.48;
 
@@ -293,24 +296,30 @@ useEffect(() => {
           }
 
           const rateVal = parseFloat(result.rate);
-          setRate(rateVal.toFixed(4));
+          setRate(rateVal.toFixed(2));
 
           if (plan === '72') {
             const preBase = sa / rateVal;
             const factor = PLAN_72_FACTOR[mode] || 1;
-            basePremium = preBase * factor;
+            console.log('Plan 72 - Pre Base:', preBase, 'Factor:', factor);
+            basePremiumInitial = preBase * factor 
+            basePremiumFinal = basePremiumInitial * 500;
+            console.log('Base Premium Calculation for Plan 72:', `(${sa} / ${rateVal}) * ${factor} * 500 = ${basePremiumFinal}`);
           } else {
             const multiplier = MODE_MULTIPLIER[mode] || 1;
-            basePremium = (sa / 1000) * rateVal * multiplier;
+            console.log('Mode Multiplier:', multiplier);
+            basePremiumInitial = (sa / 1000) * rateVal;
+            basePremiumFinal = basePremiumInitial / multiplier;
+            console.log('Base Premium Calculation:', `(${sa} / 1000) * ${rateVal} / ${multiplier} = ${basePremiumFinal}`);
           }
-
         } else {
           // NON-SPECIAL (28 & 57) → NO RATE FETCH, DIRECT CALCULATION
           setRate('0');
-          basePremium = sa / (12 * parseInt(term));
+          basePremiumFinal = sa / (12 * parseInt(term));
+          console.log('Base Premium Calculation for Non-Special:', `${sa} / (12 * ${term}) = ${basePremiumFinal}`);
         }
 
-        const roundedPremium = Number(basePremium.toFixed(2));
+        const roundedPremium = Number(basePremiumFinal.toFixed(2));
         console.log('Rounded Premium:', roundedPremium);
         const commAmount = Number((roundedPremium * commRate).toFixed(2));
         console.log('Commission Amount:', commAmount);
@@ -346,11 +355,18 @@ useEffect(() => {
       return;
     }
 
+    // Must have a project selected
+    if (!selectedProject?.code) {
+      setUm(''); setBm(''); setAgm('');
+      ToastAndroid.show('Please select a project first', ToastAndroid.LONG);
+      return;
+    }
+
     ToastAndroid.show('Verifying agent code...', ToastAndroid.SHORT);
 
     (async () => {
       setIsFetchingAgent(true);
-      const result = await getAgentCodes(fa);
+      const result = await getAgentCodes(fa, selectedProject.code);
       setIsFetchingAgent(false);
 
       if (result.success) {
@@ -363,7 +379,7 @@ useEffect(() => {
         ToastAndroid.show('Invalid FA Code', ToastAndroid.LONG);
       }
     })();
-  }, [fa]);
+  }, [fa, selectedProject?.code]);
 
 
   const handleNomineePercent = (setter) => (text) => {

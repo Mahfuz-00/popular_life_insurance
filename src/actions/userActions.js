@@ -706,8 +706,8 @@ export const getRate = async (projectCode, plan, term, age) => {
   }
 };
 
-//Get Agent Codes from FA (8-digit code)
-export const getAgentCodes = async (faCode) => {
+// Get Agent Codes
+export const getAgentCodes = async (faCode, projectCode) => {
   try {
     const token = await AsyncStorage.getItem('token');
     const config = {
@@ -717,10 +717,11 @@ export const getAgentCodes = async (faCode) => {
       },
     };
 
-    const { data } = await axios.get(
-      `${API}/api/get-agent-codes/IA/${faCode}`,
-      config
-    );
+    // DYNAMIC PROJECT CODE instead of hardcoded "IA"
+    const url = `${API}/api/get-agent-codes/${projectCode}/${faCode}`;
+    console.log('Fetching agent codes →', url);
+
+    const { data } = await axios.get(url, config);
 
     console.log('Agent Codes Response:', data);
 
@@ -735,8 +736,8 @@ export const getAgentCodes = async (faCode) => {
 
     return { success: false };
   } catch (error) {
-    console.error('Error fetching agent codes:', error);
-    ToastAndroid.show('Invalid FA Code', ToastAndroid.SHORT);
+    console.error('Error fetching agent codes:', error.response?.data || error.message);
+    ToastAndroid.show('Invalid FA Code or Project Mismatch', ToastAndroid.LONG);
     return { success: false };
   }
 };
