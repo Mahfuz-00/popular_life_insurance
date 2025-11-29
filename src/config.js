@@ -6,4 +6,4 @@ export const API = "http://103.155.184.108";
 // export const COMPANY_LOGO = require('./assets/icon-producer.png');
 
 export const COMPANY_LOGO = require('./assets/logo.png');
-export const COMPANY_NAME = "Popular Life Insurance Company Ltd";
+export const COMPANY_NAME = "Popular Life Insurance PLC";

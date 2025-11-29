@@ -74,7 +74,18 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
   const dispatch = useDispatch();
   const { user } = useSelector(state => state.auth);
   const policyNo = route.params.policyNo;
+
+  // Payment Type: Full or Partial
+  const [paymentType, setPaymentType] = useState('full');
+
   const [amount, setAmount] = useState('0');
+
+  // Partial Payment Fields
+  const [partialAmount, setPartialAmount] = useState('');
+  const [adjustWith, setAdjustWith] = useState('');
+  const [cause, setCause] = useState('');
+
+
   const [policyDetails, setPolicyDetails] = useState(null);
   const [method, setMethod] = useState('nagad');
 
@@ -92,14 +103,42 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const isProcessingRef = React.useRef(false);
 
+
+  // THIS IS THE AMOUNT SENT TO PAYMENT GATEWAY
+  const amountToPay = paymentType === 'partial' ? partialAmount : amount;
+
+  // MAX 50% of Due Per Instalment
+  const maxPartialAllowed = policyDetails ? Math.floor(policyDetails.DuePerInstalMent * 0.5) : 0;
+
   const handleSubmit = async () => {
     if (!isEnabled)
       return ToastAndroid.show(
         'Please agree terms & conditions',
         ToastAndroid.LONG,
       );
-    if (Number(amount) == 0)
-      return ToastAndroid.show('Amount can not be zero !', ToastAndroid.LONG);
+
+    // if (Number(amount) == 0)
+    //   return ToastAndroid.show('Amount can not be zero !', ToastAndroid.LONG);
+
+    if (!amountToPay || Number(amountToPay) <= 0)
+      return ToastAndroid.show('Amount cannot be zero!', ToastAndroid.LONG);
+
+    if (paymentType === 'partial') {
+      if (!partialAmount || !adjustWith || !cause.trim())
+        return ToastAndroid.show('Please fill all partial payment fields', ToastAndroid.LONG);
+
+      if (Number(partialAmount) > maxPartialAllowed)
+        return ToastAndroid.show(`Partial amount cannot exceed 50% of instalment (Max: ${maxPartialAllowed})`, ToastAndroid.LONG);
+
+      if (Number(partialAmount) > Number(policyDetails?.DueAmount))
+        return ToastAndroid.show('Partial amount cannot exceed total due', ToastAndroid.LONG);
+    }
+
+    if (paymentType === 'full') {
+      if (Number(amount) % Number(policyDetails?.totalpremium) !== 0)
+        return ToastAndroid.show('Full amount must be multiple of premium', ToastAndroid.LONG);
+    }
+
     // if(Number(policyDetails.ins_expected) < 1) return ToastAndroid.show('No expected instalment found', ToastAndroid.LONG);
     // if( Number(amount) > Number(policyDetails.DueAmount)) return ToastAndroid.show('You can not pay more than due', ToastAndroid.LONG);
     if (policyDetails.isLaps == true)
@@ -126,7 +165,7 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
 
           const createPaymentResult = await bkashCreatePayment(
             token,
-            amount,
+            amountToPay,
             policyNo,
           );
           console.log(
@@ -151,7 +190,7 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
           try {
             const createPaymentResult = await bkashCreatePayment(
               storedToken,
-              amount,
+              amountToPay,
               policyNo,
             );
 
@@ -184,7 +223,7 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
 
             const createPaymentResult = await bkashCreatePayment(
               token,
-              amount,
+              amountToPay,
               policyNo,
             );
             console.log(
@@ -280,7 +319,7 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
       setTransactionNo(trnxNo);
       let postData = {
         policyNo: policyNo,
-        amount: amount,
+        amount: amountToPay,
         mobileNo: user?.phone,
         transactionNo: trnxNo,
       };
@@ -294,10 +333,38 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
     }
   };
 
+  // CLEAR OPPOSITE FIELDS WHEN SWITCHING PAYMENT TYPE
+  useEffect(() => {
+    if (paymentType === 'full') {
+      setPartialAmount('');
+      setAdjustWith('');
+      setCause('');
+    } else {
+      setAmount(''); // ← This clears the full amount field
+    }
+  }, [paymentType]);
+
+  // DEBUG: Log every input change in real-time
+useEffect(() => {
+  console.log('DEBUG PAYMENT FORM STATE:');
+  console.log('  Payment Type    :', paymentType);
+  console.log('  Full Amount     :', amount || '(empty)');
+  console.log('  Partial Amount  :', partialAmount || '(empty)');
+  console.log('  Adjust With     :', adjustWith || '(not selected)');
+  console.log('  Cause           :', cause || '(empty)');
+  console.log('  Amount to Pay   :', amountToPay);
+  console.log('  Max Partial     :', maxPartialAllowed);
+  console.log('  T&C Accepted    :', isEnabled);
+  console.log('  Gateway         :', method);
+  console.log('  Policy Details  :', policyDetails ? 'Loaded' : 'Loading...');
+  console.log('----------------------------------------');
+}, [paymentType, amount, partialAmount, adjustWith, cause, amountToPay, isEnabled, method, policyDetails, maxPartialAllowed]);
+
   useEffect(() => {
     async function fetchData() {
       const response = await getDuePremiumDetails(policyNo);
       if (response) setPolicyDetails(response);
+      console.log('Due Premium Details:', response);
       //setAmount(Math.ceil(Number(response.totalpremium)))
     }
     fetchData();
@@ -351,9 +418,12 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
               let postData = {
                 policy_no: policyNo,
                 method: method,
-                amount: amount,
+                amount: paymentType === 'full' ? amount : null,
                 transaction_no: createExecuteResult.trxID,
                 date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+                partial_amount: paymentType === 'partial' ? partialAmount : null,
+                adjust_with: paymentType === 'partial' ? adjustWith : null,
+                cause: paymentType === 'partial' ? cause.trim() : null,
               };
 
               console.log('Post Data: ', postData);
@@ -428,9 +498,12 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
             let postData = {
               policy_no: policyNo,
               method: method,
-              amount: amount,
+              amount: paymentType === 'full' ? amount : null,
               transaction_no: transactionNo,
               date_time: moment().format('DD-MM-YYYY HH:mm:ss'),
+              partial_amount: paymentType === 'partial' ? partialAmount : null,
+              adjust_with: paymentType === 'partial' ? adjustWith : null,
+              cause: paymentType === 'partial' ? cause.trim() : null,
             };
 
             var syncPayments =
@@ -559,16 +632,146 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
                       <Text style={styles.rowLable}>Mode</Text>
                       <Text style={styles.rowValue}>{policyDetails.mode}</Text>
                     </View>
+
+
+                      <View style={styles.rowWrapper}>
+                      <Text style={styles.rowLable}>Service Cell</Text>
+                      <Text style={styles.rowValue}>{policyDetails.serviceCell}</Text>
+                    </View>
+
+                      <View style={styles.rowWrapper}>
+                      <Text style={styles.rowLable}>Branch</Text>
+                      <Text style={styles.rowValue}>{policyDetails.branch}</Text>
+                    </View>
                   </View>
                 )}
+
+                <Text style={[globalStyle.fontMedium, { color: '#000', marginTop: 15, fontSize: 16 }]}>
+                Choose Payment Type
+                </Text>
+
+                {/* Full vs Partial Radio */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10 }}>
+                {['full', 'partial'].map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    onPress={() => {
+                      setPaymentType(type);
+                      if (type === 'full') {
+                        setPartialAmount('');
+                        setAdjustWith('');
+                        setCause('');
+                      } else {
+                        setAmount('');
+                      }
+                    }}
+                    style={{ flexDirection: 'row', alignItems: 'center' }}
+                  >
+                    <View
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 12,
+                        borderWidth: 2,
+                        borderColor: '#0066CC',
+                        marginRight: 12,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        backgroundColor: paymentType === type ? '#0066CC' : '#FFF',
+                      }}
+                    >
+                      {paymentType === type && (
+                        <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#FFF' }} />
+                      )}
+                    </View>
+                    <Text style={{ fontSize: 16, color: '#000', textTransform: 'capitalize' }}>
+                      {type === 'full' ? 'Full Payment' : 'Partial Payment'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                </View>
+
+                {/* Full Payment Amount Field */}
+                {paymentType === 'full' && (
+                  <Input
+                    keyboardType="numeric"
+                    label="Amount"
+                    placeholder="Enter full amount"
+                    value={amount}
+                    onChangeText={setAmount}
+                  />
+                )}
+
+
+                {/* Partial Payment Fields */}
+                {paymentType === 'partial' && (
+                  <>
+                    <Input
+                      keyboardType="numeric"
+                      label="Partial Amount"
+                      placeholder="Enter partial amount"
+                      value={partialAmount}
+                      onChangeText={setPartialAmount}
+                    />
+
+                    <Text style={[globalStyle.fontMedium, { marginTop: 20, marginBottom: 10, color: '#000' }]}>
+                      Adjust With
+                    </Text>
+
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 10 }}>
+                      {['SB', 'Age_Proof', 'Suspense', 'Others'].map((item) => (
+                        <TouchableOpacity
+                          key={item}
+                          onPress={() => setAdjustWith(item)}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            width: '48%',
+                            marginVertical: 8,
+                          }}
+                        >
+                          <View
+                            style={{
+                              width: 22,
+                              height: 22,
+                              borderRadius: 11,
+                              borderWidth: 2,
+                              borderColor: '#0066CC',
+                              marginRight: 10,
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              backgroundColor: adjustWith === item ? '#0066CC' : '#FFF',
+                            }}
+                          >
+                            {adjustWith === item && (
+                              <View style={{ width: 11, height: 11, borderRadius: 5.5, backgroundColor: '#FFF' }} />
+                            )}
+                          </View>
+                          <Text style={{ fontSize: 15, color: '#000' }}>
+                            {item === 'Age_Proof' ? 'Age Proof' : item}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+
+                    <Input
+                      label="Cause / Reason"
+                      placeholder="Enter reason for partial payment"
+                      value={cause}
+                      onChangeText={setCause}
+                    />
+                  </>
+                )}
+
 
                 <Text
                   style={[
                     globalStyle.fontMedium,
-                    { color: '#FFF', marginTop: 15 },
+                    { color: '#000', marginTop: 15 },
                   ]}>
                   Choose Your Payment Method
                 </Text>
+
 
                 <RadioButtonRN
                   data={gatewayOptions}
@@ -579,7 +782,7 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
                   boxStyle={{ height: 60, justifyContent: 'center' }}
                 />
 
-                <Input
+                {/* <Input
                   keyboardType="numeric"
                   label={''}
                   placeholder={'Amount'}
@@ -589,7 +792,7 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
                     globalStyle.fontMedium,
                     { color: '#FFF', marginTop: 5 },
                   ]}
-                />
+                /> */}
 
                 <View
                   style={{
@@ -628,7 +831,7 @@ const PhPayPremiumScreen = ({ navigation, route }) => {
                 </View>
 
                 <FilledButton
-                  title={`Pay ${Math.ceil(amount).toString()}`}
+                  title={`Pay ${Math.ceil(amountToPay || 0).toString()}`}
                   style={{
                     width: '40%',
                     borderRadius: 50,

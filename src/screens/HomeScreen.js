@@ -41,59 +41,80 @@ const HomeScreen = ({navigation}) => {
   const {isAuthenticated, user} = useSelector(state => state.auth);
 
   const menus = [
-    {
-      title: 'Company Information',
-      navigateTo: 'CompanyInfo',
-      icon: require('../assets/icon-company-info.png'),
-    },
-    {
-      title: 'Policy Information',
-      navigateTo: isAuthenticated ? 'AuthPolicyInfo' : 'PolicyInfo',
-      icon: require('../assets/icon-policy-info.png'),
-    },
-    {
-      title: 'Premium Calculator',
-      navigateTo: 'PremiumCalculator',
-      icon: require('../assets/icon-premium-calc.png'),
-    },
-    // {title: 'My Account', navigateTo: 'PhMyProfile', icon: require('../assets/icon-my-transaction.png')},
+    // 1. New Policy (only for authenticated users)
+    ...(isAuthenticated
+      ? [
+          {
+            title: 'New Policy',
+            navigateTo: 'PhPayFirstPremium',
+            icon: require('../assets/pay-first-premiums-menu.jpg'),
+          },
+        ]
+      : []),
+
+    // 2. Pay Premium
     {
       title: 'Pay Premium',
       navigateTo: 'PayPremium',
       icon: require('../assets/icon-online-payment.png'),
     },
-    //{title: 'Claim Submission', navigateTo: 'ClaimSubmission', icon: require('../assets/icon-claim-submission.png')},
+
+    // 3. Premium Calculator
+    {
+      title: 'Premium Calculator',
+      navigateTo: 'PremiumCalculator',
+      icon: require('../assets/icon-premium-calc.png'),
+    },
+
+    // 4. Policy Information
+    {
+      title: 'Policy Information',
+      navigateTo: isAuthenticated ? 'AuthPolicyInfo' : 'PolicyInfo',
+      icon: require('../assets/icon-policy-info.png'),
+    },
+
+    // 5. Receipt Download (only for authenticated)
+    ...(isAuthenticated
+      ? [
+          {
+            title: 'Receipt Download',
+            navigateTo: 'PayFirstPremiumTransaction',
+            icon: require('../assets/icon-premium-calc.png'),
+          },
+        ]
+      : []),
+
+    // 6. Phone No Update
+    {
+      title: 'Phone No Update',
+      navigateTo: 'PolicyPhoneUpdate',
+      icon: require('../assets/product-engine.png'),
+    },
+
+    // 7. Company Information
+    {
+      title: 'Company Information',
+      navigateTo: 'CompanyInfo',
+      icon: require('../assets/icon-company-info.png'),
+    },
+
+    // 8. Product Engine
     {
       title: 'Product Engine',
       navigateTo: 'ProductInfo',
       icon: require('../assets/product-engine.png'),
     },
-    {
-      title: 'Policy Phone No Update',
-      navigateTo: 'PolicyPhoneUpdate',
-      icon: require('../assets/product-engine.png'),
-    },
-    // Conditionally add "Pay First Premium" only if authenticated
+
+    // 9. Business Report (only for agents/producers)
     ...(isAuthenticated
       ? [
           {
-            title: 'Pay First Premium',
-            navigateTo: 'PhPayFirstPremium',
-            icon: require('../assets/pay-first-premiums-menu.jpg'),
-          },
-          {
-            title: 'Pay First Premium Transaction',
-            navigateTo: 'PayFirstPremiumTransaction',
-            icon: require('../assets/icon-premium-calc.png'),
-          },
-          {
-            title: 'Collection Summary',
+            title: 'Business Report',
             navigateTo: 'CodeWiseCollectionScreen',
             icon: require('../assets/icon-claim-submission.png'),
           },
         ]
       : []),
-    // {title: 'Sync Payment', navigateTo: 'SyncPayment', icon: require('../assets/product-engine.png')},
   ];
 
   const [isDownloading, setIsDownloading] = useState(false);

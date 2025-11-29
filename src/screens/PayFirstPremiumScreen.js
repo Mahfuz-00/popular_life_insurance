@@ -73,7 +73,7 @@ const PayFirstPremiumScreen = ({ navigation }) => {
 
 
   // SPECIAL PROJECT CODES → Use mode multiplier
-  const SPECIAL_PROJECTS = ['ABA', 'AKOK', 'ALA', 'IA', 'JBA', 'JBAT', 'IBT'];
+  const SPECIAL_PROJECTS = ['ABA', 'AKOK', 'ALA', 'IA', 'JBA', 'JBAK', 'IBT'];
 
   // Mode multiplier mapping
   const MODE_MULTIPLIER = {

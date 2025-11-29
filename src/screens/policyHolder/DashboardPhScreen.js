@@ -43,7 +43,7 @@ const DashboardPhScreen = ({navigation, route}) => {
       icon: require('../../assets/icon-premium-calc.png'),
     },
     {
-      title: 'Policy Transactions',
+      title: 'E-Receipt',
       navigateTo: 'PhPolicyTransactions',
       icon: require('../../assets/icon-premium-calc.png'),
     },
@@ -53,7 +53,7 @@ const DashboardPhScreen = ({navigation, route}) => {
       icon: require('../../assets/icon-claim-submission.png'),
     },
     {
-      title: 'PR List',
+      title: 'Policy Ledger',
       navigateTo: 'PhPRList',
       icon: require('../../assets/icon-claim-submission.png'),
     },
