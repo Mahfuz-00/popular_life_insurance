@@ -181,6 +181,10 @@ export const getDuePremiumDetails = async policyNo => {
       config,
     );
 
+    console.log('Due Premium Details API Response:', data);
+    console.log('Due Premium Data:', data.data);
+    console.log('status:', data.status);
+
     return data.data;
   } catch (error) {
     return [];

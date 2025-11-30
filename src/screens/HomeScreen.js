@@ -98,9 +98,9 @@ const HomeScreen = ({navigation}) => {
       icon: require('../assets/icon-company-info.png'),
     },
 
-    // 8. Product Engine
+    // 8. Our Product
     {
-      title: 'Product Engine',
+      title: 'Our Product',
       navigateTo: 'ProductInfo',
       icon: require('../assets/product-engine.png'),
     },
@@ -567,7 +567,9 @@ const HomeScreen = ({navigation}) => {
 
   return (
     <View style={globalStyle.container}>
-      <Header navigation={navigation} title={COMPANY_NAME} />
+      {/* <Header navigation={navigation} title={COMPANY_NAME} /> */}
+      <Header navigation={navigation} />
+
 
       <ScrollView>
         <Slider />

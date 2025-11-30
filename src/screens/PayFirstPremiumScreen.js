@@ -71,6 +71,8 @@ const PayFirstPremiumScreen = ({ navigation }) => {
   const [nominee3Name, setNominee3Name] = useState('');
   const [nominee3Percent, setNominee3Percent] = useState('');
 
+  const [netCommission, setNetCommission] = useState('');   
+
 
   // SPECIAL PROJECT CODES → Use mode multiplier
   const SPECIAL_PROJECTS = ['ABA', 'AKOK', 'ALA', 'IA', 'JBA', 'JBAK', 'IBT'];
@@ -250,11 +252,32 @@ useEffect(() => {
   // }, [selectedProject]);
 
 
-  // Calculate Age from Date of Birth
-  useEffect(() => {
-    const calculatedAge = moment().diff(dateOfBirth, 'years');
-    setAge(calculatedAge);
-  }, [dateOfBirth]);
+  // // Calculate Age from Date of Birth
+  // useEffect(() => {
+  //   const calculatedAge = moment().diff(dateOfBirth, 'years');
+  //   setAge(calculatedAge);
+  // }, [dateOfBirth]);
+
+  // Bangladesh Insurance Age: +1 year from 1 July
+    useEffect(() => {
+      if (!dateOfBirth) return;
+
+      const birthDate = moment(dateOfBirth);
+      const today = moment();
+      const currentYearJuly1 = moment().year(today.year()).month(6).date(1); // 1 July this year
+
+      let age = today.diff(birthDate, 'years');
+      console.log('Initial calculated age:', age);
+
+      // If today is 1 July or later → add 1 year
+      if (today.isSameOrAfter(currentYearJuly1)) {
+        age += 1;
+      }
+
+      console.log('Final age after 1 July adjustment:', age);
+
+      setAge(age);
+    }, [dateOfBirth]);
 
   // AUTO CALCULATE PREMIUM
   useEffect(() => {
@@ -321,9 +344,18 @@ useEffect(() => {
 
         const roundedPremium = Number(basePremiumFinal.toFixed(2));
         console.log('Rounded Premium:', roundedPremium);
+        // const commAmount = Number((roundedPremium * commRate).toFixed(2));
+        // console.log('Commission Amount:', commAmount);
+        // const netBeforeRound = roundedPremium - commAmount;
+        // console.log('Net Amount before rounding:', netBeforeRound);
+
         const commAmount = Number((roundedPremium * commRate).toFixed(2));
         console.log('Commission Amount:', commAmount);
-        const netBeforeRound = roundedPremium - commAmount;
+        const taxOnCommission = Number((commAmount * 0.05).toFixed(2));        // 5% Tax
+        console.log('Tax on Commission (5%):', taxOnCommission);
+        const netCommission = Number((commAmount - taxOnCommission).toFixed(2));
+        console.log('Net Commission after tax:', netCommission);
+        const netBeforeRound = roundedPremium - netCommission;               // Final deduction
         console.log('Net Amount before rounding:', netBeforeRound);
 
         const decimal = netBeforeRound - Math.floor(netBeforeRound);
@@ -334,7 +366,8 @@ useEffect(() => {
         console.log('Net Amount after rounding:', netAmount);
 
         setPremium(roundedPremium.toFixed(2));
-        setCommission(commAmount.toFixed(2));
+        setCommission(commAmount.toFixed(2));           // ← Gross commission
+        setNetCommission(netCommission.toFixed(2));     // ← Net after 5% tax
         setNetAmount(netAmount.toString());
 
       } catch (e) {
@@ -489,7 +522,7 @@ useEffect(() => {
         agm,
         rateCode: code6Digit,
         basePremium: premium,
-        commission: commission,
+        commission: netCommission,
         rate: rate,
         netAmount: netAmount,
         fatherHusbandName, 
@@ -608,7 +641,7 @@ useEffect(() => {
             <Input label="Rate" value="0" editable={false} />
           )}
           <Input label="Premium" value={premium} editable={false} />
-          <Input label="Commission" value={commission} editable={false} />
+          <Input label="Commission" value={netCommission} editable={false} />
           <Input label="Payment Amount" value={netAmount} editable={false} />
           <Input
             label={'Total Premium'}

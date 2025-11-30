@@ -357,14 +357,17 @@ useEffect(() => {
   console.log('  T&C Accepted    :', isEnabled);
   console.log('  Gateway         :', method);
   console.log('  Policy Details  :', policyDetails ? 'Loaded' : 'Loading...');
+  console.log('  ------------------------------');
+  console.log('  Service Cell  :', policyDetails?.service_cell_code || 'Not loaded yet');
+  console.log('  Branch        :', policyDetails?.branch_code || 'Not loaded yet');
   console.log('----------------------------------------');
 }, [paymentType, amount, partialAmount, adjustWith, cause, amountToPay, isEnabled, method, policyDetails, maxPartialAllowed]);
 
   useEffect(() => {
     async function fetchData() {
       const response = await getDuePremiumDetails(policyNo);
-      if (response) setPolicyDetails(response);
       console.log('Due Premium Details:', response);
+      if (response) setPolicyDetails(response);
       //setAmount(Math.ceil(Number(response.totalpremium)))
     }
     fetchData();
@@ -424,6 +427,9 @@ useEffect(() => {
                 partial_amount: paymentType === 'partial' ? partialAmount : null,
                 adjust_with: paymentType === 'partial' ? adjustWith : null,
                 cause: paymentType === 'partial' ? cause.trim() : null,
+                // ADD THESE TWO LINES
+                service_cell_code: policyDetails.service_cell_code || '',
+                branch_code: policyDetails.branch_code || '',
               };
 
               console.log('Post Data: ', postData);
@@ -504,6 +510,9 @@ useEffect(() => {
               partial_amount: paymentType === 'partial' ? partialAmount : null,
               adjust_with: paymentType === 'partial' ? adjustWith : null,
               cause: paymentType === 'partial' ? cause.trim() : null,
+              // ADD THESE TWO LINES
+              service_cell_code: policyDetails.service_cell_code || '',
+              branch_code: policyDetails.branch_code || '',
             };
 
             var syncPayments =
@@ -636,12 +645,12 @@ useEffect(() => {
 
                       <View style={styles.rowWrapper}>
                       <Text style={styles.rowLable}>Service Cell</Text>
-                      <Text style={styles.rowValue}>{policyDetails.serviceCell}</Text>
+                      <Text style={styles.rowValue}>{policyDetails.service_cell_code || 0}</Text>
                     </View>
 
                       <View style={styles.rowWrapper}>
                       <Text style={styles.rowLable}>Branch</Text>
-                      <Text style={styles.rowValue}>{policyDetails.branch}</Text>
+                      <Text style={styles.rowValue}>{policyDetails.branch_code || 0}</Text>
                     </View>
                   </View>
                 )}

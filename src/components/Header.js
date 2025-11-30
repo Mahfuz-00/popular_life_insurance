@@ -4,10 +4,12 @@ import Icon from 'react-native-vector-icons/Ionicons';
 
 import logo from '../assets/icon-producer.png';
 import iconDrawerToggle from '../assets/icon-drawer-toggle.png';
-import { COMPANY_LOGO } from './../config';
+import { COMPANY_LOGO, COMPANY_NAME } from './../config';
 import globalStyle from '../styles/globalStyle';
 
 const Header = ({navigation, title}) => {
+    const showTitleCard = title && title.trim() !== '';
+
   return (
     <View 
         style={{
@@ -26,20 +28,44 @@ const Header = ({navigation, title}) => {
                 height:100, 
                 backgroundColor:'#966EAF', 
                 flexDirection:'row', 
+                alignItems: 'center',
                 justifyContent:'space-between', 
                 paddingHorizontal:20,
-                paddingTop:15
+                // paddingTop:15
             }}
         >
-            <View style={{height:50, width:50}}>
+            {/* <View style={{height:50, width:50}}>
                 <Image source={COMPANY_LOGO} style={{width:'100%', height:'100%',resizeMode:'contain'}} />
-            </View>
+            </View> */}
 
-            <TouchableOpacity style={{marginTop:10}} onPress={()=>navigation.toggleDrawer()}>
+            {/* <TouchableOpacity style={{marginTop:10}} onPress={()=>navigation.toggleDrawer()}>
                 <Image source={iconDrawerToggle} style={{width:25, height:25}} />
-            </TouchableOpacity>
-        </View>       
+            </TouchableOpacity> */}
 
+                {/* LEFT: Logo */}
+                <Image
+                source={COMPANY_LOGO}
+                style={{ width: 50, height: 50, resizeMode: 'contain' }}
+                />
+
+                {/* CENTER: Company Name (Takes Full Middle Space) */}
+                <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center' }}>
+                <Text style={[globalStyle.fontFjallaOne, {fontSize: 20}]}>
+                    {COMPANY_NAME}
+                </Text>
+                </View>
+
+                {/* RIGHT: Drawer Toggle */}
+                <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
+                <Image
+                    source={iconDrawerToggle}
+                    style={{ width: 28, height: 28 }}
+                />
+                </TouchableOpacity>
+            </View>       
+       
+       {/* WHITE TITLE CARD — ONLY SHOW IF TITLE EXISTS */}
+        {showTitleCard && (
         <View
             style={{
                 backgroundColor:'#FFF',
@@ -56,7 +82,8 @@ const Header = ({navigation, title}) => {
             }}
         >
             <Text  style={[globalStyle.fontFjallaOne, {fontSize: 18}]}>{title}</Text>
-        </View>
+        </View> 
+        )}
     </View>
   )
 }
