@@ -818,8 +818,8 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
                     }}>
                     {tableData.map((item, index) => (
                       <View key={index} style={styles.rowWrapper}>
-                        <Text style={styles.rowLable}>{item.label}</Text>
-                        <Text style={styles.rowValue}>{item.value}</Text>
+                        <Text style={[styles.rowLable, globalStyle.tableText]}>{item.label}</Text>
+                        <Text style={[styles.rowValue, globalStyle.tableText]}>{item.value}</Text>
                       </View>
                     ))}
                   </View>

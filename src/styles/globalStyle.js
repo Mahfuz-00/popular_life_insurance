@@ -30,6 +30,12 @@ export default StyleSheet.create({
         color:'#000',
         fontFamily:'FjallaOne-Regular'
     },
+
+    tableText: {
+    fontSize: 14,
+    color: '#056608ff',                
+    fontFamily: 'Poppins-Medium',
+    },
     errorMessageText:{
         color:'red',
         marginBottom: 10

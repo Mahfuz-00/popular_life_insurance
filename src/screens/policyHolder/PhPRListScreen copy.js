@@ -30,28 +30,28 @@ const PhPRListScreen = ({ navigation, route }) => {
                 <View key={index} style={{ borderTopWidth: 2, borderLeftWidth: 2, borderRightWidth: 2, borderColor: '#5382AC', marginVertical: 15 }}>
                   
                   <View style={styles.rowWrapper}>
-                    <Text style={styles.rowLable}>Policy No</Text>
-                    <Text style={styles.rowValue}>{policyNo}</Text>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Policy No</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyNo}</Text>
                   </View>
                   
                   <View style={styles.rowWrapper}>
-                    <Text style={styles.rowLable}>PR No</Text>
-                    <Text style={styles.rowValue}>{pr.prno}</Text>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>PR No</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>{pr.prno}</Text>
                   </View>
                   
                   <View style={styles.rowWrapper}>
-                    <Text style={styles.rowLable}>PR Amount</Text>
-                    <Text style={styles.rowValue}>{pr.pramount}</Text>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>PR Amount</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>{pr.pramount}</Text>
                   </View>
                   
                   <View style={styles.rowWrapper}>
-                    <Text style={styles.rowLable}>PR Type</Text>
-                    <Text style={styles.rowValue}>{pr.type}</Text>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>PR Type</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>{pr.type}</Text>
                   </View>
                   
                   <View style={styles.rowWrapper}>
-                    <Text style={styles.rowLable}>PR Date</Text>
-                    <Text style={styles.rowValue}>{pr.prdate.format3}</Text>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>PR Date</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>{pr.prdate.format3}</Text>
                   </View>
 
                 </View>

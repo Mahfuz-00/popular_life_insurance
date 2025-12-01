@@ -91,13 +91,13 @@ const MyTransactionScreen = ({navigation}) => {
               policyDetails && 
               <View style={{borderTopWidth:2, borderLeftWidth: 2, borderRightWidth: 2, borderColor:'#5382AC', marginVertical:15}}>
                 <View style={styles.rowWrapper}>
-                    <Text style={styles.rowValue}>Last Pay Date</Text>
-                    <Text style={styles.rowValue}>{moment(policyDetails.lastPayDate).format('YYYY-MM-DD') }</Text>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Last Pay Date</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>{moment(policyDetails.lastPayDate).format('YYYY-MM-DD') }</Text>
                 </View>
 
                 <View style={styles.rowWrapper}>
-                    <Text style={styles.rowLable}>Total Paid</Text>
-                    <Text style={styles.rowValue}>{policyDetails.totalPaid}</Text>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Total Paid</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.totalPaid}</Text>
                 </View>
             </View>
             }            

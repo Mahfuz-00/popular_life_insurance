@@ -44,20 +44,20 @@ const PhPolicyTransactionsScreen = ({navigation, route}) => {
           <View style={globalStyle.wrapper}>
             <View style={{borderTopWidth:2, borderLeftWidth: 2, borderRightWidth: 2, borderColor:'#5382AC', marginVertical:15}}>
               <View style={styles.rowWrapper}>
-                  <Text style={styles.rowLable}>Trns. No</Text>
-                  <Text style={styles.rowLable}>Pay Date</Text>
-                  <Text style={styles.rowLable}>Amount</Text>
-                  <Text style={styles.rowLable}>Method</Text>
-                  <Text style={styles.rowLable}>Receipt</Text>
+                  <Text style={[styles.rowLable, globalStyle.tableText]}>Trns. No</Text>
+                  <Text style={[styles.rowLable, globalStyle.tableText]}>Pay Date</Text>
+                  <Text style={[styles.rowLable, globalStyle.tableText]}>Amount</Text>
+                  <Text style={[styles.rowLable, globalStyle.tableText]}>Method</Text>
+                  <Text style={[styles.rowLable, globalStyle.tableText]}>Receipt</Text>
               </View>
               {
                 transactions.map((item, index)=>(
                   <View style={styles.rowWrapper} key={index}>
-                      <Text style={styles.rowValue}>{item.transaction_no}</Text>
-                      <Text style={styles.rowValue}>{moment(item.created_at).format('YYYY-MM-DD')}</Text>
-                      <Text style={styles.rowValue}>{item.amount}</Text>
-                      <Text style={styles.rowValue}>{item.method}</Text>
-                      <TouchableOpacity style={[styles.rowValue, {alignItems: 'center'}]} onPress={()=>Linking.openURL(`${API}/api/policy/e-receipt/${item.id}`)}>
+                      <Text style={[styles.rowValue, globalStyle.tableText]}>{item.transaction_no}</Text>
+                      <Text style={[styles.rowValue, globalStyle.tableText]}>{moment(item.created_at).format('YYYY-MM-DD')}</Text>
+                      <Text style={[styles.rowValue, globalStyle.tableText]}>{item.amount}</Text>
+                      <Text style={[styles.rowValue, globalStyle.tableText]}>{item.method}</Text>
+                      <TouchableOpacity style={[styles.rowValue, globalStyle.tableText, {alignItems: 'center'}]} onPress={()=>Linking.openURL(`${API}/api/policy/e-receipt/${item.id}`)}>
                         <Icon name="download-outline" size={26} color="blue" />
                       </TouchableOpacity>
                   </View>

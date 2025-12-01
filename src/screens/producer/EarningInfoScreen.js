@@ -45,24 +45,24 @@ const EarningInfoScreen = ({navigation}) => {
 
                     <View style={{borderTopWidth:2, borderLeftWidth: 2, borderRightWidth: 2, borderColor:'#5382AC', marginVertical:15}}>
                         <View style={styles.rowWrapper}>
-                            <Text style={styles.rowLable}>Month</Text>
-                            <Text style={styles.rowLable}>First Year</Text>
-                            <Text style={styles.rowLable}>Renewal</Text>
-                            <Text style={styles.rowLable}>Total</Text>
+                            <Text style={[styles.rowLable, globalStyle.tableText]}>Month</Text>
+                            <Text style={[styles.rowLable, globalStyle.tableText]}>First Year</Text>
+                            <Text style={[styles.rowLable, globalStyle.tableText]}>Renewal</Text>
+                            <Text style={[styles.rowLable, globalStyle.tableText]}>Total</Text>
                         </View>
 
                         <View style={styles.rowWrapper}>
-                            <Text style={styles.rowValue}>Jan 23</Text>
-                            <Text style={styles.rowValue}>10000</Text>
-                            <Text style={styles.rowValue}>2000</Text>
-                            <Text style={styles.rowValue}>12000</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>Jan 23</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>10000</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>2000</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>12000</Text>
                         </View>
 
                         <View style={styles.rowWrapper}>
-                            <Text style={styles.rowValue}>Feb 23</Text>
-                            <Text style={styles.rowValue}>5000</Text>
-                            <Text style={styles.rowValue}>1000</Text>
-                            <Text style={styles.rowValue}>6000</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>Feb 23</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>5000</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>1000</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>6000</Text>
                         </View>
                     </View>
 

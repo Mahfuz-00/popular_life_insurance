@@ -68,13 +68,13 @@ const ProposalTrackingScreen = ({navigation}) => {
 
             <View style={{borderTopWidth:2, borderLeftWidth: 2, borderRightWidth: 2, borderColor:'#5382AC', marginVertical:15}}>
                 <View style={styles.rowWrapper}>
-                    <Text style={styles.rowLable}>Name</Text>
-                    <Text style={styles.rowValue}>XXXXX</Text>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Name</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>XXXXX</Text>
                 </View>
 
                 <View style={styles.rowWrapper}>
-                    <Text style={styles.rowLable}>Status</Text>
-                    <Text style={styles.rowValue}>Pending</Text>
+                    <Text style={[styles.rowLable, globalStyle.tableText]}>Status</Text>
+                    <Text style={[styles.rowValue, globalStyle.tableText]}>Pending</Text>
                 </View>
             </View>
 

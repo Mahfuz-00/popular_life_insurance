@@ -319,7 +319,7 @@ useEffect(() => {
           }
 
           const rateVal = parseFloat(result.rate);
-          setRate(rateVal.toFixed(2));
+          setRate(rateVal.toString());
 
           if (plan === '72') {
             const preBase = sa / rateVal;
@@ -342,18 +342,18 @@ useEffect(() => {
           console.log('Base Premium Calculation for Non-Special:', `${sa} / (12 * ${term}) = ${basePremiumFinal}`);
         }
 
-        const roundedPremium = Number(basePremiumFinal.toFixed(2));
+        const roundedPremium = Number(basePremiumFinal.toString());
         console.log('Rounded Premium:', roundedPremium);
         // const commAmount = Number((roundedPremium * commRate).toFixed(2));
         // console.log('Commission Amount:', commAmount);
         // const netBeforeRound = roundedPremium - commAmount;
         // console.log('Net Amount before rounding:', netBeforeRound);
 
-        const commAmount = Number((roundedPremium * commRate).toFixed(2));
+        const commAmount = Number((roundedPremium * commRate).toString());
         console.log('Commission Amount:', commAmount);
-        const taxOnCommission = Number((commAmount * 0.05).toFixed(2));        // 5% Tax
+        const taxOnCommission = Number((commAmount * 0.05).toString());        // 5% Tax
         console.log('Tax on Commission (5%):', taxOnCommission);
-        const netCommission = Number((commAmount - taxOnCommission).toFixed(2));
+        const netCommission = Number((commAmount - taxOnCommission).toString());
         console.log('Net Commission after tax:', netCommission);
         const netBeforeRound = roundedPremium - netCommission;               // Final deduction
         console.log('Net Amount before rounding:', netBeforeRound);
@@ -365,9 +365,9 @@ useEffect(() => {
             : Math.floor(netBeforeRound) + 1;
         console.log('Net Amount after rounding:', netAmount);
 
-        setPremium(roundedPremium.toFixed(2));
-        setCommission(commAmount.toFixed(2));           // ← Gross commission
-        setNetCommission(netCommission.toFixed(2));     // ← Net after 5% tax
+        setPremium(roundedPremium.toString());
+        setCommission(commAmount.toString());           // ← Gross commission
+        setNetCommission(netCommission.toString());     // ← Net after 5% tax
         setNetAmount(netAmount.toString());
 
       } catch (e) {
@@ -640,9 +640,9 @@ useEffect(() => {
           ) : (
             <Input label="Rate" value="0" editable={false} />
           )}
-          <Input label="Premium" value={premium} editable={false} />
-          <Input label="Commission" value={netCommission} editable={false} />
-          <Input label="Payment Amount" value={netAmount} editable={false} />
+          <Input label="Premium" value={premium ? Math.ceil(parseFloat(premium)).toString() : ''} editable={false} />
+          <Input label="Commission" value={netCommission ? Math.ceil(parseFloat(netCommission)).toString() : ''} editable={false} />
+          <Input label="Payment Amount" value={netAmount ? Math.ceil(parseFloat(netAmount)).toString(): ''} editable={false} />
           <Input
             label={'Total Premium'}
             value={totalPremium}

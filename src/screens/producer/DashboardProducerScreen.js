@@ -31,23 +31,23 @@ const DashboardProducerScreen = ({navigation}) => {
         
           <View style={{backgroundColor: '#5382AC', borderRadius: 15, padding: 5}}>
               <View style={styles.rowWrapper}>
-                  <Text style={styles.rowLable}>ID</Text>
-                  <Text style={styles.rowValue}>010101</Text>
+                  <Text style={[styles.rowLable, globalStyle.tableText]}>ID</Text>
+                  <Text style={[styles.rowValue, globalStyle.tableText]}>010101</Text>
               </View>
 
               <View style={styles.rowWrapper}>
-                  <Text style={styles.rowLable}>Name</Text>
-                  <Text style={styles.rowValue}>XXXXXX</Text>
+                  <Text style={[styles.rowLable, globalStyle.tableText]}>Name</Text>
+                  <Text style={[styles.rowValue, globalStyle.tableText]}>XXXXXX</Text>
               </View>
 
               <View style={styles.rowWrapper}>
-                  <Text style={styles.rowLable}>Designation</Text>
-                  <Text style={styles.rowValue}>SEVP</Text>
+                  <Text style={[styles.rowLable, globalStyle.tableText]}>Designation</Text>
+                  <Text style={[styles.rowValue, globalStyle.tableText]}>SEVP</Text>
               </View>
 
               <View style={styles.rowWrapper}>
-                  <Text style={styles.rowLable}>Office</Text>
-                  <Text style={styles.rowValue}>XXXX XXXXX XXXXXX</Text>
+                  <Text style={[styles.rowLable, globalStyle.tableText]}>Office</Text>
+                  <Text style={[styles.rowValue, globalStyle.tableText]}>XXXX XXXXX XXXXXX</Text>
               </View>
           </View>
       <View style={{ flexDirection:'row', flexWrap: 'wrap', justifyContent:'space-between'}}>

@@ -25,9 +25,9 @@ const PhPRListScreen = ({ navigation, route }) => {
       <ImageBackground source={BackgroundImage} style={{ flex: 1 }}>
         <Header navigation={navigation} title={`PR List (${policyNo})`} />
           <View style={styles.rowWrapper}>
-            <Text style={styles.rowLable}>PR No</Text>
-            <Text style={styles.rowLable}>PR Date</Text>
-            <Text style={styles.rowLable}>Amount</Text>
+            <Text style={[styles.rowLable, globalStyle.tableText]}>PR No</Text>
+            <Text style={[styles.rowLable, globalStyle.tableText]}>PR Date</Text>
+            <Text style={[styles.rowLable, globalStyle.tableText]}>Amount</Text>
           </View>
         <ScrollView>
           <View style={globalStyle.wrapper}>
@@ -38,23 +38,23 @@ const PhPRListScreen = ({ navigation, route }) => {
                 Object.keys(prList).map((key, index) => (
                   <View key={index}>
                     <View style={styles.rowWrapper}>
-                      <Text style={styles.rowLable}>{key}</Text>
-                      <Text style={styles.rowLable}></Text>
-                      <Text style={styles.rowLable}></Text>
+                      <Text style={[styles.rowLable, globalStyle.tableText]}>{key}</Text>
+                      <Text style={[styles.rowLable, globalStyle.tableText]}></Text>
+                      <Text style={[styles.rowLable, globalStyle.tableText]}></Text>
                     </View>
                     {
                       prList[key].pr.map((prItem, index) => (
                         <View style={styles.rowWrapper} key={index}>
-                          <Text style={styles.rowValue}>{prItem.prno}</Text>
-                          <Text style={styles.rowValue}>{prItem.prdate.format3}</Text>
-                          <Text style={styles.rowValue}>{prItem.pramount}</Text>
+                          <Text style={[styles.rowValue, globalStyle.tableText]}>{prItem.prno}</Text>
+                          <Text style={[styles.rowValue, globalStyle.tableText]}>{prItem.prdate.format3}</Text>
+                          <Text style={[styles.rowValue, globalStyle.tableText]}>{prItem.pramount}</Text>
                         </View>
                       ))
                     }
                     <View style={styles.rowWrapper}>
-                      <Text style={styles.rowLable}></Text>
-                      <Text style={styles.rowLable}></Text>
-                      <Text style={[styles.rowLable, {borderTopWidth: 0.5}]}>{prList[key].total}</Text>
+                      <Text style={[styles.rowLable, globalStyle.tableText]}></Text>
+                      <Text style={[styles.rowLable, globalStyle.tableText]}></Text>
+                      <Text style={[styles.rowLable, globalStyle.tableText, {borderTopWidth: 0.5}]}>{prList[key].total}</Text>
                     </View>
 
                     <View style={{ borderWidth: 0.5, marginHorizontal: 15, marginVertical: 8 }}></View>

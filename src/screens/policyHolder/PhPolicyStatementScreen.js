@@ -34,75 +34,75 @@ const PhPolicyStatementScreen = ({navigation, route}) => {
                             policyDetails && 
                             <View style={{borderTopWidth:2, borderLeftWidth: 2, borderRightWidth: 2, borderColor:'#5382AC', marginVertical:15}}>
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Policy No</Text>
-                                <Text style={styles.rowValue}>{policyNo}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Policy No</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyNo}</Text>
                             </View>
                             
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Project</Text>
-                                <Text style={styles.rowValue}>{policyDetails.project}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Project</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.project}</Text>
                             </View>
                             
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Name</Text>
-                                <Text style={styles.rowValue}>{policyDetails.name}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Name</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.name}</Text>
                             </View>
                             
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Mobile</Text>
-                                <Text style={styles.rowValue}>{policyDetails.mobile}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Mobile</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.mobile}</Text>
                             </View>
     
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Address</Text>
-                                <Text style={styles.rowValue}>{policyDetails.address}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Address</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.address}</Text>
                             </View>
     
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Table & Term</Text>
-                                <Text style={styles.rowValue}>{`${policyDetails.planNo} - ${policyDetails.tarm}`}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Table & Term</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{`${policyDetails.planNo} - ${policyDetails.tarm}`}</Text>
                             </View>
     
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Sum Assured</Text>
-                                <Text style={styles.rowValue}>{policyDetails.sumAssured}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Sum Assured</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.sumAssured}</Text>
                             </View>
     
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Total Premium</Text>
-                                <Text style={styles.rowValue}>{policyDetails.totalPremium}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Total Premium</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.totalPremium}</Text>
                             </View>                        
     
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Mode</Text>
-                                <Text style={styles.rowValue}>{policyDetails.mode}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Mode</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.mode}</Text>
                             </View>                  
     
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>No of Installment</Text>
-                                <Text style={styles.rowValue}>{policyDetails.noOfInstallment}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>No of Installment</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.noOfInstallment}</Text>
                             </View>                  
     
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Status</Text>
-                                <Text style={styles.rowValue}>{policyDetails.status}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Status</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.status}</Text>
                             </View>                
     
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Total Paid</Text>
-                                <Text style={styles.rowValue}>{Number(policyDetails.totalPaid).toFixed(2)}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Total Paid</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{Number(policyDetails.totalPaid).toFixed(2)}</Text>
                             </View>
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Date of Birth</Text>
-                                <Text style={styles.rowValue}>{policyDetails.dateOfBirth.format3}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Date of Birth</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.dateOfBirth.format3}</Text>
                             </View>
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Com. Date</Text>
-                                <Text style={styles.rowValue}>{policyDetails.comDate.format3}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Com. Date</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.comDate.format3}</Text>
                             </View> 
                             <View style={styles.rowWrapper}>
-                                <Text style={styles.rowLable}>Next Due Date</Text>
-                                <Text style={styles.rowValue}>{policyDetails.nextDueDate.format3}</Text>
+                                <Text style={[styles.rowLable, globalStyle.tableText]}>Next Due Date</Text>
+                                <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.nextDueDate.format3}</Text>
                             </View>                            
                         </View>
                         }
