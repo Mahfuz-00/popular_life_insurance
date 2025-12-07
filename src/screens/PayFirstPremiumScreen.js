@@ -329,11 +329,42 @@ useEffect(() => {
             basePremiumFinal = basePremiumInitial * 500;
             console.log('Base Premium Calculation for Plan 72:', `(${sa} / ${rateVal}) * ${factor} * 500 = ${basePremiumFinal}`);
           } else {
+            let adjustedRate = rateVal;
+
+              // CUSTOM RATE ADJUSTMENTS FOR SPECIAL PROJECTS
+              if (['01', '02', '03', '05'].includes(plan)) {
+                if (mode === 'hly') adjustedRate = rateVal + 1;
+                if (mode === 'qly') adjustedRate = rateVal + 2;
+              }
+              else if (['04', '06', '07'].includes(plan)) {
+                if (mode === 'hly') adjustedRate = rateVal - 1;
+                if (mode === 'yly') adjustedRate = rateVal - 2;
+              }
+              else if (plan === '08') {
+                if (mode === 'hly') adjustedRate = rateVal * 0.525;
+                if (mode === 'qly') adjustedRate = rateVal * 0.275;
+              }
+              else if (plan === '09') {
+                if (mode === 'hly') adjustedRate = rateVal - 10;
+                if (mode === 'yly') adjustedRate = rateVal - 20;
+              }
+
+            console.log('Special Project Rate Adjustment:', {
+              originalRate: rateVal,
+              adjustedRate,
+              plan,
+              mode,
+              sa,
+              multiplier,
+              basePremiumFinal
+            });
+
+
             const multiplier = MODE_MULTIPLIER[mode] || 1;
             console.log('Mode Multiplier:', multiplier);
-            basePremiumInitial = (sa / 1000) * rateVal;
+            basePremiumInitial = (sa / 1000) * adjustedRate;
             basePremiumFinal = basePremiumInitial / multiplier;
-            console.log('Base Premium Calculation:', `(${sa} / 1000) * ${rateVal} / ${multiplier} = ${basePremiumFinal}`);
+            console.log('Base Premium Calculation:', `(${sa} / 1000) * ${adjustedRate} / ${multiplier} = ${basePremiumFinal}`);
           }
         } else {
           // NON-SPECIAL (28 & 57) → NO RATE FETCH, DIRECT CALCULATION
@@ -684,11 +715,11 @@ useEffect(() => {
 
           <Text style={styles.sectionTitle}>Nominee Details</Text>
           <Input label="Nominee 1 Name" value={nominee1Name} onChangeText={setNominee1Name} required />
-          <Input label="Nominee 1 %" value={nominee1Percent} onChangeText={handleNomineePercent(setNominee1Percent)} keyboardType="numeric" required />
+          <Input label="Nominee 1 Ratio %" value={nominee1Percent} onChangeText={handleNomineePercent(setNominee1Percent)} keyboardType="numeric" required />
           <Input label="Nominee 2 Name" value={nominee2Name} onChangeText={setNominee2Name} />
-          <Input label="Nominee 2 %" value={nominee2Percent} onChangeText={handleNomineePercent(setNominee2Percent)} keyboardType="numeric" />
+          <Input label="Nominee 2 Ratio %" value={nominee2Percent} onChangeText={handleNomineePercent(setNominee2Percent)} keyboardType="numeric" />
           <Input label="Nominee 3 Name" value={nominee3Name} onChangeText={setNominee3Name} />
-          <Input label="Nominee 3 %" value={nominee3Percent} onChangeText={handleNomineePercent(setNominee3Percent)} keyboardType="numeric" />
+          <Input label="Nominee 3 Ratio %" value={nominee3Percent} onChangeText={handleNomineePercent(setNominee3Percent)} keyboardType="numeric" />
 
           <Text style={styles.sectionTitle}>Code Setup</Text>
           <Input
