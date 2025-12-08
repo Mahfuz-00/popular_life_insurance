@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image } from 'react-native'
+import { View, Text, TouchableOpacity, Image, Dimensions} from 'react-native'
 import React from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -6,9 +6,12 @@ import logo from '../assets/icon-producer.png';
 import iconDrawerToggle from '../assets/icon-drawer-toggle.png';
 import { COMPANY_LOGO, COMPANY_NAME } from './../config';
 import globalStyle from '../styles/globalStyle';
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const Header = ({navigation, title}) => {
     const showTitleCard = title && title.trim() !== '';
+
+    const companyNameFontSize = SCREEN_WIDTH < 380 ? 17 : 20;
 
   return (
     <View 
@@ -50,7 +53,12 @@ const Header = ({navigation, title}) => {
 
                 {/* CENTER: Company Name (Takes Full Middle Space) */}
                 <View style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center' }}>
-                <Text style={[globalStyle.fontFjallaOne, {fontSize: 20}]}>
+                <Text style={[
+                    globalStyle.fontFjallaOne, 
+                    {fontSize: companyNameFontSize,}]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit={false}
+                    >
                     {COMPANY_NAME}
                 </Text>
                 </View>

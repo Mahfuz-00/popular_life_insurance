@@ -373,8 +373,12 @@ useEffect(() => {
           console.log('Base Premium Calculation for Non-Special:', `${sa} / (12 * ${term}) = ${basePremiumFinal}`);
         }
 
-        const roundedPremium = Number(basePremiumFinal.toString());
-        console.log('Rounded Premium:', roundedPremium);
+        const decimalPart = basePremiumFinal - Math.floor(basePremiumFinal);
+        const roundedPremium = decimalPart < 0.5 
+          ? Math.floor(basePremiumFinal) 
+          : Math.floor(basePremiumFinal) + 1;
+
+        console.log('Rounded Premium (0.5+ up):', roundedPremium);
         // const commAmount = Number((roundedPremium * commRate).toFixed(2));
         // console.log('Commission Amount:', commAmount);
         // const netBeforeRound = roundedPremium - commAmount;
@@ -773,6 +777,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginVertical: 10,
+    color: '#333',
   },
   submitButton: {
     marginVertical: 20,
