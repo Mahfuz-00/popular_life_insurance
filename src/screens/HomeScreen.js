@@ -29,6 +29,7 @@ import MenuComponent from '../components/MenuComponent';
 import Header from '../components/Header';
 import {COMPANY_NAME} from '../config';
 import Slider from '../components/Slider';
+import FooterContact from '../components/FooterContact';
 // import DeviceInfo from 'react-native-device-info';
 // import RNFS from 'react-native-fs';
 // import checkVersion from 'react-native-store-version';
@@ -632,6 +633,8 @@ const HomeScreen = ({navigation}) => {
           </View>
         </View>
       </ScrollView>
+
+      <FooterContact />
 
       {/* Modal for showing download progress */}
       <Modal

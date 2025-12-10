@@ -702,10 +702,19 @@ useEffect(() => {
           <Text style={styles.sectionTitle}>Personal & Nominee Details</Text>
           <Input label="Father's / Husband's Name" value={fatherHusbandName} onChangeText={setFatherHusbandName} required />
           <Input label="Mother's Name" value={motherName} onChangeText={setMotherName} required />
-          <Input label="Address" value={address} onChangeText={setAddress} required/>
+          <Input 
+            label="Address" 
+            value={address} 
+            onChangeText={setAddress} 
+            required
+            multiline={true}                     
+            numberOfLines={4}                   
+            textAlignVertical="top"             
+            style={{ paddingTop: 12 }}
+          />
           <Input label="District" value={district} onChangeText={setDistrict} required/>
 
-          <Text style={{ marginLeft: 15, marginTop: 10, fontWeight: '600' }}>Gender</Text>
+          <Text style={{ marginLeft: 15, marginTop: 10, fontWeight: '600', color: '#000' }}>Gender</Text>
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10 }}>
             {['Male', 'Female'].map(g => (
               <TouchableOpacity key={g} onPress={() => setGender(g)} style={{ flexDirection: 'row', alignItems: 'center' }}>

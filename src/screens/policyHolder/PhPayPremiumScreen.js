@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RSA } from 'react-native-rsa-native';
 
 import Header from '../../components/Header';
+import { showPartialReceiptAlert } from '../../components/premiumReciept';
 import globalStyle from '../../styles/globalStyle';
 import BackgroundImage from '../../assets/BackgroundImage.png';
 import { Input } from '../../components/Input';
@@ -446,6 +447,10 @@ useEffect(() => {
               console.log('Is Success: ', isSuccess);
 
               if (isSuccess) {
+                if (paymentType === "partial") {
+                  showPartialReceiptAlert(postData.transaction_no);
+                } 
+
                 var syncPayments =
                   JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
                 console.log('Sync Payments: ', syncPayments);
@@ -540,6 +545,11 @@ useEffect(() => {
               console.log('Response', isSuccess);
 
               if (isSuccess) {
+                if (paymentType === "partial") {
+                  showPartialReceiptAlert(postData.transaction_no);
+                } 
+
+
                 var syncPayments =
                   JSON.parse(await AsyncStorage.getItem('syncPayments')) ?? [];
                 updateSyncPayments = syncPayments.filter(
@@ -728,7 +738,7 @@ useEffect(() => {
                     </Text>
 
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 10 }}>
-                      {['SB', 'Age_Proof', 'Suspense', 'Others'].map((item) => (
+                      {['SB', 'Age_Proof', 'Suspense', 'Others', 'F/E', 'O/E', 'ADAB', 'PDAB'].map((item) => (
                         <TouchableOpacity
                           key={item}
                           onPress={() => setAdjustWith(item)}

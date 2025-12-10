@@ -142,6 +142,29 @@ export const userPolicyPaymentList = async postData => {
   }
 };
 
+
+export const userPolicyPartialPaymentList = async postData => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${JSON.parse(token)}`,
+      },
+    };
+    const { data } = await axios.post(
+      `${API}/api/policy/partial-payment`,
+      postData,
+      config,
+    );
+
+    return data;
+  } catch (error) {
+    return;
+  }
+};
+
 export const userPayPremium = async postData => {
   try {
     const token = await AsyncStorage.getItem('token');
