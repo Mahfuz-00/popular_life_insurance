@@ -95,7 +95,7 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
 
                 if (response.status === 200 && response.data?.data) {
                     console.log('Designation response.data', response.data);
-                    const allowedDesignations = ['Agent', 'Manager', 'Am', 'Agm'];
+                    const allowedDesignations = ['Agent', 'Manager', 'Am', 'Agm', 'Branch', 'Service Cell'];
                     const formattedDesignations = response.data.data
                         .filter(item => allowedDesignations.includes(item))
                         .map(item => {
@@ -104,6 +104,8 @@ const CodeWiseCollectionScreen = ({ navigation }) => {
                                 'Manager': 'BM',
                                 'Am': 'UM',
                                 'Agm': 'AGM',
+                                'Branch': 'Branch',           
+                                'Service Cell': 'Service Cell', 
                             }[item] || item;
                             return {
                                 label: displayLabel,

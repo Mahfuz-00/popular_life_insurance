@@ -61,10 +61,27 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
     um,
     bm,
     agm,
+    // New fields
+    rateCode,           
+    basePremium,        
+    commission,   
+    rate,              
+    netAmount,
+    fatherHusbandName, 
+    motherName, 
+    address, 
+    district, 
+    gender,
+    nominee1Name, 
+    nominee1Percent,
+    nominee2Name, 
+    nominee2Percent,
+    nominee3Name, 
+    nominee3Percent,
   } = route.params;
 
   // State variables
-  const [amount] = useState(totalPremium);
+  const [amount] = useState(netAmount);
   const [method, setMethod] = useState('bkash');
   const [isEnabled, setIsEnabled] = useState(false);
   const [bkashToken, setBkashToken] = useState('');
@@ -131,7 +148,7 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
   const tableData = [
     { label: 'Project', value: project },
     { label: 'Project Code', value: projectCode },
-    { label: 'Project ID', value: code },
+    // { label: 'Project ID', value: code },
     { label: 'NID', value: nid },
     { label: 'Date', value: entrydate },
     { label: 'Name', value: name },
@@ -143,6 +160,27 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
     { label: 'Mode', value: mode },
     { label: 'Sum assured', value: sumAssured },
     { label: 'Total Premium', value: totalPremium },
+    // === NEW CALCULATED FIELDS ===
+    { label: 'Rate Code', value: rateCode },           
+    { label: 'Rate', value: rate },                
+    { label: 'Base Premium', value: basePremium },            
+    { label: 'Commission', value: commission },              
+    { label: 'Payment Amount', value: netAmount }, 
+    
+    // === Family Info ===
+    { label: 'Father or Husband\'s Name', value: fatherHusbandName },           
+    { label: 'Mother \'s Name', value: motherName },                
+    { label: 'Address', value: address },            
+    { label: 'District', value: district },              
+    { label: 'Gender', value: gender }, 
+    { label: 'Nominee 1', value: nominee1Name }, 
+    { label: 'Nominee 1 Share (%)', value: nominee1Percent }, 
+    { label: 'Nominee 2', value: nominee2Name }, 
+    { label: 'Nominee 2 Share (%)', value: nominee2Percent }, 
+    { label: 'Nominee 3', value: nominee3Name }, 
+    { label: 'Nominee 3 Share (%)', value: nominee3Percent }, 
+
+    // === AGENT HIERARCHY ===
     { label: 'Servicing Cell', value: servicingCell },
     { label: 'Agent Mobile', value: agentMobile },
     { label: 'FA', value: fa },
@@ -191,6 +229,19 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
         bm: bm || null,
         agm: agm || null,
         agentMobile,
+        commission: commission || '0',        
+        net_pay: netAmount || '0',
+        father_or_husband_name: fatherHusbandName, 
+        mother_name: motherName,
+        address: address,
+        district: district,
+        gender: gender,
+        nominee_1_name: nominee1Name,
+        nominee_1_percentage:nominee1Percent,
+        nominee_2_name: nominee2Name,
+        nominee_2_percentage: nominee2Percent,
+        nominee_3_name: nominee3Name,
+        nominee_3_percentage: nominee3Percent,
       };
 
       const response = await axios.post(`${API}/api/first-premium`, postData, {
@@ -767,8 +818,8 @@ const PayFirstPremiumGateway = ({ navigation, route }) => {
                     }}>
                     {tableData.map((item, index) => (
                       <View key={index} style={styles.rowWrapper}>
-                        <Text style={styles.rowLable}>{item.label}</Text>
-                        <Text style={styles.rowValue}>{item.value}</Text>
+                        <Text style={[styles.rowLable, globalStyle.tableText]}>{item.label}</Text>
+                        <Text style={[styles.rowValue, globalStyle.tableText]}>{item.value}</Text>
                       </View>
                     ))}
                   </View>

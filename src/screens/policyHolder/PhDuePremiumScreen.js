@@ -35,42 +35,42 @@ const PhDuePremiumScreen = ({navigation, route}) => {
                             <View style={{borderTopWidth:2, borderLeftWidth: 2, borderRightWidth: 2, borderColor:'#5382AC', marginVertical:15}}>
 
                                 <View style={styles.rowWrapper}>
-                                    <Text style={styles.rowLable}>Policy No</Text>
-                                    <Text style={styles.rowValue}>{policyNo}</Text>
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Policy No</Text>
+                                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyNo}</Text>
                                 </View>
                                 <View style={styles.rowWrapper}>
-                                    <Text style={styles.rowLable}>Due Date</Text>
-                                    <Text style={styles.rowValue}>{policyDetails.NextDueDate.format3}</Text>
-                                </View>
-        
-                                <View style={styles.rowWrapper}>
-                                    <Text style={styles.rowLable}>Instalment</Text>
-                                    <Text style={styles.rowValue}>{policyDetails.NoofInstolment}</Text>
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Due Date</Text>
+                                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.NextDueDate.format3}</Text>
                                 </View>
         
                                 <View style={styles.rowWrapper}>
-                                    <Text style={styles.rowLable}>Instalment Expected</Text>
-                                    <Text style={styles.rowValue}>{policyDetails.ins_expected}</Text>
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Instalment</Text>
+                                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.NoofInstolment}</Text>
                                 </View>
         
                                 <View style={styles.rowWrapper}>
-                                    <Text style={styles.rowLable}>Due Per Instalment</Text>
-                                    <Text style={styles.rowValue}>{Number(policyDetails.DuePerInstalMent).toFixed(2)}</Text>
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Instalment Expected</Text>
+                                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.ins_expected}</Text>
                                 </View>
         
                                 <View style={styles.rowWrapper}>
-                                    <Text style={styles.rowLable}>Total Premium</Text>
-                                    <Text style={styles.rowValue}>{Number(policyDetails.totalpremium).toFixed(2)}</Text>
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Due Per Instalment</Text>
+                                    <Text style={[styles.rowValue, globalStyle.tableText]}>{Number(policyDetails.DuePerInstalMent).toFixed(2)}</Text>
+                                </View>
+        
+                                <View style={styles.rowWrapper}>
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Total Premium</Text>
+                                    <Text style={[styles.rowValue, globalStyle.tableText]}>{Number(policyDetails.totalpremium).toFixed(2)}</Text>
                                 </View>   
         
                                 <View style={styles.rowWrapper}>
-                                    <Text style={styles.rowLable}>Due Amount</Text>
-                                    <Text style={styles.rowValue}>{policyDetails.DueAmount}</Text>
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Due Amount</Text>
+                                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.DueAmount}</Text>
                                 </View>   
         
                                 <View style={styles.rowWrapper}>
-                                    <Text style={styles.rowLable}>Mode</Text>
-                                    <Text style={styles.rowValue}>{policyDetails.mode}</Text>
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Mode</Text>
+                                    <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.mode}</Text>
                                 </View>     
                             </View>
                         }

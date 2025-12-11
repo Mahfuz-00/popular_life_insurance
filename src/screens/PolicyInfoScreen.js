@@ -132,33 +132,33 @@ const PolicyInfoScreen = ({navigation}) => {
                         policyDetails && 
                         <View style={{borderTopWidth:2, borderLeftWidth: 2, borderRightWidth: 2, borderColor:'#5382AC', marginVertical:15}}>
                         <View style={styles.rowWrapper}>
-                            <Text style={styles.rowLable}>Name</Text>
-                            <Text style={styles.rowValue}>{policyDetails.name}</Text>
+                            <Text style={[styles.rowLable, globalStyle.tableText]}>Name</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.name}</Text>
                         </View>
 
                         <View style={styles.rowWrapper}>
-                            <Text style={styles.rowLable}>Plan</Text>
-                            <Text style={styles.rowValue}>{policyDetails.plan}</Text>
+                            <Text style={[styles.rowLable, globalStyle.tableText]}>Plan</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.plan}</Text>
                         </View>
 
                         <View style={styles.rowWrapper}>
-                            <Text style={styles.rowLable}>Term</Text>
-                            <Text style={styles.rowValue}>{policyDetails.tarm}</Text>
+                            <Text style={[styles.rowLable, globalStyle.tableText]}>Term</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.tarm}</Text>
                         </View>
 
                         <View style={styles.rowWrapper}>
-                            <Text style={styles.rowLable}>Sum Assured</Text>
-                            <Text style={styles.rowValue}>{policyDetails.sumAssured}</Text>
+                            <Text style={[styles.rowLable, globalStyle.tableText]}>Sum Assured</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.sumAssured}</Text>
                         </View>
 
                         <View style={styles.rowWrapper}>
-                            <Text style={styles.rowLable}>Total Premium</Text>
-                            <Text style={styles.rowValue}>{policyDetails.totalPremium}</Text>
+                            <Text style={[styles.rowLable, globalStyle.tableText]}>Total Premium</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.totalPremium}</Text>
                         </View>                        
 
                         <View style={styles.rowWrapper}>
-                            <Text style={styles.rowLable}>Mode</Text>
-                            <Text style={styles.rowValue}>{policyDetails.mode}</Text>
+                            <Text style={[styles.rowLable, globalStyle.tableText]}>Mode</Text>
+                            <Text style={[styles.rowValue, globalStyle.tableText]}>{policyDetails.mode}</Text>
                         </View>
                     </View>
                     }

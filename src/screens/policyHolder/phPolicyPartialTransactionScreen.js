@@ -8,11 +8,11 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import Header from './../../components/Header';
 import globalStyle from '../../styles/globalStyle';
 import BackgroundImage from '../../assets/BackgroundImage.png'
-import { userPolicyPaymentList } from '../../actions/userActions';
+import { userPolicyPartialPaymentList } from '../../actions/userActions';
 import { API } from '../../config';
 
 
-const PhPolicyTransactionsScreen = ({navigation, route}) => {
+const PhPolicyPartialTransactionsScreen = ({navigation, route}) => {
   const policyNo = route.params.policyNo;
   const dispatch = useDispatch();
 
@@ -23,7 +23,7 @@ const PhPolicyTransactionsScreen = ({navigation, route}) => {
       let postData = {
         policy_no: policyNo
       }
-        const response = await userPolicyPaymentList(postData);
+        const response = await userPolicyPartialPaymentList(postData);
         if(response.errors){
           
         }else{
@@ -57,7 +57,7 @@ const PhPolicyTransactionsScreen = ({navigation, route}) => {
                       <Text style={[styles.rowValue, globalStyle.tableText]}>{moment(item.created_at).format('YYYY-MM-DD')}</Text>
                       <Text style={[styles.rowValue, globalStyle.tableText]}>{item.amount}</Text>
                       <Text style={[styles.rowValue, globalStyle.tableText]}>{item.method}</Text>
-                      <TouchableOpacity style={[styles.rowValue, globalStyle.tableText, {alignItems: 'center'}]} onPress={()=>Linking.openURL(`${API}/api/policy/e-receipt/${item.id}`)}>
+                      <TouchableOpacity style={[styles.rowValue, globalStyle.tableText, {alignItems: 'center'}]} onPress={()=>Linking.openURL(`${API}/api/policy/short-pr-receipt/${item.transaction_no}`)}> 
                         <Icon name="download-outline" size={26} color="blue" />
                       </TouchableOpacity>
                   </View>
@@ -99,4 +99,4 @@ const styles = StyleSheet.create({
 })
 
 
-export default PhPolicyTransactionsScreen
+export default PhPolicyPartialTransactionsScreen

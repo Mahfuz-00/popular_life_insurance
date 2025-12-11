@@ -18,10 +18,11 @@ import globalStyle from '../../styles/globalStyle';
 import MenuComponent from './../../components/MenuComponent';
 import iconProducer from '../../assets/icon-producer.png';
 import {logout} from '../../actions/userActions';
-import Header from './../../components/Header';
+import Header from '../../components/Header';
 import {COMPANY_NAME} from './../../config';
 import DeviceInfo from 'react-native-device-info';
 import checkVersion from 'react-native-store-version';
+import FooterContact from '../../components/FooterContact';
 
 const DashboardPhScreen = ({navigation, route}) => {
   const policyNo = route.params.policyNo;
@@ -43,7 +44,7 @@ const DashboardPhScreen = ({navigation, route}) => {
       icon: require('../../assets/icon-premium-calc.png'),
     },
     {
-      title: 'Policy Transactions',
+      title: 'Ren/Def E-Receipt',
       navigateTo: 'PhPolicyTransactions',
       icon: require('../../assets/icon-premium-calc.png'),
     },
@@ -53,9 +54,14 @@ const DashboardPhScreen = ({navigation, route}) => {
       icon: require('../../assets/icon-claim-submission.png'),
     },
     {
-      title: 'PR List',
+      title: 'Policy Ledger',
       navigateTo: 'PhPRList',
       icon: require('../../assets/icon-claim-submission.png'),
+    },
+     {
+      title: 'Partial E-Receipt',
+      navigateTo: 'PhPolicyPartialTransactions',
+      icon: require('../../assets/icon-premium-calc.png'),
     },
   ];
 
@@ -146,6 +152,8 @@ const DashboardPhScreen = ({navigation, route}) => {
           </View>
         </View>
       </ScrollView>
+
+      <FooterContact />
     </View>
   );
 };

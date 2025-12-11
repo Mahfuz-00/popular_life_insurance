@@ -1,6 +1,15 @@
-import React, {useContext,useEffect,useRef} from 'react';
-import {Alert,BackHandler,View,Text,TouchableOpacity,StyleSheet,ScrollView,Image,Dimensions} from 'react-native';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import React from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Dimensions,
+  SafeAreaView,
+  Platform,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -8,293 +17,201 @@ import { COMPANY_NAME } from '../config';
 import { COMPANY_LOGO } from './../config';
 import { logout } from './../actions/userActions';
 
+// Simple scaling utility based on screen width (design based on ~360dp width)
+const { width, height } = Dimensions.get('window');
+const guidelineBaseWidth = 360;
 
-function DrawerContent({navigation}) {
-    const { isAuthenticated, user } = useSelector(state => state.auth);
-    const dispatch = useDispatch();
+const scale = (size) => (width / guidelineBaseWidth) * size;
 
-    const logoutHandler = () => {
-        dispatch(logout(navigation)); 
-    }
+const DrawerContent = ({ navigation }) => {
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
 
-    return (
-        <View style={styles.drawer}>
-            <View style={{ padding:15, height:'15%'}}>
-                <Icon style={{}} name="arrow-back-sharp" size={26} color="#000" onPress={()=>navigation.toggleDrawer()} />
-                <View style={{flexDirection:'row', backgroundColor:'#fff', flex:1, marginTop:10}} >
-                    <View style={{width:'30%',  height:'100%'}}>
-                        <Image style={{height:'100%',width:'100%', resizeMode: 'contain'}} source={COMPANY_LOGO}/>
-                    </View>
-                    <View style={{flexDirection:'column', width:'70%'}}>
-                        <Text style={{ fontSize:16, fontWeight:'bold', color:'#000'}}>{COMPANY_NAME}</Text>
-                        {/* <Text>xyz@mail.com</Text> */}
-                    </View>
-                </View>
+  const logoutHandler = () => {
+    dispatch(logout(navigation));
+  };
 
-                
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.drawer}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Icon
+            name="arrow-back-sharp"
+            size={scale(26)}
+            color="#000"
+            onPress={() => navigation.toggleDrawer()}
+            style={styles.backIcon}
+          />
+
+          <View style={styles.headerContent}>
+            <View style={styles.logoContainer}>
+              <Image source={COMPANY_LOGO} style={styles.logo} />
             </View>
-            <View style={styles.line}></View>
-            <ScrollView>
-            <Text style={styles.drawerBodySectionTitle}>General</Text>
-
-                <TouchableOpacity
-                    onPress={()=>navigation.navigate('Home')}
-                    style={styles.drawerBodyMenu}
-                >
-                    <View style={styles.drawerBodyMenuIconContainer}>
-                        {/* <FontAwesome style={styles.drawerBodyMenuIcon}  name="file"  /> */}
-                        <Icon style={styles.drawerBodyMenuIcon} name="home" size={30} color="#000" />
-                    </View>
-                    
-                    <Text style={styles.drawerBodyMenuText}>Home</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                    onPress={()=>navigation.navigate('MessageFromMd')}
-                    style={styles.drawerBodyMenu}
-                >
-                    <View style={styles.drawerBodyMenuIconContainer}>
-                        {/* <FontAwesome style={styles.drawerBodyMenuIcon}  name="file"  /> */}
-                        <Icon style={styles.drawerBodyMenuIcon} name="mail-outline" size={30} color="#000" />
-                    </View>
-                    
-                    <Text style={styles.drawerBodyMenuText}>Message from CEO</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={()=>navigation.navigate('ApplyOnline')}
-                    style={styles.drawerBodyMenu}
-                >
-                    <View style={styles.drawerBodyMenuIconContainer}>
-                        {/* <FontAwesome style={styles.drawerBodyMenuIcon}  name="file"  /> */}
-                        <Icon style={styles.drawerBodyMenuIcon} name="create-outline" size={30} color="#000" />
-                    </View>
-                    
-                    <Text style={styles.drawerBodyMenuText}>Apply for Policy</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    onPress={()=>navigation.navigate('PolicyPhoneUpdate')}
-                    style={styles.drawerBodyMenu}
-                >
-                    <View style={styles.drawerBodyMenuIconContainer}>
-                        {/* <FontAwesome style={styles.drawerBodyMenuIcon}  name="file"  /> */}
-                        <Icon style={styles.drawerBodyMenuIcon} name="md-phone-portrait-outline" size={30} color="#000" />
-                    </View>
-                    
-                    <Text style={styles.drawerBodyMenuText}>Policy Phone No Update</Text>
-                </TouchableOpacity>
-
-
-                <TouchableOpacity
-                onPress={()=>navigation.navigate('PolicyInfo')}
-                    style={styles.drawerBodyMenu}
-                >
-                    <View style={styles.drawerBodyMenuIconContainer}>
-                        <Icon style={styles.drawerBodyMenuIcon} name="md-newspaper-outline" size={30} color="#000"/>
-                    </View>
-                    
-                    <Text style={styles.drawerBodyMenuText}>Policy Info</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                onPress={()=>navigation.navigate('PremiumCalculator')}
-                    style={styles.drawerBodyMenu}
-                >
-                    <View style={styles.drawerBodyMenuIconContainer}>
-                        <Icon style={styles.drawerBodyMenuIcon} name="calculator-outline" size={30} color="#000"/>
-                    </View>
-                    
-                    <Text style={styles.drawerBodyMenuText}>Premium Calculator</Text>
-                </TouchableOpacity>
-                {/* <TouchableOpacity
-                onPress={()=>navigation.navigate('PayPremium')}
-                    style={styles.drawerBodyMenu}
-                >
-                    <View style={styles.drawerBodyMenuIconContainer}>
-                        <Icon style={styles.drawerBodyMenuIcon} name="logo-usd" size={30} color="#000"/>
-                    </View>
-                    
-                    <Text style={styles.drawerBodyMenuText}>Pay Premium</Text>
-                </TouchableOpacity> */}
-                
-                
-                
-
-                <View style={styles.line}></View>
-                <TouchableOpacity
-                onPress={()=>navigation.navigate('About App')}>
-                <Text style={[styles.drawerBodySectionTitle]}>About</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                onPress={()=>navigation.navigate('ContactUs')}
-                    style={styles.drawerBodyMenu}
-                >
-                    <View style={styles.drawerBodyMenuIconContainer}>
-                        <Icon style={styles.drawerBodyMenuIcon} name="notifications-outline" size={30} color="#000"/>
-                    </View>
-                    
-                    <Text style={styles.drawerBodyMenuText}>Contact Us</Text>
-                </TouchableOpacity>
-                             
-                <TouchableOpacity
-                    onPress={()=>navigation.navigate('ProductInfo')}
-                    style={styles.drawerBodyMenu}
-                >
-                    <View style={styles.drawerBodyMenuIconContainer}>
-                        <Icon style={styles.drawerBodyMenuIcon} name="md-cube-outline" size={30} color="#000"/>
-                    </View>
-                    
-                    <Text style={styles.drawerBodyMenuText}>Product Info</Text>
-                </TouchableOpacity>
-                             
-                <TouchableOpacity
-                    onPress={()=>navigation.navigate('CompanyInfo')}
-                    style={styles.drawerBodyMenu}
-                >
-                    <View style={styles.drawerBodyMenuIconContainer}>
-                        <Icon style={styles.drawerBodyMenuIcon} name="md-business-outline" size={30} color="#000"/>
-                    </View>
-                    
-                    <Text style={styles.drawerBodyMenuText}>Company Info</Text>
-                </TouchableOpacity>
-                
-                <View style={styles.line}></View>
-                <Text style={styles.drawerBodySectionTitle}>Accounts</Text>
-                
-                {
-                    isAuthenticated == false &&  
-                    <>          
-                        <TouchableOpacity
-                            onPress={()=>navigation.navigate('Login')}
-                            style={styles.drawerBodyMenu}
-                        >
-                            <View style={styles.drawerBodyMenuIconContainer}>
-                                <Icon style={styles.drawerBodyMenuIcon} name="log-in-outline" size={30} color="#000"/>
-                            </View>
-                            
-                            <Text style={styles.drawerBodyMenuText}>Login</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            onPress={()=>navigation.navigate('Registration')}
-                            style={styles.drawerBodyMenu}
-                        >
-                            <View style={styles.drawerBodyMenuIconContainer}>
-                                <Icon style={styles.drawerBodyMenuIcon} name="add" size={30} color="#000"/>
-                            </View>
-                            
-                            <Text style={styles.drawerBodyMenuText}>Add Account</Text>
-                        </TouchableOpacity>
-                    </>    
-                }
-
-                {
-                    isAuthenticated == true &&                    
-                    <TouchableOpacity
-                    onPress={()=>logoutHandler()}
-                        style={styles.drawerBodyMenu}
-                    >
-                        <View style={styles.drawerBodyMenuIconContainer}>
-                            <Icon style={styles.drawerBodyMenuIcon} name="log-in-outline" size={30} color="#000"/>
-                        </View>
-                        
-                        <Text style={styles.drawerBodyMenuText}>Log Out</Text>
-                    </TouchableOpacity>
-                
-                }
-                
-            </ScrollView>
+            <View style={styles.companyInfo}>
+              <Text style={styles.companyName}>{COMPANY_NAME}</Text>
+            </View>
+          </View>
         </View>
 
-    );
-}
+        <View style={styles.divider} />
+
+        {/* Scrollable Menu */}
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Text style={styles.sectionTitle}>General</Text>
+
+          {/* Menu Items */}
+          {menuItems.map((item, index) => (
+            <MenuItem
+              key={index}
+              icon={item.icon}
+              label={item.label}
+              onPress={() => navigation.navigate(item.screen)}
+            />
+          ))}
+
+          <View style={styles.divider} />
+
+          <TouchableOpacity onPress={() => navigation.navigate('About App')}>
+            <Text style={styles.sectionTitle}>About</Text>
+          </TouchableOpacity>
+
+          {aboutItems.map((item, index) => (
+            <MenuItem
+              key={index}
+              icon={item.icon}
+              label={item.label}
+              onPress={() => navigation.navigate(item.screen)}
+            />
+          ))}
+
+          <View style={styles.divider} />
+          <Text style={styles.sectionTitle}>Accounts</Text>
+
+          {!isAuthenticated ? (
+            <>
+              <MenuItem
+                icon="log-in-outline"
+                label="Login"
+                onPress={() => navigation.navigate('Login')}
+              />
+              <MenuItem
+                icon="person-add-outline"
+                label="Add Account"
+                onPress={() => navigation.navigate('Registration')}
+              />
+            </>
+          ) : (
+            <MenuItem
+              icon="log-out-outline"
+              label="Log Out"
+              onPress={logoutHandler}
+              textStyle={{ color: '#D32F2F' }} // optional red for logout
+            />
+          )}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
+};
+
+// Reusable Menu Item Component
+const MenuItem = ({ icon, label, onPress, textStyle }) => (
+  <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+    <View style={styles.menuIconContainer}>
+      <Icon name={icon} size={scale(26)} color="#000" />
+    </View>
+    <Text style={[styles.menuText, textStyle]}>{label}</Text>
+  </TouchableOpacity>
+);
+
+// Menu Data (keeps content exactly the same)
+const menuItems = [
+  { icon: 'home', label: 'Home', screen: 'Home' },
+  { icon: 'mail-outline', label: 'Message from CEO', screen: 'MessageFromMd' },
+  { icon: 'create-outline', label: 'Apply for Policy', screen: 'ApplyOnline' },
+  { icon: 'md-phone-portrait-outline', label: 'Policy Phone No Update', screen: 'PolicyPhoneUpdate' },
+  { icon: 'md-newspaper-outline', label: 'Policy Info', screen: 'PolicyInfo' },
+  { icon: 'calculator-outline', label: 'Premium Calculator', screen: 'PremiumCalculator' },
+];
+
+const aboutItems = [
+  { icon: 'call-outline', label: 'Contact Us', screen: 'ContactUs' },
+  { icon: 'md-cube-outline', label: 'Product Info', screen: 'ProductInfo' },
+  { icon: 'md-business-outline', label: 'Company Info', screen: 'CompanyInfo' },
+];
 
 const styles = StyleSheet.create({
-    drawerBodyMenuEndIcon:{
-        fontSize:25,
-        color:'black',
-        alignSelf:'center',
-        marginTop:20
-    },
-    drawerBodySectionTitle:{
-        fontFamily:'FjallaOne-Regular',
-        marginLeft:20,
-        marginBottom:5,
-        marginTop:5,
-        fontSize:16,
-        color:'#000'
-    },
-    loggedinAs:{
-        fontFamily:'Montserrat-Bold',
-        fontSize:13,
-        marginLeft:15,
-        marginBottom:5,
-        color: 'black',
-        textTransform:'capitalize',
-    },
-    loggedinAsName:{
-        fontFamily:'Montserrat-Bold',
-        fontSize:13,
-        marginLeft:15,
-        marginBottom:5,
-        color: 'green',
-        textTransform:'capitalize',
-    },
-    line:{
-        
-        height:1,
-        backgroundColor:'black',
-        marginTop:10,
-        marginBottom:10,
-        marginHorizontal:10
-    },
-    drawerBodyMenuSelected:{
-        backgroundColor:'#DFE0E0',
-    },
-    drawerBodyMenuText:{
-        fontFamily:'Poppins-Regular',
-        width:'85%',
-        color:'#000',
-    },
-    drawerBodyMenuIconContainer:{
-        width:'15%',
-        marginRight:20,
-        alignItems:'center'
-    },
-    drawerBodyMenuIcon:{
-        fontSize:25,
-        color:'#000',
-    },
-    drawerBodyMenu:{
-        flexDirection:'row',
-        // backgroundColor:'#DFE0E0',
-        paddingHorizontal:10,
-        paddingVertical:5,
-        alignItems:'center'
-    },
-    drawerBody:{
-
-    },
-    drawerHeadText: {
-        color:'white'
-    },
-    drawerHeadImageContainer:{
-        width:'100%', 
-        height:'100%',
-        padding:0,
-        justifyContent:'center',
-        alignItems:'center'
-    
-    },
-    drawerHeadImage: {
-        width:'100%', 
-        height:'100%',
-        resizeMode:'contain'
-    },
-    
-    drawer: {
-        flex:1,
-    },
-})
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  drawer: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: scale(15),
+    paddingTop: scale(10),
+    paddingBottom: scale(15),
+  },
+  backIcon: {
+    marginBottom: scale(10),
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoContainer: {
+    width: '30%',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logo: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
+  companyInfo: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingLeft: scale(12),
+  },
+  companyName: {
+    fontSize: scale(16),
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#000',
+    marginHorizontal: scale(15),
+    marginVertical: scale(12),
+  },
+  sectionTitle: {
+    fontSize: scale(16),
+    fontWeight: '600',
+    color: '#000',
+    marginLeft: scale(20),
+    marginTop: scale(8),
+    marginBottom: scale(6),
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: scale(12),
+    paddingHorizontal: scale(15),
+  },
+  menuIconContainer: {
+    width: '15%',
+    alignItems: 'center',
+  },
+  menuText: {
+    fontSize: scale(15),
+    color: '#000',
+    marginLeft: scale(8),
+    flex: 1,
+  },
+});
 
 export default DrawerContent;

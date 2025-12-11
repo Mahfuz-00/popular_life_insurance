@@ -104,8 +104,8 @@ android {
         applicationId "com.insurancecompanyapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 38
-        versionName "2.9.0"
+        versionCode 41
+        versionName "2.9.6"
 
     }
 

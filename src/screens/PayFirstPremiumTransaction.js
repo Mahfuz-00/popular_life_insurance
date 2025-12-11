@@ -113,22 +113,22 @@ const FirstPremiumTransactionsScreen = ({ navigation }) => {
                         {transactions.length > 0 && (
                             <View style={{ borderTopWidth: 2, borderLeftWidth: 2, borderRightWidth: 2, borderColor: '#5382AC', marginVertical: 15 }}>
                                 <View style={styles.rowWrapper}>
-                                    <Text style={styles.rowLabel}>Project Name</Text>
-                                    {/* <Text style={styles.rowLabel}>Trns. Date</Text> */}
-                                    <Text style={styles.rowLabel}>Trns. No</Text>
-                                    <Text style={styles.rowLabel}>Method</Text>
-                                    <Text style={styles.rowLabel}>Premium</Text>
-                                    <Text style={styles.rowLabel}>Receipt</Text>
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Project Name</Text>
+                                    {/* <Text style={[styles.rowLable, globalStyle.tableText]}>Trns. Date</Text> */}
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Trns. No</Text>
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Method</Text>
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Premium</Text>
+                                    <Text style={[styles.rowLable, globalStyle.tableText]}>Receipt</Text>
                                 </View>
                                 {transactions.map((item, index) => (
                                     <View style={styles.rowWrapper} key={index}>
-                                        <Text style={styles.rowValue}>{item.Project_Name}</Text>
-                                        {/* <Text style={styles.rowValue}>{moment(item.entrydate).format('YYYY-MM-DD')}</Text> */}
-                                        <Text style={styles.rowValue}>{item.transaction_no}</Text>
-                                        <Text style={styles.rowValue}>{item.method}</Text>
-                                        <Text style={styles.rowValue}>{parseFloat(item.Total_Premium).toFixed(2)}</Text>
+                                        <Text style={[styles.rowValue, globalStyle.tableText]}>{item.Project_Name}</Text>
+                                        {/* <Text style={[styles.rowValue, globalStyle.tableText]}>{moment(item.entrydate).format('YYYY-MM-DD')}</Text> */}
+                                        <Text style={[styles.rowValue, globalStyle.tableText]}>{item.transaction_no}</Text>
+                                        <Text style={[styles.rowValue, globalStyle.tableText]}>{item.method}</Text>
+                                        <Text style={[styles.rowValue, globalStyle.tableText]}>{parseFloat(item.Total_Premium).toFixed(2)}</Text>
                                         <TouchableOpacity
-                                            style={[styles.rowValue, { alignItems: 'center' }]}
+                                            style={[styles.rowValue, globalStyle.tableText, { alignItems: 'center' }]}
                                             onPress={() => handleDownloadReceipt(item.transaction_no, item.NID_NO)}
                                         >
                                             <Icon name="download-outline" size={26} color="blue" />
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 2,
         borderColor: '#5382AC',
     },
-    rowLabel: {
+    rowLable: {
         flex: 1,
         textAlign: 'center',
         borderColor: '#5382AC',

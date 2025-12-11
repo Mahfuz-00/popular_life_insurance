@@ -244,7 +244,8 @@ public class MainApplication extends Application implements ReactApplication {
     private final ReactNativeHost mReactNativeHost = new DefaultReactNativeHost(this) {
         @Override
         public boolean getUseDeveloperSupport() {
-            return BuildConfig.DEBUG;
+            // return BuildConfig.DEBUG;
+            return false;
         }
 
         @Override
@@ -277,6 +278,12 @@ public class MainApplication extends Application implements ReactApplication {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // === THIS IS THE REAL FIX FOR OLD RN VERSIONS ===
+        System.setProperty("devsupport.disabled", "true");
+        // or the older property that some RN versions still check:
+        System.setProperty("react.native.dev_support", "false");
+
         SoLoader.init(this, false);
         if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
             DefaultNewArchitectureEntryPoint.load();

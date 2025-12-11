@@ -45,6 +45,7 @@ import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import ClaimSubmissionScreen from './src/screens/ClaimSubmissionScreen';
 import PhPolicyTransactionsScreen from './src/screens/policyHolder/PhPolicyTransactionsScreen';
+import PhPolicyPartialTransactionsScreen from './src/screens/policyHolder/phPolicyPartialTransactionScreen';
 import AuthPolicyInfoScreen from './src/screens/AuthPolicyInfoScreen';
 import PhMyProfileScreen from './src/screens/policyHolder/PhMyProfileScreen';
 import OrgMyProfileScreen from './src/screens/producer/OrgMyProfileScreen';
@@ -123,6 +124,10 @@ function StackNav() {
       <Stack.Screen
         name="PhPolicyTransactions"
         component={PhPolicyTransactionsScreen}
+      />
+       <Stack.Screen
+        name="PhPolicyPartialTransactions"
+        component={PhPolicyPartialTransactionsScreen}
       />
       <Stack.Screen name="AuthPolicyInfo" component={AuthPolicyInfoScreen} />
       <Stack.Screen name="PhMyProfile" component={PhMyProfileScreen} />
