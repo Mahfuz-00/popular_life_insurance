@@ -1,4 +1,5 @@
 import { Alert, Linking } from "react-native";
+import { API } from '../../config';
 
 export const showPartialReceiptAlert = (trxNo) => {
   Alert.alert(
@@ -9,7 +10,7 @@ export const showPartialReceiptAlert = (trxNo) => {
       {
         text: "Download",
         onPress: () => {
-          const url = `http://103.155.184.108/api/policy/short-pr-receipt/${trxNo}`;
+          const url = `${API}/api/policy/short-pr-receipt/${trxNo}`;
           Linking.openURL(url);
         },
       },

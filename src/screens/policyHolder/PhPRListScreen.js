@@ -1,21 +1,36 @@
-import { View, Text, ScrollView, ImageBackground, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, ImageBackground, StyleSheet, Alert } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { useDispatch } from 'react-redux';
 import globalStyle from '../../styles/globalStyle';
 import BackgroundImage from '../../assets/BackgroundImage.png';
 import Header from '../../components/Header';
 import { getPrListByUser } from '../../actions/userActions';
+import { SHOW_LOADING, HIDE_LOADING } from '../../store/constants/commonConstants';
 
 const PhPRListScreen = ({ navigation, route }) => {
   const policyNo = route.params.policyNo;
   const [prList, setPrList] = useState([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const dispatch = useDispatch();
 
   useEffect(() => {
     async function fetchData() {
-      const response = await dispatch(getPrListByUser(policyNo));      
-      if (response)
-        setPrList(response);
+      dispatch({ type: SHOW_LOADING, payload: `Loading PR List for ${policyNo}...` });
+      setIsLoadingData(true);
+      try {
+        const response = await dispatch(getPrListByUser(policyNo));
+        if (response) {
+          setPrList(response);
+        } else {
+            setPrList({});
+        }
+      } catch (error) {
+        console.error('Failed to fetch PR list:', error);
+        setPrList({});
+      } finally {
+        dispatch({ type: HIDE_LOADING });
+        setIsLoadingData(false); 
+      }
     }
     fetchData();
   }, [])

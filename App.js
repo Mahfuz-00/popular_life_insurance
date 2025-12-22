@@ -1,4 +1,3 @@
-// In App.js in a new project
 import * as React from 'react';
 import VersionCheck from 'react-native-version-check';
 import InAppUpdates from 'react-native-in-app-updates';
